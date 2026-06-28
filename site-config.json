@@ -1,0 +1,64 @@
+{
+  "site_name": "TFSE金融便民中心",
+  "base_url": "https://windzlc-code.github.io/finance_webto",
+  "og_image": "assets/images/logo/tfse-logo.svg",
+  "analytics": {
+    "ga4_measurement_id": "",
+    "server_event_endpoint": "",
+    "meta_pixel_id": "",
+    "sentry_dsn": "",
+    "sample_rate": 1
+  },
+  "search_console": {
+    "google_site_verification": ""
+  },
+  "backend": {
+    "api_base_url": "",
+    "mode": "localStorage",
+    "timeout_ms": 8000
+  },
+  "security": {
+    "turnstile": {
+      "site_key": "",
+      "enabled": false
+    }
+  },
+  "line": {
+    "oa_url": "free-check.html#line-cta",
+    "label": "Line 官方帳號承接說明"
+  },
+  "default_changefreq": "weekly",
+  "canonical_pages": [
+    "",
+    "index.html",
+    "index-2.html",
+    "index-3.html",
+    "database.html",
+    "database/banks.html",
+    "database/finance-companies.html",
+    "database/credit-unions.html",
+    "service.html",
+    "work.html",
+    "work-details.html",
+    "mortgage.html",
+    "credit-loan.html",
+    "vehicle-finance.html",
+    "installment.html",
+    "credit-union.html",
+    "debt-law.html",
+    "insurance-finance.html",
+    "anti-fraud.html",
+    "articles.html",
+    "blog-grid.html",
+    "blog-classic.html",
+    "blog-details.html",
+    "free-check.html",
+    "contact.html",
+    "search.html",
+    "about.html",
+    "privacy.html",
+    "terms.html",
+    "disclaimer.html",
+    "source-policy.html"
+  ]
+}

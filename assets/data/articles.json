@@ -1,0 +1,722 @@
+[
+  {
+    "id": "article_bank_credit_conditions",
+    "title": "銀行信貸申請前要看哪些條件",
+    "slug": "bank-credit-application-conditions",
+    "category": "銀行信貸",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "銀行信貸申請前要看哪些條件｜TFSE金融便民中心",
+    "seo_description": "整理銀行信貸申請前常見的收入、負債比、信用紀錄與公開資訊查詢方向。",
+    "summary": "整理銀行信貸申請前常見的收入、負債比、信用紀錄與公開資訊查詢方向。",
+    "keywords": [
+      "信貸",
+      "銀行",
+      "負債比",
+      "信用紀錄"
+    ],
+    "compliance_note": "提醒使用者條件與結果需以合法金融機構最新公告為準。"
+  },
+  {
+    "id": "article_salary_transfer_short",
+    "title": "薪轉不足還能查詢哪些合法金融資訊",
+    "slug": "salary-transfer-insufficient-options",
+    "category": "銀行信貸",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "薪轉不足還能查詢哪些合法金融資訊｜TFSE金融便民中心",
+    "seo_description": "說明薪轉不足時可先整理收入型態、工作資料與合法公開資訊查詢方向。",
+    "summary": "說明薪轉不足時可先整理收入型態、工作資料與合法公開資訊查詢方向。",
+    "keywords": [
+      "薪轉",
+      "收入型態",
+      "信貸",
+      "合法金融資訊"
+    ],
+    "compliance_note": "不得暗示可略過審核或取得特定結果。"
+  },
+  {
+    "id": "article_credit_record_impact",
+    "title": "聯徵紀錄對信貸條件的影響",
+    "slug": "credit-record-impact",
+    "category": "銀行信貸",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "聯徵紀錄對信貸條件的影響｜TFSE金融便民中心",
+    "seo_description": "整理信用紀錄、遲繳紀錄與負債比對金融資訊查詢的影響。",
+    "summary": "整理信用紀錄、遲繳紀錄與負債比對金融資訊查詢的影響。",
+    "keywords": [
+      "聯徵",
+      "信用紀錄",
+      "負債比",
+      "信貸"
+    ],
+    "compliance_note": "僅提供查詢方向，不提供信用修復承諾。"
+  },
+  {
+    "id": "article_public_sector_credit",
+    "title": "公教軍警醫護信貸資訊整理",
+    "slug": "public-sector-credit-info",
+    "category": "銀行信貸",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "公教軍警醫護信貸資訊整理｜TFSE金融便民中心",
+    "seo_description": "整理公教、軍警、醫護族群查詢信貸公開資訊時可注意的條件與費用。",
+    "summary": "整理公教、軍警、醫護族群查詢信貸公開資訊時可注意的條件與費用。",
+    "keywords": [
+      "公教",
+      "軍警",
+      "醫護",
+      "信貸"
+    ],
+    "compliance_note": "不得宣稱專屬額度或保證結果。"
+  },
+  {
+    "id": "article_sme_working_capital",
+    "title": "中小企業周轉金常見資料",
+    "slug": "sme-working-capital-info",
+    "category": "企業金融",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "中小企業周轉金常見資料｜TFSE金融便民中心",
+    "seo_description": "整理中小企業查詢周轉金資訊前可準備的用途、營收與公開資料。",
+    "summary": "整理中小企業查詢周轉金資訊前可準備的用途、營收與公開資料。",
+    "keywords": [
+      "中小企業",
+      "週轉金",
+      "企業金融",
+      "公開資料"
+    ],
+    "compliance_note": "不得承諾快速撥款或特定額度。"
+  },
+  {
+    "id": "article_credit_rate_reading",
+    "title": "信貸利率資訊如何看懂",
+    "slug": "credit-rate-information-guide",
+    "category": "銀行信貸",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "信貸利率資訊如何看懂｜TFSE金融便民中心",
+    "seo_description": "說明利率、總費用、手續費與契約條款的基本查詢方向。",
+    "summary": "說明利率、總費用、手續費與契約條款的基本查詢方向。",
+    "keywords": [
+      "信貸利率",
+      "總費用",
+      "手續費",
+      "契約條款"
+    ],
+    "compliance_note": "提醒利率與費用以合法金融機構公告為準。"
+  },
+  {
+    "id": "article_no_salary_transfer",
+    "title": "無薪轉族群查詢金融資訊的方法",
+    "slug": "no-salary-transfer-finance-info",
+    "category": "銀行信貸",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "無薪轉族群查詢金融資訊的方法｜TFSE金融便民中心",
+    "seo_description": "整理接案、自由工作與非固定薪轉族群可先查詢的公開金融資訊。",
+    "summary": "整理接案、自由工作與非固定薪轉族群可先查詢的公開金融資訊。",
+    "keywords": [
+      "無薪轉",
+      "接案",
+      "自由工作",
+      "金融資訊"
+    ],
+    "compliance_note": "不得暗示可規避正常審查。"
+  },
+  {
+    "id": "article_business_owner_prepare",
+    "title": "企業主申請周轉資訊前要準備什麼",
+    "slug": "business-owner-working-capital-guide",
+    "category": "企業金融",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "企業主申請周轉資訊前要準備什麼｜TFSE金融便民中心",
+    "seo_description": "協助企業主整理資金用途、營收型態、期間與合法查詢路徑。",
+    "summary": "協助企業主整理資金用途、營收型態、期間與合法查詢路徑。",
+    "keywords": [
+      "企業主",
+      "週轉",
+      "營收",
+      "合法金融資訊"
+    ],
+    "compliance_note": "不得宣稱代辦或保證取得資金。"
+  },
+  {
+    "id": "article_mortgage_refinance_difference",
+    "title": "房屋轉貸與增貸差異",
+    "slug": "mortgage-refinance-increase-difference",
+    "category": "房貸資訊",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "房屋轉貸與增貸差異｜TFSE金融便民中心",
+    "seo_description": "說明房屋轉貸、增貸在用途、費用、設定與查詢資料上的差異。",
+    "summary": "說明房屋轉貸、增貸在用途、費用、設定與查詢資料上的差異。",
+    "keywords": [
+      "房屋轉貸",
+      "房屋增貸",
+      "房貸",
+      "費用"
+    ],
+    "compliance_note": "提醒抵押設定與契約條款需向合法機構確認。"
+  },
+  {
+    "id": "article_second_mortgage_distinguish",
+    "title": "二胎房貸與合法融資資訊如何分辨",
+    "slug": "second-mortgage-legal-info-check",
+    "category": "房貸資訊",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "二胎房貸與合法融資資訊如何分辨｜TFSE金融便民中心",
+    "seo_description": "整理二胎相關資訊查詢時如何看來源、費用、契約與風險。",
+    "summary": "整理二胎相關資訊查詢時如何看來源、費用、契約與風險。",
+    "keywords": [
+      "二胎",
+      "房貸",
+      "合法融資",
+      "來源"
+    ],
+    "compliance_note": "不得暗示本站媒合或承作任何融資。"
+  },
+  {
+    "id": "article_first_home_mortgage",
+    "title": "首購房貸常見條件",
+    "slug": "first-home-mortgage-conditions",
+    "category": "房貸資訊",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "首購房貸常見條件｜TFSE金融便民中心",
+    "seo_description": "整理首購房貸查詢時常見的自備款、收入、信用與費用資訊。",
+    "summary": "整理首購房貸查詢時常見的自備款、收入、信用與費用資訊。",
+    "keywords": [
+      "首購",
+      "房貸",
+      "自備款",
+      "信用紀錄"
+    ],
+    "compliance_note": "提醒條件以銀行與主管機關公告為準。"
+  },
+  {
+    "id": "article_mortgage_payment_pressure",
+    "title": "房貸月付壓力如何做財務健檢",
+    "slug": "mortgage-payment-pressure-check",
+    "category": "房貸資訊",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "房貸月付壓力如何做財務健檢｜TFSE金融便民中心",
+    "seo_description": "說明如何用低敏資料先整理月付壓力、收入支出與查詢方向。",
+    "summary": "說明如何用低敏資料先整理月付壓力、收入支出與查詢方向。",
+    "keywords": [
+      "房貸月付",
+      "財務健檢",
+      "收入支出",
+      "房貸"
+    ],
+    "compliance_note": "不得提供核准或降息承諾。"
+  },
+  {
+    "id": "article_property_high_debt",
+    "title": "有房產但卡債高該先看哪些資訊",
+    "slug": "property-owner-card-debt-info",
+    "category": "房貸資訊",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "有房產但卡債高該先看哪些資訊｜TFSE金融便民中心",
+    "seo_description": "整理有房產且負債偏高時可先查詢的債務法令、房貸與費用資訊。",
+    "summary": "整理有房產且負債偏高時可先查詢的債務法令、房貸與費用資訊。",
+    "keywords": [
+      "房產",
+      "卡債",
+      "債務法令",
+      "房貸"
+    ],
+    "compliance_note": "提醒重大債務問題應洽詢專業法律服務。"
+  },
+  {
+    "id": "article_second_mortgage_risk",
+    "title": "房屋二胎常見風險",
+    "slug": "second-mortgage-common-risk",
+    "category": "房貸資訊",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "房屋二胎常見風險｜TFSE金融便民中心",
+    "seo_description": "整理房屋二胎資訊中的費用、抵押、違約與個資風險提醒。",
+    "summary": "整理房屋二胎資訊中的費用、抵押、違約與個資風險提醒。",
+    "keywords": [
+      "二胎",
+      "房屋融資",
+      "風險",
+      "抵押"
+    ],
+    "compliance_note": "內容須以風險辨識為主，不作銷售引導。"
+  },
+  {
+    "id": "article_refinance_fee_check",
+    "title": "房貸轉貸前要確認的費用",
+    "slug": "mortgage-refinance-fee-check",
+    "category": "房貸資訊",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "房貸轉貸前要確認的費用｜TFSE金融便民中心",
+    "seo_description": "列出轉貸前常見費用、提前清償、估價與設定相關查詢項目。",
+    "summary": "列出轉貸前常見費用、提前清償、估價與設定相關查詢項目。",
+    "keywords": [
+      "轉貸",
+      "房貸費用",
+      "提前清償",
+      "估價"
+    ],
+    "compliance_note": "提醒費用以契約與合法機構公告為準。"
+  },
+  {
+    "id": "article_vehicle_finance_notice",
+    "title": "車輛分期資訊查詢前要注意什麼",
+    "slug": "vehicle-installment-before-check",
+    "category": "車融分期",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "車輛分期資訊查詢前要注意什麼｜TFSE金融便民中心",
+    "seo_description": "整理車輛分期查詢前的公司合法性、總費用與合約確認方向。",
+    "summary": "整理車輛分期查詢前的公司合法性、總費用與合約確認方向。",
+    "keywords": [
+      "車輛分期",
+      "車融",
+      "合約",
+      "總費用"
+    ],
+    "compliance_note": "不得要求交付證件或敏感帳戶資料。"
+  },
+  {
+    "id": "article_used_car_finance",
+    "title": "中古車原車融資常見條件",
+    "slug": "used-car-finance-conditions",
+    "category": "車融分期",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "中古車原車融資常見條件｜TFSE金融便民中心",
+    "seo_description": "整理中古車相關融資資訊查詢時可注意的車況、估價與費用。",
+    "summary": "整理中古車相關融資資訊查詢時可注意的車況、估價與費用。",
+    "keywords": [
+      "中古車",
+      "原車融資",
+      "估價",
+      "費用"
+    ],
+    "compliance_note": "不得承諾可取得特定額度。"
+  },
+  {
+    "id": "article_motorcycle_installment",
+    "title": "機車分期與消費分期差異",
+    "slug": "motorcycle-consumer-installment-difference",
+    "category": "車融分期",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "機車分期與消費分期差異｜TFSE金融便民中心",
+    "seo_description": "比較機車分期與一般消費分期在合約、費用與查詢資料上的差異。",
+    "summary": "比較機車分期與一般消費分期在合約、費用與查詢資料上的差異。",
+    "keywords": [
+      "機車分期",
+      "消費分期",
+      "合約",
+      "費用"
+    ],
+    "compliance_note": "提醒使用者不要只看月付金。"
+  },
+  {
+    "id": "article_home_appliance_installment",
+    "title": "裝潢與家電分期資訊整理",
+    "slug": "home-appliance-installment-info",
+    "category": "車融分期",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "裝潢與家電分期資訊整理｜TFSE金融便民中心",
+    "seo_description": "整理裝潢、家電等消費分期資訊的總費用、契約與申訴管道。",
+    "summary": "整理裝潢、家電等消費分期資訊的總費用、契約與申訴管道。",
+    "keywords": [
+      "裝潢分期",
+      "家電分期",
+      "消費分期",
+      "申訴"
+    ],
+    "compliance_note": "不得把分期描述為無成本方案。"
+  },
+  {
+    "id": "article_finance_company_verify",
+    "title": "合法融資公司資訊如何核驗",
+    "slug": "finance-company-verification",
+    "category": "車融分期",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "合法融資公司資訊如何核驗｜TFSE金融便民中心",
+    "seo_description": "說明查詢融資公司公開資訊時，可先看公司資訊、合約與來源政策。",
+    "summary": "說明查詢融資公司公開資訊時，可先看公司資訊、合約與來源政策。",
+    "keywords": [
+      "融資公司",
+      "合法性",
+      "來源核驗",
+      "合約"
+    ],
+    "compliance_note": "提醒以公開來源與官方資訊為準。"
+  },
+  {
+    "id": "article_vehicle_rate_compare",
+    "title": "車融利率資訊如何比較",
+    "slug": "vehicle-finance-rate-compare",
+    "category": "車融分期",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "車融利率資訊如何比較｜TFSE金融便民中心",
+    "seo_description": "整理車融費率、總費用、期數與提前清償資訊的比較方式。",
+    "summary": "整理車融費率、總費用、期數與提前清償資訊的比較方式。",
+    "keywords": [
+      "車融利率",
+      "總費用",
+      "期數",
+      "提前清償"
+    ],
+    "compliance_note": "不得宣稱低利保證或特定費率。"
+  },
+  {
+    "id": "article_credit_union_intro",
+    "title": "儲蓄互助社是什麼",
+    "slug": "credit-union-member-guide",
+    "category": "儲蓄互助社",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "儲蓄互助社是什麼｜TFSE金融便民中心",
+    "seo_description": "說明儲蓄互助社會員制度、在地服務與公開資訊查詢方向。",
+    "summary": "說明儲蓄互助社會員制度、在地服務與公開資訊查詢方向。",
+    "keywords": [
+      "儲蓄互助社",
+      "會員制度",
+      "在地金融",
+      "公開資訊"
+    ],
+    "compliance_note": "提醒各社規定不同，需回到各社公告確認。"
+  },
+  {
+    "id": "article_credit_union_bank_diff",
+    "title": "儲互社與銀行貸款差異",
+    "slug": "credit-union-bank-difference",
+    "category": "儲蓄互助社",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "儲互社與銀行貸款差異｜TFSE金融便民中心",
+    "seo_description": "整理儲互社與銀行在會員資格、服務範圍與資訊查詢上的差異。",
+    "summary": "整理儲互社與銀行在會員資格、服務範圍與資訊查詢上的差異。",
+    "keywords": [
+      "儲互社",
+      "銀行",
+      "會員資格",
+      "金融資訊"
+    ],
+    "compliance_note": "不得代表任何儲互社或銀行。"
+  },
+  {
+    "id": "article_local_credit_union_search",
+    "title": "地方儲互社資訊查詢方式",
+    "slug": "local-credit-union-search",
+    "category": "儲蓄互助社",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "地方儲互社資訊查詢方式｜TFSE金融便民中心",
+    "seo_description": "整理地方儲互社公開公告、章程、會員資訊與查詢方式。",
+    "summary": "整理地方儲互社公開公告、章程、會員資訊與查詢方式。",
+    "keywords": [
+      "地方儲互社",
+      "章程",
+      "會員",
+      "公告"
+    ],
+    "compliance_note": "提醒資訊需以各社正式公告為準。"
+  },
+  {
+    "id": "article_credit_union_small_amount",
+    "title": "儲互社小額融資常見限制",
+    "slug": "credit-union-small-amount-limits",
+    "category": "儲蓄互助社",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "儲互社小額融資常見限制｜TFSE金融便民中心",
+    "seo_description": "整理小額融資資訊查詢時常見的會員、期限、用途與章程限制。",
+    "summary": "整理小額融資資訊查詢時常見的會員、期限、用途與章程限制。",
+    "keywords": [
+      "小額融資",
+      "儲互社",
+      "會員",
+      "章程"
+    ],
+    "compliance_note": "不得承諾一定符合資格。"
+  },
+  {
+    "id": "article_grassroots_legal_channel",
+    "title": "基層民眾如何判斷合法管道",
+    "slug": "grassroots-legal-finance-channel",
+    "category": "儲蓄互助社",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "基層民眾如何判斷合法管道｜TFSE金融便民中心",
+    "seo_description": "說明基層民眾查詢在地金融資訊時如何判斷來源與風險。",
+    "summary": "說明基層民眾查詢在地金融資訊時如何判斷來源與風險。",
+    "keywords": [
+      "基層民眾",
+      "合法管道",
+      "在地金融",
+      "防詐"
+    ],
+    "compliance_note": "以防詐與來源辨識為主。"
+  },
+  {
+    "id": "article_high_card_debt_law",
+    "title": "卡債過高可以先了解哪些法令程序",
+    "slug": "high-card-debt-law-resources",
+    "category": "債務法令",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "卡債過高可以先了解哪些法令程序｜TFSE金融便民中心",
+    "seo_description": "整理卡債過高時可先了解的前置協商、更生清算與法扶資源。",
+    "summary": "整理卡債過高時可先了解的前置協商、更生清算與法扶資源。",
+    "keywords": [
+      "卡債",
+      "前置協商",
+      "更生清算",
+      "法扶"
+    ],
+    "compliance_note": "重大法律問題應洽詢專業法律服務。"
+  },
+  {
+    "id": "article_debt_negotiation_intro",
+    "title": "前置協商流程入門",
+    "slug": "debt-negotiation-public-resources",
+    "category": "債務法令",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "前置協商流程入門｜TFSE金融便民中心",
+    "seo_description": "說明前置協商的基本概念、公開資源、法扶入口與合法查詢方向。",
+    "summary": "說明前置協商的基本概念、公開資源與查詢方向。",
+    "keywords": [
+      "前置協商",
+      "債務法令",
+      "法扶",
+      "公開資源"
+    ],
+    "compliance_note": "不得承諾協商結果。"
+  },
+  {
+    "id": "article_rehabilitation_liquidation",
+    "title": "更生與清算差異",
+    "slug": "rehabilitation-liquidation-difference",
+    "category": "債務法令",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "更生與清算差異｜TFSE金融便民中心",
+    "seo_description": "整理消費者債務清理中的更生、清算差異與公開法令查詢方向。",
+    "summary": "整理消費者債務清理中的更生、清算差異與公開法令查詢方向。",
+    "keywords": [
+      "更生",
+      "清算",
+      "債務清理",
+      "法令"
+    ],
+    "compliance_note": "不提供法律代理或結果承諾。"
+  },
+  {
+    "id": "article_legal_aid_debt",
+    "title": "法律扶助基金會債務諮詢方式",
+    "slug": "legal-aid-debt-consultation",
+    "category": "債務法令",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "法律扶助基金會債務諮詢方式｜TFSE金融便民中心",
+    "seo_description": "整理法扶債務諮詢資源、申請前可查詢的公開資訊與注意事項。",
+    "summary": "整理法扶債務諮詢資源、申請前可查詢的公開資訊與注意事項。",
+    "keywords": [
+      "法律扶助",
+      "法扶",
+      "債務諮詢",
+      "公開資源"
+    ],
+    "compliance_note": "需提醒以法扶正式資訊為準。"
+  },
+  {
+    "id": "article_debt_agency_phrase",
+    "title": "債務相關代辦話術如何辨識",
+    "slug": "debt-agency-phrase-check",
+    "category": "金融防詐",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "債務相關代辦話術如何辨識｜TFSE金融便民中心",
+    "seo_description": "整理高風險債務話術的辨識方式，提醒先查來源、合約與費用。",
+    "summary": "整理高風險債務話術的辨識方式，提醒先查來源、合約與費用。",
+    "keywords": [
+      "債務",
+      "高風險話術",
+      "防詐",
+      "費用"
+    ],
+    "compliance_note": "可描述風險語境，但不得替高風險服務背書。"
+  },
+  {
+    "id": "article_high_debt_dont",
+    "title": "負債比過高時不要做的事",
+    "slug": "high-debt-ratio-avoid",
+    "category": "債務法令",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "負債比過高時不要做的事｜TFSE金融便民中心",
+    "seo_description": "整理負債比偏高時應避免的資料交付、預付款與不明窗口風險。",
+    "summary": "整理負債比偏高時應避免的資料交付、預付款與不明窗口風險。",
+    "keywords": [
+      "負債比",
+      "債務",
+      "防詐",
+      "個資"
+    ],
+    "compliance_note": "以風險提醒和公開資源導引為主。"
+  },
+  {
+    "id": "article_no_agency_safer",
+    "title": "不代辦貸款為什麼更安全",
+    "slug": "no-loan-agency-safer",
+    "category": "金融防詐",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "不代辦貸款為什麼更安全｜TFSE金融便民中心",
+    "seo_description": "說明由使用者親洽合法金融機構，能降低個資外流與不明費用風險。",
+    "summary": "說明由使用者親洽合法金融機構，能降低個資外流與不明費用風險。",
+    "keywords": [
+      "不代辦",
+      "個資保護",
+      "合法金融機構",
+      "防詐"
+    ],
+    "compliance_note": "強調 TFSE 只做資訊整理。"
+  },
+  {
+    "id": "article_high_risk_claims",
+    "title": "高風險過件承諾話術風險",
+    "slug": "high-risk-approval-claims",
+    "category": "金融防詐",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "高風險過件承諾話術風險｜TFSE金融便民中心",
+    "seo_description": "整理以結果承諾、預繳費用或不明窗口包裝的高風險訊號。",
+    "summary": "整理以結果承諾、預繳費用或不明窗口包裝的高風險訊號。",
+    "keywords": [
+      "高風險",
+      "防詐",
+      "預繳費用",
+      "個資"
+    ],
+    "compliance_note": "避免重複使用禁用承諾詞作為行銷文案。"
+  },
+  {
+    "id": "article_platform_usage",
+    "title": "金融資訊查詢平台如何使用",
+    "slug": "finance-search-platform-howto",
+    "category": "金融防詐",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "金融資訊查詢平台如何使用｜TFSE金融便民中心",
+    "seo_description": "說明如何使用 TFSE 的資料庫、文章、來源政策與免費健檢入口。",
+    "summary": "說明如何使用 TFSE 的資料庫、文章、來源政策與免費健檢入口。",
+    "keywords": [
+      "TFSE",
+      "金融資訊查詢",
+      "資料庫",
+      "來源政策"
+    ],
+    "compliance_note": "不得讓使用者誤認本站代表金融機構。"
+  },
+  {
+    "id": "article_free_check_data",
+    "title": "免費財務健檢會收哪些資料",
+    "slug": "free-check-data-privacy",
+    "category": "免費健檢",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "免費財務健檢會收哪些資料｜TFSE金融便民中心",
+    "seo_description": "說明免費財務健檢只收低敏聯絡與需求資料，不收證件或金融帳戶資訊。",
+    "summary": "說明免費財務健檢只收低敏聯絡與需求資料，不收證件或金融帳戶資訊。",
+    "keywords": [
+      "免費財務健檢",
+      "低敏資料",
+      "隱私權",
+      "表單"
+    ],
+    "compliance_note": "需與隱私權政策、免責聲明互相連結。"
+  },
+  {
+    "id": "article_illegal_agency_identify",
+    "title": "如何辨識非法代辦",
+    "slug": "illegal-agency-identification",
+    "category": "金融防詐",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "如何辨識非法代辦｜TFSE金融便民中心",
+    "seo_description": "整理非法代辦常見的預收費用、敏感資料要求與來源不明等風險。",
+    "summary": "整理非法代辦常見的預收費用、敏感資料要求與來源不明等風險。",
+    "keywords": [
+      "非法代辦",
+      "防詐",
+      "預收費用",
+      "個資"
+    ],
+    "compliance_note": "以辨識與查證為主，不提供處理承諾。"
+  },
+  {
+    "id": "article_no_documents_meaning",
+    "title": "不收證件代表什麼",
+    "slug": "no-document-collection-meaning",
+    "category": "金融防詐",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "不收證件代表什麼｜TFSE金融便民中心",
+    "seo_description": "說明 TFSE 不收證件、存摺、金融卡或密碼，僅做公開資訊整理。",
+    "summary": "說明 TFSE 不收證件、存摺、金融卡或密碼，僅做公開資訊整理。",
+    "keywords": [
+      "不收證件",
+      "個資保護",
+      "金融卡",
+      "密碼"
+    ],
+    "compliance_note": "提醒使用者不要向不明窗口交付敏感資料。"
+  },
+  {
+    "id": "article_tfse_source_policy",
+    "title": "TFSE資料來源與更新原則",
+    "slug": "source-policy-public-information",
+    "category": "來源政策",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "TFSE資料來源與更新原則｜TFSE金融便民中心",
+    "seo_description": "說明 TFSE 以公開合法資訊、官方公告與法令資源作為整理基礎。",
+    "summary": "說明 TFSE 以公開合法資訊、官方公告與法令資源作為整理基礎。",
+    "keywords": [
+      "來源政策",
+      "公開資訊",
+      "來源核驗",
+      "TFSE"
+    ],
+    "compliance_note": "需避免讓使用者誤認本站代表任何機構。"
+  },
+  {
+    "id": "article_before_search_fraud_check",
+    "title": "找金融資訊前先看這份防詐清單",
+    "slug": "finance-info-before-search-fraud-check",
+    "category": "金融防詐",
+    "status": "published",
+    "updated_at": "2026-06-27",
+    "seo_title": "找金融資訊前先看這份防詐清單｜TFSE金融便民中心",
+    "seo_description": "整理查詢金融資訊前應確認的來源、費用、個資與合約風險。",
+    "summary": "整理查詢金融資訊前應確認的來源、費用、個資與合約風險。",
+    "keywords": [
+      "防詐清單",
+      "金融資訊",
+      "來源",
+      "個資"
+    ],
+    "compliance_note": "作為查詢前提醒，不作為金融商品建議。"
+  }
+]

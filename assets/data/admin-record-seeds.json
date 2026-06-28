@@ -1,0 +1,1480 @@
+{
+  "format": "tfse_admin_record_seeds",
+  "source": "tools/browser_acceptance_verify.mjs",
+  "generated_at": "2026-06-28T14:02:46.118Z",
+  "base_url": "http://127.0.0.1:4173",
+  "summary": {
+    "config_input_records": 6,
+    "backend_acceptance_records": 11,
+    "search_console_records": 11,
+    "external_execution_records": 6,
+    "launch_handoff_records": 6,
+    "line_oa_records": 11,
+    "external_verification_records": 7,
+    "browser_acceptance_records": 6,
+    "source_evidence_records": 26,
+    "leads": 3,
+    "public_feedback_tickets": 1,
+    "admin_audit": 9,
+    "events": 11,
+    "errors": 0,
+    "compliance_reviews": 1
+  },
+  "config_input_records": [
+    {
+      "input_key": "google_site_verification",
+      "input_label": "Google Search Console 驗證碼",
+      "owner_role": "seo_owner",
+      "result": "received",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a formal config input trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.295Z"
+    },
+    {
+      "source": "seed_config_input_records",
+      "input_key": "google_site_verification",
+      "input_label": "Google Search Console 驗證碼",
+      "owner_role": "seo_owner",
+      "result": "received",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a formal config input trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.015Z"
+    },
+    {
+      "source": "seed_config_input_records",
+      "input_key": "google_site_verification",
+      "input_label": "Google Search Console 驗證碼",
+      "owner_role": "seo_owner",
+      "result": "received",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a formal config input trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:09.290Z"
+    },
+    {
+      "source": "seed_config_input_records",
+      "input_key": "google_site_verification",
+      "input_label": "Google Search Console 驗證碼",
+      "owner_role": "seo_owner",
+      "result": "received",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a formal config input trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:05.879Z"
+    },
+    {
+      "source": "seed_config_input_records",
+      "input_key": "google_site_verification",
+      "input_label": "Google Search Console 驗證碼",
+      "owner_role": "seo_owner",
+      "result": "received",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a formal config input trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:42.229Z"
+    },
+    {
+      "source": "seed_config_input_records",
+      "input_key": "google_site_verification",
+      "input_label": "Google Search Console 驗證碼",
+      "owner_role": "seo_owner",
+      "result": "received",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a formal config input trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:15:19.962Z"
+    }
+  ],
+  "backend_acceptance_records": [
+    {
+      "endpoint_key": "auth_session",
+      "endpoint_label": "GET /api/admin/auth/session",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved an auth session acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.428Z"
+    },
+    {
+      "endpoint_key": "auth_login",
+      "endpoint_label": "POST /api/admin/auth/login",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved a backend acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.361Z"
+    },
+    {
+      "source": "seed_backend_acceptance_records",
+      "endpoint_key": "auth_session",
+      "endpoint_label": "GET /api/admin/auth/session",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved an auth session acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.131Z"
+    },
+    {
+      "source": "seed_backend_acceptance_records",
+      "endpoint_key": "auth_login",
+      "endpoint_label": "POST /api/admin/auth/login",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved a backend acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.080Z"
+    },
+    {
+      "source": "seed_backend_acceptance_records",
+      "endpoint_key": "auth_session",
+      "endpoint_label": "GET /api/admin/auth/session",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved an auth session acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:09.434Z"
+    },
+    {
+      "source": "seed_backend_acceptance_records",
+      "endpoint_key": "auth_login",
+      "endpoint_label": "POST /api/admin/auth/login",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved a backend acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:09.368Z"
+    },
+    {
+      "source": "seed_backend_acceptance_records",
+      "endpoint_key": "auth_session",
+      "endpoint_label": "GET /api/admin/auth/session",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved an auth session acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:05.995Z"
+    },
+    {
+      "source": "seed_backend_acceptance_records",
+      "endpoint_key": "auth_login",
+      "endpoint_label": "POST /api/admin/auth/login",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved a backend acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:05.946Z"
+    },
+    {
+      "source": "seed_backend_acceptance_records",
+      "endpoint_key": "auth_session",
+      "endpoint_label": "GET /api/admin/auth/session",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved an auth session acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:42.345Z"
+    },
+    {
+      "source": "seed_backend_acceptance_records",
+      "endpoint_key": "auth_login",
+      "endpoint_label": "POST /api/admin/auth/login",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved a backend acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:42.295Z"
+    },
+    {
+      "source": "seed_backend_acceptance_records",
+      "endpoint_key": "auth_login",
+      "endpoint_label": "POST /api/admin/auth/login",
+      "owner_role": "data_manager",
+      "result": "passed",
+      "owner": "backend_owner",
+      "evidence_note": "Playwright smoke saved a backend acceptance trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:15:20.027Z"
+    }
+  ],
+  "search_console_records": [
+    {
+      "target_key": "sitemap_submit",
+      "target_label": "Sitemap 提交",
+      "target_type": "sitemap",
+      "result": "submitted",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a sitemap submission trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.528Z"
+    },
+    {
+      "target_key": "property_verify",
+      "target_label": "Property 驗證",
+      "target_type": "property",
+      "result": "verified",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a Search Console verification trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.478Z"
+    },
+    {
+      "source": "seed_search_console_records",
+      "target_key": "sitemap_submit",
+      "target_label": "Sitemap 提交",
+      "target_type": "sitemap",
+      "result": "submitted",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a sitemap submission trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.231Z"
+    },
+    {
+      "source": "seed_search_console_records",
+      "target_key": "property_verify",
+      "target_label": "Property 驗證",
+      "target_type": "property",
+      "result": "verified",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a Search Console verification trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.181Z"
+    },
+    {
+      "source": "seed_search_console_records",
+      "target_key": "sitemap_submit",
+      "target_label": "Sitemap 提交",
+      "target_type": "sitemap",
+      "result": "submitted",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a sitemap submission trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:09.951Z"
+    },
+    {
+      "source": "seed_search_console_records",
+      "target_key": "property_verify",
+      "target_label": "Property 驗證",
+      "target_type": "property",
+      "result": "verified",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a Search Console verification trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:09.885Z"
+    },
+    {
+      "source": "seed_search_console_records",
+      "target_key": "sitemap_submit",
+      "target_label": "Sitemap 提交",
+      "target_type": "sitemap",
+      "result": "submitted",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a sitemap submission trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:07.867Z"
+    },
+    {
+      "source": "seed_search_console_records",
+      "target_key": "property_verify",
+      "target_label": "Property 驗證",
+      "target_type": "property",
+      "result": "verified",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a Search Console verification trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:07.435Z"
+    },
+    {
+      "source": "seed_search_console_records",
+      "target_key": "sitemap_submit",
+      "target_label": "Sitemap 提交",
+      "target_type": "sitemap",
+      "result": "submitted",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a sitemap submission trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:42.812Z"
+    },
+    {
+      "source": "seed_search_console_records",
+      "target_key": "property_verify",
+      "target_label": "Property 驗證",
+      "target_type": "property",
+      "result": "verified",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a Search Console verification trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:42.751Z"
+    },
+    {
+      "source": "seed_search_console_records",
+      "target_key": "property_verify",
+      "target_label": "Property 驗證",
+      "target_type": "property",
+      "result": "verified",
+      "owner": "seo_owner",
+      "evidence_note": "Playwright smoke saved a Search Console verification trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:15:20.077Z"
+    }
+  ],
+  "external_execution_records": [
+    {
+      "item_key": "institution_import",
+      "item_title": "機構資料正式匯入與來源版本紀錄",
+      "owner_role": "data_manager",
+      "result": "in_progress",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external execution trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.578Z"
+    },
+    {
+      "source": "seed_external_execution_records",
+      "item_key": "institution_import",
+      "item_title": "機構資料正式匯入與來源版本紀錄",
+      "owner_role": "data_manager",
+      "result": "in_progress",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external execution trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.281Z"
+    },
+    {
+      "source": "seed_external_execution_records",
+      "item_key": "institution_import",
+      "item_title": "機構資料正式匯入與來源版本紀錄",
+      "owner_role": "data_manager",
+      "result": "in_progress",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external execution trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:11.958Z"
+    },
+    {
+      "source": "seed_external_execution_records",
+      "item_key": "institution_import",
+      "item_title": "機構資料正式匯入與來源版本紀錄",
+      "owner_role": "data_manager",
+      "result": "in_progress",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external execution trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:09.867Z"
+    },
+    {
+      "source": "seed_external_execution_records",
+      "item_key": "institution_import",
+      "item_title": "機構資料正式匯入與來源版本紀錄",
+      "owner_role": "data_manager",
+      "result": "in_progress",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external execution trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:44.798Z"
+    },
+    {
+      "source": "seed_external_execution_records",
+      "item_key": "institution_import",
+      "item_title": "機構資料正式匯入與來源版本紀錄",
+      "owner_role": "data_manager",
+      "result": "in_progress",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external execution trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:15:20.127Z"
+    }
+  ],
+  "launch_handoff_records": [
+    {
+      "checkpoint": "release_gate",
+      "result": "ready",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved a launch handoff checkpoint trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.644Z"
+    },
+    {
+      "source": "seed_launch_handoff_records",
+      "checkpoint": "release_gate",
+      "result": "ready",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved a launch handoff checkpoint trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.348Z"
+    },
+    {
+      "source": "seed_launch_handoff_records",
+      "checkpoint": "release_gate",
+      "result": "ready",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved a launch handoff checkpoint trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:12.052Z"
+    },
+    {
+      "source": "seed_launch_handoff_records",
+      "checkpoint": "release_gate",
+      "result": "ready",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved a launch handoff checkpoint trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:09.945Z"
+    },
+    {
+      "source": "seed_launch_handoff_records",
+      "checkpoint": "release_gate",
+      "result": "ready",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved a launch handoff checkpoint trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:44.862Z"
+    },
+    {
+      "source": "seed_launch_handoff_records",
+      "checkpoint": "release_gate",
+      "result": "ready",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved a launch handoff checkpoint trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:15:20.194Z"
+    }
+  ],
+  "line_oa_records": [
+    {
+      "task_key": "handoff_route_1",
+      "task_label": "站內 CTA 驗收 1",
+      "phase": "handoff",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA handoff route trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.761Z"
+    },
+    {
+      "task_key": "setup_welcome",
+      "task_label": "歡迎語建立",
+      "phase": "setup",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA setup trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.711Z"
+    },
+    {
+      "source": "seed_line_oa_records",
+      "task_key": "handoff_route_1",
+      "task_label": "站內 CTA 驗收 1",
+      "phase": "handoff",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA handoff route trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.481Z"
+    },
+    {
+      "source": "seed_line_oa_records",
+      "task_key": "setup_welcome",
+      "task_label": "歡迎語建立",
+      "phase": "setup",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA setup trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.415Z"
+    },
+    {
+      "source": "seed_line_oa_records",
+      "task_key": "handoff_route_1",
+      "task_label": "站內 CTA 驗收 1",
+      "phase": "handoff",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA handoff route trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:12.185Z"
+    },
+    {
+      "source": "seed_line_oa_records",
+      "task_key": "setup_welcome",
+      "task_label": "歡迎語建立",
+      "phase": "setup",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA setup trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:12.118Z"
+    },
+    {
+      "source": "seed_line_oa_records",
+      "task_key": "handoff_route_1",
+      "task_label": "站內 CTA 驗收 1",
+      "phase": "handoff",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA handoff route trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:10.062Z"
+    },
+    {
+      "source": "seed_line_oa_records",
+      "task_key": "setup_welcome",
+      "task_label": "歡迎語建立",
+      "phase": "setup",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA setup trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:10.012Z"
+    },
+    {
+      "source": "seed_line_oa_records",
+      "task_key": "handoff_route_1",
+      "task_label": "站內 CTA 驗收 1",
+      "phase": "handoff",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA handoff route trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:44.978Z"
+    },
+    {
+      "source": "seed_line_oa_records",
+      "task_key": "setup_welcome",
+      "task_label": "歡迎語建立",
+      "phase": "setup",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA setup trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:44.928Z"
+    },
+    {
+      "source": "seed_line_oa_records",
+      "task_key": "setup_welcome",
+      "task_label": "歡迎語建立",
+      "phase": "setup",
+      "result": "completed",
+      "owner": "content_editor",
+      "evidence_note": "Playwright smoke saved a Line OA setup trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:15:20.243Z"
+    }
+  ],
+  "external_verification_records": [
+    {
+      "service": "ga4",
+      "result": "passed",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external verification evidence trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.810Z"
+    },
+    {
+      "source": "seed_external_verification_records",
+      "service": "ga4",
+      "result": "passed",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external verification evidence trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:00:17.531Z"
+    },
+    {
+      "source": "seed_external_verification_records",
+      "service": "ga4",
+      "result": "passed",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external verification evidence trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:58:12.235Z"
+    },
+    {
+      "source": "seed_external_verification_records",
+      "service": "ga4",
+      "result": "passed",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external verification evidence trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:51:10.979Z"
+    },
+    {
+      "source": "seed_external_verification_records",
+      "service": "ga4",
+      "result": "passed",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external verification evidence trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:31:45.900Z"
+    },
+    {
+      "source": "seed_external_verification_records",
+      "service": "ga4",
+      "result": "passed",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external verification evidence trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:15:20.294Z"
+    },
+    {
+      "source": "seed_external_verification_records",
+      "service": "ga4",
+      "result": "passed",
+      "owner": "data_manager",
+      "evidence_note": "Playwright smoke saved an external verification evidence trace.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T13:12:46.930Z"
+    }
+  ],
+  "browser_acceptance_records": [
+    {
+      "item_key": "mobile_browser",
+      "item_label": "手機端導航清楚",
+      "group": "UI 驗收",
+      "viewport": "mobile",
+      "result": "passed",
+      "evidence_note": "Playwright smoke saved a manual browser acceptance trace for mobile navigation.",
+      "checked_by_role": "super_admin",
+      "checked_at": "2026-06-28T14:02:26.978Z"
+    },
+    {
+      "source": "seed_browser_acceptance_evidence",
+      "item_key": "no_text_overlap",
+      "item_label": "頁面不出現文字重疊",
+      "group": "UI 驗收",
+      "viewport": "desktop+mobile",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證首頁、資料庫、文章、免費健檢與 Admin 在桌面/手機 viewport 的 layout 與 text fit 均通過。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "desktop layout /index.html",
+        "desktop text fit /index.html",
+        "desktop layout /database.html",
+        "desktop text fit /database.html",
+        "desktop layout /articles.html",
+        "desktop text fit /articles.html",
+        "desktop layout /free-check.html",
+        "desktop text fit /free-check.html",
+        "desktop layout /admin.html",
+        "desktop text fit /admin.html",
+        "mobile layout /index.html",
+        "mobile text fit /index.html",
+        "mobile layout /database.html",
+        "mobile text fit /database.html",
+        "mobile layout /articles.html",
+        "mobile text fit /articles.html",
+        "mobile layout /free-check.html",
+        "mobile text fit /free-check.html",
+        "mobile layout /admin.html",
+        "mobile text fit /admin.html"
+      ]
+    },
+    {
+      "source": "seed_browser_acceptance_evidence",
+      "item_key": "mobile_browser",
+      "item_label": "手機端測試通過",
+      "group": "上線最終檢查",
+      "viewport": "390x844,430x932",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證手機版主要頁面無橫向溢出，且 mobile menu 開合、子選單與主要 CTA 可用。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "mobile layout /index.html",
+        "mobile text fit /index.html",
+        "mobile layout /database.html",
+        "mobile text fit /database.html",
+        "mobile layout /articles.html",
+        "mobile text fit /articles.html",
+        "mobile layout /free-check.html",
+        "mobile text fit /free-check.html",
+        "mobile layout /admin.html",
+        "mobile text fit /admin.html",
+        "mobile menu opens with TFSE links",
+        "mobile submenu expands",
+        "mobile menu closes"
+      ]
+    },
+    {
+      "source": "seed_browser_acceptance_evidence",
+      "item_key": "admin_login_browser",
+      "item_label": "後台登入測試通過",
+      "group": "上線最終檢查",
+      "viewport": "1440x900",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證 Admin 登入前受保護區塊隱藏，登入後 CRM 與驗收面板可見。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "admin protection before login",
+        "admin login"
+      ]
+    },
+    {
+      "source": "seed_browser_acceptance_evidence",
+      "item_key": "form_submit_browser",
+      "item_label": "表單提交測試通過",
+      "group": "上線最終檢查",
+      "viewport": "1440x900",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證免費健檢提交、UTM 寫入、Admin 可見線索並可更新跟進狀態與審計。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "lead submission and UTM capture",
+        "lead visible in admin",
+        "admin lead follow-up update and audit",
+        "admin lead status filter"
+      ]
+    },
+    {
+      "source": "seed_browser_acceptance_evidence",
+      "item_key": "public_feedback_intake",
+      "item_label": "聯絡頁可提交低敏資料回報",
+      "group": "業務閉環",
+      "viewport": "1440x900",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證 contact.html 低敏資料回報在本機模式可建立工單，且切換正式 API 模式後仍可成功提交。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "public feedback local submission",
+        "formal API public feedback submission"
+      ]
+    }
+  ],
+  "source_evidence_records": [
+    {
+      "id": "source_evidence_mqxuyt3d",
+      "product_id": "product_bank_credit",
+      "result": "approved",
+      "source_url": "https://www.fsc.gov.tw/",
+      "evidence_note": "Playwright smoke saved a source verification evidence trace.",
+      "reviewer_role": "super_admin",
+      "reviewed_at": "2026-06-28T14:02:27.145Z"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_bank_credit",
+      "item_type": "product",
+      "product_id": "product_bank_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_salary_credit",
+      "item_type": "product",
+      "product_id": "product_salary_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_no_salary_credit",
+      "item_type": "product",
+      "product_id": "product_no_salary_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_public_sector_credit",
+      "item_type": "product",
+      "product_id": "product_public_sector_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_business_credit",
+      "item_type": "product",
+      "product_id": "product_business_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_sme_working_capital",
+      "item_type": "product",
+      "product_id": "product_sme_working_capital",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_card_finance",
+      "item_type": "product",
+      "product_id": "product_card_finance",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為信用卡費用與消費金融資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_insurance_finance",
+      "item_type": "product",
+      "product_id": "product_insurance_finance",
+      "result": "approved",
+      "source_url": "https://www.fsc.gov.tw/",
+      "evidence_note": "已核對金管會官方公開資訊，可作為保險與理財公開資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_mortgage",
+      "item_type": "product",
+      "product_id": "product_mortgage",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_first_home",
+      "item_type": "product",
+      "product_id": "product_first_home",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_mortgage_increase",
+      "item_type": "product",
+      "product_id": "product_mortgage_increase",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_second_mortgage",
+      "item_type": "product",
+      "product_id": "product_second_mortgage",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_finance_vehicle",
+      "item_type": "product",
+      "product_id": "product_finance_vehicle",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_used_car",
+      "item_type": "product",
+      "product_id": "product_used_car",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_motorcycle",
+      "item_type": "product",
+      "product_id": "product_motorcycle",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_consumer_installment",
+      "item_type": "product",
+      "product_id": "product_consumer_installment",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_home_appliance",
+      "item_type": "product",
+      "product_id": "product_home_appliance",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_medical_installment",
+      "item_type": "product",
+      "product_id": "product_medical_installment",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_credit_union",
+      "item_type": "product",
+      "product_id": "product_credit_union",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_credit_union_member",
+      "item_type": "product",
+      "product_id": "product_credit_union_member",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_credit_union_local",
+      "item_type": "product",
+      "product_id": "product_credit_union_local",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_product_credit_union_small",
+      "item_type": "product",
+      "product_id": "product_credit_union_small",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_inst_bank_public",
+      "item_type": "institution",
+      "product_id": "inst_bank_public",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方網站與資訊揭露入口，適合作為銀行公開資訊的機構來源。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_inst_finance_company_public",
+      "item_type": "institution",
+      "product_id": "inst_finance_company_public",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為公司登記與公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "source": "seed_source_verification_evidence",
+      "id": "source_evidence_inst_credit_union_public",
+      "item_type": "institution",
+      "product_id": "inst_credit_union_public",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    }
+  ],
+  "leads": [
+    {
+      "id": "lead_line_optout_seed_20260628",
+      "display_name": "QA Line 退訂樣本",
+      "phone": "0977000456",
+      "line_id": "qa_line_optout",
+      "region": "桃園",
+      "needs": "車融資訊",
+      "occupation_type": "自由業",
+      "income_type": "現金收入",
+      "message": "STOP 退訂測試，請停止 Line 訊息。",
+      "consent_privacy": true,
+      "consent_line": true,
+      "consent_version": "privacy-2026-06-27",
+      "source_channel": "line",
+      "source_url": "free-check.html#line-cta",
+      "utm_source": "line",
+      "utm_medium": "owned_social",
+      "utm_campaign": "line_optout_seed",
+      "utm_content": "quick_reply",
+      "utm_term": "optout",
+      "device_id": "device_line_optout_seed",
+      "cf_turnstile_response": "",
+      "status": "closed",
+      "tags": [
+        "form_submitted",
+        "line_opt_in",
+        "source_line"
+      ],
+      "recommended_categories": [
+        "車融與機車融資資訊"
+      ],
+      "recommended_articles": [
+        "申請車融前應先查核哪些公開資訊"
+      ],
+      "notes": [
+        "STOP 退訂測試，請停止接收 Line 訊息。"
+      ],
+      "submitted_at": "2026-06-28T14:02:29.793Z",
+      "updated_at": "2026-06-28T14:02:29.793Z",
+      "line_optout_requested": true,
+      "privacy_request_type": "line_optout",
+      "contact_logs": [
+        {
+          "id": "contact_line_optout_seed",
+          "channel": "line",
+          "outcome": "reached",
+          "next_action": "privacy_request",
+          "note": "使用者要求退訂 Line 訊息。",
+          "handled_by_role": "automation",
+          "contacted_at": "2026-06-28T14:02:29.793Z"
+        }
+      ]
+    },
+    {
+      "id": "lead_followup_seed_20260628",
+      "display_name": "QA 待跟進樣本",
+      "phone": "0987654678",
+      "line_id": "qa_followup",
+      "region": "新北",
+      "needs": "信貸與債務法令資訊",
+      "occupation_type": "上班族",
+      "income_type": "固定薪轉",
+      "message": "保留在待跟進隊列與去重隊列的煙測樣本。",
+      "consent_privacy": true,
+      "consent_line": true,
+      "consent_version": "privacy-2026-06-27",
+      "source_channel": "facebook",
+      "source_url": "free-check.html",
+      "utm_source": "facebook",
+      "utm_medium": "paid_social",
+      "utm_campaign": "followup_seed",
+      "utm_content": "creative_b",
+      "utm_term": "credit_help",
+      "device_id": "device_followup_seed",
+      "cf_turnstile_response": "",
+      "status": "contacted",
+      "tags": [
+        "form_submitted",
+        "need_credit_loan",
+        "need_debt_law",
+        "segment_employee",
+        "line_opt_in",
+        "source_paid_social"
+      ],
+      "recommended_categories": [
+        "銀行金融商品專區",
+        "債務法令與前置協商資訊"
+      ],
+      "recommended_articles": [
+        "申請信貸前，先看懂負債比與信用紀錄"
+      ],
+      "notes": [
+        "保留在 CRM 待跟進隊列與去重隊列的煙測樣本。"
+      ],
+      "submitted_at": "2026-06-28T14:02:29.793Z",
+      "updated_at": "2026-06-28T14:02:29.793Z",
+      "assigned_to": "consultant",
+      "follow_up_priority": "high",
+      "next_follow_up_at": "2026-07-02",
+      "contact_logs": [
+        {
+          "id": "contact_followup_seed",
+          "channel": "phone",
+          "outcome": "reached",
+          "next_action": "send_public_info",
+          "note": "建立待跟進樣本，供 CRM / dedupe 報表驗證。",
+          "next_follow_up_at": "2026-07-02",
+          "handled_by_role": "automation",
+          "contacted_at": "2026-06-28T14:02:29.793Z"
+        }
+      ]
+    },
+    {
+      "id": "lead_mqxuykff_73b7y1",
+      "display_name": "QA 瀏覽器驗收",
+      "phone": "0912345678",
+      "line_id": "qa_tfse",
+      "region": "台北",
+      "needs": "信貸與債務法令資訊",
+      "occupation_type": "上班族",
+      "income_type": "固定薪轉",
+      "message": "瀏覽器驗收測試，不含敏感資料。",
+      "consent_privacy": true,
+      "consent_line": true,
+      "consent_version": "privacy-2026-06-27",
+      "source_channel": "qa",
+      "source_url": "free-check.html",
+      "utm_source": "qa",
+      "utm_medium": "paid_social",
+      "utm_campaign": "manual",
+      "utm_content": "",
+      "utm_term": "",
+      "device_id": "device_mqxuykfg_46dm9c175omrf",
+      "cf_turnstile_response": "",
+      "status": "closed",
+      "tags": [
+        "form_submitted",
+        "need_credit_loan",
+        "need_debt_law",
+        "segment_employee",
+        "line_opt_in"
+      ],
+      "recommended_categories": [
+        "銀行金融商品專區",
+        "債務法令與前置協商資訊"
+      ],
+      "recommended_articles": [
+        "申請信貸前，先看懂負債比與信用紀錄",
+        "前置協商是什麼？債務法令資訊查詢方向"
+      ],
+      "notes": [
+        "2026-06-28T14:02:18.296Z 負責：consultant；優先級：high；渠道：phone；結果：reached；下次動作：send_public_info；下次跟進：2026-07-01；瀏覽器煙測更新狀態。",
+        "2026/6/28 22:02:21 使用者資料刪除請求已標記，正式版需執行資料庫刪除流程。",
+        "2026/6/28 22:02:29 使用者資料刪除請求已完成留痕，供個資流程驗收使用。"
+      ],
+      "submitted_at": "2026-06-28T14:02:15.916Z",
+      "updated_at": "2026-06-28T14:02:29.793Z",
+      "assigned_to": "consultant",
+      "follow_up_priority": "high",
+      "next_follow_up_at": "2026-07-01",
+      "contact_logs": [
+        {
+          "id": "contact_mqxuym9k_6ghleg",
+          "channel": "phone",
+          "outcome": "reached",
+          "next_action": "send_public_info",
+          "note": "瀏覽器煙測更新狀態。",
+          "next_follow_up_at": "2026-07-01",
+          "handled_by_role": "super_admin",
+          "contacted_at": "2026-06-28T14:02:18.296Z"
+        }
+      ],
+      "delete_requested": true,
+      "privacy_request_type": "delete",
+      "privacy_request_status": "completed",
+      "privacy_requested_at": "2026-06-28T14:02:21.998Z",
+      "privacy_completed_at": "2026-06-28T14:02:29.793Z"
+    }
+  ],
+  "public_feedback_tickets": [
+    {
+      "ticket_id": "feedback_local_1782655337030",
+      "status": "queued",
+      "assigned_role": "data_manager",
+      "related_task_type": "source_update",
+      "received_at": "2026-06-28T14:02:17.030Z",
+      "feedback_type": "source_update",
+      "page_url": "http://127.0.0.1:4173/products/bank-credit-products.html",
+      "summary": "公開來源連結需更新，請協助復核。",
+      "official_source_url": "https://example.gov.tw/source-update",
+      "source_updated_at": "2026-06-28",
+      "reporter_contact_hash": "sha256_4827f3b947cf45daba342a9822cbf2e7771aea668a7183beda61c544bfeee431",
+      "phone_last3": "678",
+      "consent_contact": true,
+      "website": ""
+    }
+  ],
+  "admin_audit": [
+    {
+      "action": "privacy_request_complete",
+      "target": "lead_mqxuykff_73b7y1",
+      "role": "automation",
+      "at": "2026-06-28T14:02:29.793Z",
+      "note": "Marked restored privacy request as completed for local fulfillment evidence."
+    },
+    {
+      "action": "browser_seed_workflow_samples",
+      "target": "followup_dedupe_line_optout",
+      "role": "automation",
+      "at": "2026-06-28T14:02:29.793Z",
+      "note": "Seeded local follow-up, dedupe and Line opt-out samples for report closure."
+    },
+    {
+      "action": "backup_import",
+      "target": "2d6bb7d7-1805-4ffb-b910-62f782cd98ed",
+      "role": "super_admin",
+      "at": "2026-06-28T14:02:29.644Z"
+    },
+    {
+      "action": "backup_export",
+      "target": "tfse-local-backup-2026-06-28.json",
+      "role": "super_admin",
+      "at": "2026-06-28T14:02:22.045Z"
+    },
+    {
+      "action": "lead_delete_request",
+      "target": "lead_mqxuykff_73b7y1",
+      "role": "super_admin",
+      "at": "2026-06-28T14:02:21.999Z"
+    },
+    {
+      "action": "compliance_review_save",
+      "target": "lp.html?slug=credit-loan:needs_revision",
+      "role": "super_admin",
+      "at": "2026-06-28T14:02:21.615Z"
+    },
+    {
+      "action": "compliance_copy_scan",
+      "target": "needs_revision",
+      "role": "super_admin",
+      "at": "2026-06-28T14:02:21.334Z"
+    },
+    {
+      "action": "lead_follow_up_update",
+      "target": "lead_mqxuykff_73b7y1:contacted:consultant:localStorage",
+      "role": "super_admin",
+      "at": "2026-06-28T14:02:18.297Z"
+    },
+    {
+      "action": "admin_login",
+      "target": "Super Admin:local_mvp",
+      "role": "super_admin",
+      "at": "2026-06-28T14:02:17.745Z"
+    }
+  ],
+  "events": [
+    {
+      "name": "page_view",
+      "path": "admin.html",
+      "url": "http://127.0.0.1:4173/admin.html",
+      "referrer": "",
+      "payload": {
+        "title": "Admin CRM｜TFSE金融便民中心",
+        "utm_source": "",
+        "utm_medium": "",
+        "utm_campaign": ""
+      },
+      "at": "2026-06-28T14:02:29.819Z"
+    },
+    {
+      "id": "evt_line_optout_seed",
+      "name": "line_cta_click",
+      "path": "/free-check.html",
+      "utm_source": "line",
+      "utm_medium": "owned_social",
+      "utm_campaign": "line_optout_seed",
+      "utm_content": "quick_reply",
+      "utm_term": "optout",
+      "created_at": "2026-06-28T14:02:29.793Z"
+    },
+    {
+      "id": "evt_followup_seed",
+      "name": "lead_submit",
+      "path": "/free-check.html",
+      "utm_source": "facebook",
+      "utm_medium": "paid_social",
+      "utm_campaign": "followup_seed",
+      "utm_content": "creative_b",
+      "utm_term": "credit_help",
+      "created_at": "2026-06-28T14:02:29.793Z"
+    },
+    {
+      "name": "page_view",
+      "path": "admin.html",
+      "url": "http://127.0.0.1:4173/admin.html",
+      "referrer": "",
+      "payload": {
+        "title": "Admin CRM｜TFSE金融便民中心",
+        "utm_source": "",
+        "utm_medium": "",
+        "utm_campaign": ""
+      },
+      "at": "2026-06-28T14:02:17.047Z"
+    },
+    {
+      "name": "public_feedback_submit",
+      "path": "contact.html",
+      "url": "http://127.0.0.1:4173/contact.html",
+      "referrer": "",
+      "payload": {
+        "feedback_type": "source_update",
+        "status": "queued",
+        "mode": "localStorage",
+        "assigned_role": "data_manager",
+        "has_official_source": true,
+        "has_contact_hash": true
+      },
+      "at": "2026-06-28T14:02:17.030Z"
+    },
+    {
+      "name": "page_view",
+      "path": "contact.html",
+      "url": "http://127.0.0.1:4173/contact.html",
+      "referrer": "",
+      "payload": {
+        "title": "聯絡我們｜TFSE金融便民中心",
+        "utm_source": "",
+        "utm_medium": "",
+        "utm_campaign": ""
+      },
+      "at": "2026-06-28T14:02:15.954Z"
+    },
+    {
+      "name": "lead_line_cta_shown",
+      "path": "free-check.html",
+      "url": "http://127.0.0.1:4173/free-check.html?utm_source=qa&utm_medium=paid_social&utm_campaign=manual",
+      "referrer": "",
+      "payload": {
+        "source": "qa",
+        "line_cta_url": "free-check.html#line-cta",
+        "mode": "localStorage"
+      },
+      "at": "2026-06-28T14:02:15.931Z"
+    },
+    {
+      "name": "lead_submit",
+      "path": "free-check.html",
+      "url": "http://127.0.0.1:4173/free-check.html?utm_source=qa&utm_medium=paid_social&utm_campaign=manual",
+      "referrer": "",
+      "payload": {
+        "source": "qa",
+        "mode": "localStorage",
+        "line_cta_url": "free-check.html#line-cta",
+        "tags": [
+          "form_submitted",
+          "need_credit_loan",
+          "need_debt_law",
+          "segment_employee",
+          "line_opt_in"
+        ],
+        "recommended_categories": [
+          "銀行金融商品專區",
+          "債務法令與前置協商資訊"
+        ],
+        "recommended_articles": [
+          "申請信貸前，先看懂負債比與信用紀錄",
+          "前置協商是什麼？債務法令資訊查詢方向"
+        ]
+      },
+      "at": "2026-06-28T14:02:15.931Z"
+    },
+    {
+      "name": "faq_view",
+      "path": "free-check.html",
+      "url": "http://127.0.0.1:4173/free-check.html?utm_source=qa&utm_medium=paid_social&utm_campaign=manual",
+      "referrer": "",
+      "payload": {
+        "count": 6
+      },
+      "at": "2026-06-28T14:02:12.925Z"
+    },
+    {
+      "name": "line_flow_view",
+      "path": "free-check.html",
+      "url": "http://127.0.0.1:4173/free-check.html?utm_source=qa&utm_medium=paid_social&utm_campaign=manual",
+      "referrer": "",
+      "payload": {
+        "quick_replies": 6,
+        "tags": 17
+      },
+      "at": "2026-06-28T14:02:12.925Z"
+    },
+    {
+      "name": "page_view",
+      "path": "free-check.html",
+      "url": "http://127.0.0.1:4173/free-check.html?utm_source=qa&utm_medium=paid_social&utm_campaign=manual",
+      "referrer": "",
+      "payload": {
+        "title": "免費財務健檢｜TFSE金融便民中心",
+        "utm_source": "qa",
+        "utm_medium": "paid_social",
+        "utm_campaign": "manual"
+      },
+      "at": "2026-06-28T14:02:12.921Z"
+    }
+  ],
+  "errors": [],
+  "compliance_reviews": [
+    {
+      "id": "review_mqxuyotr",
+      "type": "ad",
+      "target": "lp.html?slug=credit-loan",
+      "result": "needs_revision",
+      "note": "禁用詞需修改：保證核貸；CTA 可能過度導向：立即申請；缺少必要免責聲明關鍵字：本中心僅彙整公開合法金融商品；文案疑似要求敏感個資或證件，需改為低敏資訊說明。",
+      "scan_payload": {
+        "status": "needs_revision",
+        "issues": [
+          "禁用詞需修改：保證核貸",
+          "CTA 可能過度導向：立即申請",
+          "缺少必要免責聲明關鍵字：本中心僅彙整公開合法金融商品",
+          "文案疑似要求敏感個資或證件，需改為低敏資訊說明。"
+        ],
+        "forbidden_hits": [
+          "保證核貸"
+        ],
+        "high_risk_cta": [
+          "立即申請"
+        ],
+        "has_disclaimer": false,
+        "has_sensitive_ask": true,
+        "scanned_at": "2026-06-28T14:02:21.333Z"
+      },
+      "reviewer_role": "super_admin",
+      "reviewed_at": "2026-06-28T14:02:21.615Z"
+    }
+  ]
+}

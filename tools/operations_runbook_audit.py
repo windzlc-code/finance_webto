@@ -1,0 +1,143 @@
+from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[1]
+RUNBOOK = ROOT / "OPERATIONS_RUNBOOK.md"
+
+REQUIRED_MARKERS = (
+    "保留 Exomac 前端模板，不重新設計網站",
+    "python3 tools/compliance_scan.py",
+    "python3 tools/data_quality_audit.py",
+    "python3 tools/checklist_artifact_coverage_audit.py --markdown",
+    "python3 tools/crm_capability_audit.py --markdown",
+    "python3 tools/production_env_template.py --markdown",
+    "python3 tools/production_config_readiness.py --markdown",
+    "python3 tools/site_config_update_package.py --markdown",
+    "python3 tools/site_config_approval_package.py --markdown",
+    "python3 tools/launch_health_check.py --markdown",
+    "python3 tools/domain_cutover_package.py --markdown",
+    "python3 tools/host_fallback_deployment_check.py --markdown",
+    "python3 tools/seo_submission_package.py --markdown",
+    "python3 tools/search_console_verification_package.py --markdown",
+    "python3 tools/tracking_consent_audit.py --markdown",
+    "python3 tools/monitoring_receipt_checklist.py --markdown",
+    "python3 tools/sentry_error_verification_package.py --markdown",
+    "python3 tools/admin_export_cli_coverage_audit.py --markdown",
+    "python3 tools/security_headers_deployment_check.py --markdown",
+    "python3 tools/admin_security_matrix.py --markdown",
+    "python3 tools/admin_auth_cutover_check.py --markdown",
+    "python3 tools/backend_acceptance_matrix.py --markdown",
+    "python3 tools/line_oa_setup_package.py --markdown",
+    "python3 tools/line_oa_handoff_check.py --markdown",
+    "python3 tools/formal_backend_migration_package.py --markdown",
+    "python3 tools/backup_restore_drill_plan.py --markdown",
+    "python3 tools/backup_receipt_verification_package.py --markdown",
+    "python3 tools/content_api_cutover_package.py --markdown",
+    "python3 tools/turnstile_backend_verification_package.py --markdown",
+    "python3 tools/analytics_debug_verification_package.py --markdown",
+    "python3 tools/acceptance_checklist.py --markdown",
+    "python3 tools/project_plan_coverage_report.py --markdown",
+    "python3 tools/plan_requirement_trace.py --markdown",
+    "python3 tools/source_review_queue.py --markdown",
+    "python3 tools/source_verification_evidence.py --markdown",
+    "python3 tools/content_version_snapshot.py --markdown",
+    "python3 tools/privacy_request_queue.py --markdown",
+    "python3 tools/line_segment_queue.py --markdown",
+    "python3 tools/line_optout_complaint_queue.py --markdown",
+    "python3 tools/institution_import_verification_package.py --markdown",
+    "python3 tools/public_feedback_intake_package.py --markdown",
+    "python3 tools/public_feedback_api_verification_package.py --markdown",
+    "python3 tools/lead_dedupe_queue.py --markdown",
+    "python3 tools/crm_follow_up_queue.py --markdown",
+    "python3 tools/crm_contact_log.py --markdown",
+    "python3 tools/crm_api_persistence_package.py --markdown",
+    "python3 tools/form_risk_control_report.py --markdown",
+    "python3 tools/import_validation_package.py --markdown",
+    "python3 tools/data_retention_purge_plan.py --markdown",
+    "python3 tools/privacy_fulfillment_verification_package.py --markdown",
+    "python3 tools/local_backup.py --markdown",
+    "python3 tools/ad_campaign_checklist.py --markdown",
+    "python3 tools/conversion_optimization_backlog.py --markdown",
+    "python3 tools/utm_attribution_report.py --markdown",
+    "python3 tools/retrospective_report.py --markdown",
+    "python3 tools/server_event_replay_queue.py --markdown",
+    "python3 tools/legal_compliance_review_package.py --markdown",
+    "python3 tools/legal_external_review_evidence.py --markdown",
+    "python3 tools/compliance_api_persistence_package.py --markdown",
+    "python3 tools/line_optout_api_verification_package.py --markdown",
+    "python3 tools/local_audit_matrix.py --markdown",
+    "python3 tools/seo_indexing_followup_queue.py --markdown",
+    "python3 tools/api_contract_audit.py",
+    "python3 tools/backend_schema_audit.py",
+    "python3 tools/performance_budget_audit.py",
+    "python3 tools/accessibility_audit.py",
+    "python3 tools/validate_site_config.py",
+    "python3 tools/acceptance_audit.py",
+    "python3 tools/launch_cutover_audit.py",
+    "python3 tools/backend_cutover_roadmap.py --markdown",
+    "python3 tools/launch_execution_plan.py --markdown",
+    "python3 tools/launch_countdown_plan.py --markdown",
+    "python3 tools/formal_config_input_packet.py --markdown",
+    "python3 tools/plan_closure_report.py --markdown",
+    "python3 tools/project_plan_coverage_audit.py --markdown",
+    "python3 tools/external_execution_packet.py --markdown",
+    "python3 tools/external_verification_evidence.py --markdown",
+    "python3 tools/release_readiness_package.py --markdown",
+    "python3 tools/operations_task_queue.py --markdown",
+    "python3 tools/incident_response_package.py --markdown",
+    "python3 tools/launch_handoff_manifest.py --markdown",
+    "python3 tools/browser_acceptance_report.py --markdown",
+    "tools/browser_acceptance_verify.mjs",
+    "python3 tools/verify_static_site.py",
+    "GA4",
+    "Search Console",
+    "Line OA",
+    "Sentry",
+    "Turnstile",
+    "backend.api_base_url",
+    "backup",
+    "restore drill",
+    "rollback",
+    "incident",
+    "legal / compliance",
+)
+
+REQUIRED_SECTIONS = (
+    "## 1. 上線前凍結",
+    "## 2. 本機驗收命令",
+    "## 3. 人工瀏覽器驗收",
+    "## 4. 靜態部署",
+    "## 5. 正式後端切換",
+    "## 6. 監控與追蹤",
+    "## 7. 備份與還原",
+    "## 8. 回滾流程",
+    "## 9. 事故處理",
+    "## 10. 合規與法律審核",
+)
+
+
+def main():
+    failures = []
+    if not RUNBOOK.exists():
+        print("OPERATIONS_RUNBOOK.md: missing")
+        return 1
+
+    text = RUNBOOK.read_text(errors="ignore")
+    for marker in REQUIRED_MARKERS:
+        if marker not in text:
+            failures.append(f"OPERATIONS_RUNBOOK.md: missing marker {marker}")
+    for section in REQUIRED_SECTIONS:
+        if section not in text:
+            failures.append(f"OPERATIONS_RUNBOOK.md: missing section {section}")
+
+    if failures:
+        for failure in failures:
+            print(failure)
+        return 1
+    print("operations runbook audit passed")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

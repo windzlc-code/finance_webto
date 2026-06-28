@@ -1,0 +1,86 @@
+[
+  {
+    "id": "inst_fsc_tw",
+    "name": "金融監督管理委員會",
+    "type": "government",
+    "type_label": "主管機關",
+    "region": "台灣",
+    "official_url": "https://www.fsc.gov.tw/",
+    "registry_ref": "金融監理、金融消費保護與公開公告",
+    "verification_status": "verified",
+    "last_verified_at": "2026-06-27",
+    "summary": "金融監理與公告的主要公開來源之一，適合查詢主管機關新聞、法規與金融消費保護資訊。"
+  },
+  {
+    "id": "inst_banking_bureau",
+    "name": "銀行局",
+    "type": "government",
+    "type_label": "銀行監理",
+    "region": "台灣",
+    "official_url": "https://www.banking.gov.tw/",
+    "registry_ref": "銀行業監理與公開資訊",
+    "verification_status": "verified",
+    "last_verified_at": "2026-06-27",
+    "summary": "銀行業相關法規、公告與公開資訊查詢入口，適合回查銀行金融商品與監理資訊。"
+  },
+  {
+    "id": "inst_165",
+    "name": "165 全民防騙網",
+    "type": "government",
+    "type_label": "防詐宣導",
+    "region": "台灣",
+    "official_url": "https://165.npa.gov.tw/",
+    "registry_ref": "反詐騙宣導與通報資訊",
+    "verification_status": "verified",
+    "last_verified_at": "2026-06-27",
+    "summary": "反詐騙宣導、常見詐騙手法與通報資訊來源，適合查證可疑金融話術。"
+  },
+  {
+    "id": "inst_laf",
+    "name": "法律扶助基金會",
+    "type": "legal_resource",
+    "type_label": "法扶資源",
+    "region": "台灣",
+    "official_url": "https://www.laf.org.tw/",
+    "registry_ref": "法律扶助公開服務資訊",
+    "verification_status": "verified",
+    "last_verified_at": "2026-06-27",
+    "summary": "重大債務、協商或法律問題可查詢法律扶助服務資訊；TFSE 不提供法律代理。"
+  },
+  {
+    "id": "inst_bank_public",
+    "name": "銀行官方公開資訊",
+    "type": "bank",
+    "type_label": "銀行",
+    "region": "台灣",
+    "official_url": "https://www.banking.gov.tw/",
+    "registry_ref": "銀行局官方網站、消費者園地與銀行資訊揭露",
+    "verification_status": "verified",
+    "last_verified_at": "2026-06-28",
+    "summary": "彙整銀行公開資訊時需回到各銀行官網與主管機關公告確認最新條件。"
+  },
+  {
+    "id": "inst_finance_company_public",
+    "name": "合法融資公司公開資訊",
+    "type": "finance_company",
+    "type_label": "融資公司",
+    "region": "台灣",
+    "official_url": "https://findbiz.nat.gov.tw/",
+    "registry_ref": "經濟部商工登記公示資料查詢服務",
+    "verification_status": "verified",
+    "last_verified_at": "2026-06-28",
+    "summary": "查詢融資公司資訊時需確認公司合法性、合約費用、提前清償條款與個資風險。"
+  },
+  {
+    "id": "inst_credit_union_public",
+    "name": "儲蓄互助社公開資訊",
+    "type": "credit_union",
+    "type_label": "儲蓄互助社",
+    "region": "台灣",
+    "official_url": "https://www.culroc.org.tw/",
+    "registry_ref": "中華民國儲蓄互助協會與各社公開服務資訊",
+    "verification_status": "verified",
+    "last_verified_at": "2026-06-28",
+    "summary": "各儲蓄互助社會員資格、費用與服務範圍可能不同，需回到各社公告確認。"
+  }
+]

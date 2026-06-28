@@ -1,0 +1,688 @@
+{
+  "version": "2026-06-27",
+  "base_path": "/api",
+  "security": {
+    "public": ["GET products", "GET articles", "GET search", "POST leads", "POST events", "POST public feedback"],
+    "admin": ["Bearer session token", "role based access control"],
+    "rate_limit": {
+      "POST /api/leads": "5 requests / 10 minutes / IP + device fingerprint",
+      "POST /api/events": "60 requests / minute / IP",
+      "POST /api/public-feedback": "10 requests / hour / IP + device fingerprint",
+      "admin": "server session + CSRF protection"
+    },
+    "bot_protection": "Cloudflare Turnstile on POST /api/leads"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/products",
+      "purpose": "金融商品與公開資訊列表",
+      "auth": "public",
+      "query": ["type", "category", "audience", "region", "status", "keyword", "page"],
+      "response": ["items", "page", "total"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/products/:slug",
+      "purpose": "金融商品與公開資訊詳情",
+      "auth": "public",
+      "response": ["id", "slug", "title", "source_url", "updated_at", "checks", "disclaimer"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/institutions",
+      "purpose": "公開機構資訊列表",
+      "auth": "public",
+      "query": ["type", "region", "keyword"],
+      "response": ["items", "total"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/articles",
+      "purpose": "金融知識文章列表",
+      "auth": "public",
+      "query": ["category", "keyword", "status", "page"],
+      "response": ["items", "page", "total"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/articles/:slug",
+      "purpose": "金融知識文章詳情",
+      "auth": "public",
+      "response": ["id", "slug", "title", "body", "source", "updated_at", "related_articles"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/leads",
+      "purpose": "提交免費財務健檢",
+      "auth": "public + turnstile",
+      "request": ["display_name", "phone", "line_id", "region", "needs", "occupation_type", "income_type", "message", "consent_privacy", "consent_line", "consent_version", "source_url", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "device_id", "website", "cf_turnstile_response"],
+      "validation": ["no national id", "no bank account", "no card number", "privacy consent required", "line consent optional and separate", "website honeypot must be empty", "turnstile token required when enabled", "rate limit by IP + device_id", "deduplicate same phone + needs within 24 hours"],
+      "response": ["id", "status", "recommended_categories", "recommended_articles", "line_url", "disclaimer"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/events",
+      "purpose": "前台事件追蹤",
+      "auth": "public",
+      "request": ["name", "path", "url", "referrer", "payload", "at"],
+      "response": ["accepted"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/public-feedback",
+      "purpose": "公眾資料回報、內容錯誤、合規疑慮與個資請求收件，建立去識別工單並分流",
+      "auth": "public",
+      "request": ["feedback_type", "page_url", "summary", "official_source_url", "source_updated_at", "reporter_contact_hash", "phone_last3", "consent_contact", "website"],
+      "validation": ["no national id", "no bank account", "no card number", "no password", "reporter contact hash only", "website honeypot must be empty", "rate limit by IP + device_id"],
+      "response": ["ticket_id", "status", "assigned_role", "related_task_type", "disclaimer"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/search",
+      "purpose": "全站搜尋",
+      "auth": "public",
+      "query": ["q", "type", "page"],
+      "response": ["products", "articles", "categories"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/auth/login",
+      "purpose": "Admin 伺服器登入，以 session 取代前端 MVP 明碼驗證",
+      "auth": "public + csrf",
+      "request": ["email", "password", "mfa_code", "csrf_token"],
+      "validation": ["rate limit login attempts", "no password in audit logs", "issue httpOnly secure session cookie"],
+      "response": ["admin_user", "session", "csrf_token", "expires_at", "audit_log"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/auth/session",
+      "purpose": "取得目前 Admin session 與 RBAC 權限",
+      "auth": "admin:super_admin|consultant|viewer|content_editor|data_manager|compliance_reviewer",
+      "response": ["admin_user", "role", "permissions", "expires_at", "csrf_token"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/security-matrix",
+      "purpose": "Admin 權限與安全矩陣，彙整角色權限、正式 session/CSRF/MFA/審計檢查與上線阻擋項",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "roles", "checks", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/security-headers-deployment-check",
+      "purpose": "正式主機安全標頭、CSP、快取策略、security.txt、404/500 fallback 與平台套用證據核對包",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "status", "source_files", "expected_headers", "csp_allowlist", "critical_urls", "host_notes", "verification_commands", "evidence_fields", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/auth-cutover-check",
+      "purpose": "正式 Admin Auth 切換核對包，彙整 login/session/logout、cookie、CSRF、MFA、RBAC、Viewer 遮罩、audit_logs 與 MVP 驗證碼退場步驟",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "status", "backend_mode", "api_base_url_configured", "endpoints", "schema_tables", "required_controls", "cutover_steps", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/auth/logout",
+      "purpose": "登出並撤銷目前 Admin session",
+      "auth": "admin:super_admin|consultant|viewer|content_editor|data_manager|compliance_reviewer",
+      "request": ["csrf_token"],
+      "response": ["revoked", "audit_log"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/leads",
+      "purpose": "潛客列表",
+      "auth": "admin:super_admin|consultant|viewer",
+      "query": ["status", "tag", "source", "keyword", "page"],
+      "response": ["items", "page", "total"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/leads/:id",
+      "purpose": "潛客詳情",
+      "auth": "admin:super_admin|consultant|viewer",
+      "response": ["lead", "events", "audit_logs"]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/leads/:id/status",
+      "purpose": "更新潛客狀態、備註、負責角色與下次跟進",
+      "auth": "admin:super_admin|consultant",
+      "request": ["status", "note", "assigned_to", "follow_up_priority", "next_follow_up_at", "contact_log"],
+      "response": ["lead", "audit_log"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/leads/contact-logs",
+      "purpose": "CRM 結構化聯繫紀錄，供正式 CRM 匯入與稽核",
+      "auth": "admin:super_admin|consultant",
+      "query": ["lead_id", "channel", "outcome", "handled_by", "period_start", "period_end", "page"],
+      "response": ["format", "counts", "items", "page", "total", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/leads/follow-ups",
+      "purpose": "CRM 待跟進隊列，供顧問查看未結案、新提交或已排程下次跟進的潛客",
+      "auth": "admin:super_admin|consultant",
+      "query": ["assigned_to", "priority", "due_before", "page"],
+      "response": ["items", "counts", "page", "total"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/leads/dedupe-queue",
+      "purpose": "CRM 重複線索處理隊列，依手機雜湊、需求與 24 小時窗口提出合併或關聯建議",
+      "auth": "admin:super_admin|consultant",
+      "query": ["status", "needs", "page"],
+      "response": ["format", "dedupe_policy", "counts", "items", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/crm-api-persistence-package",
+      "purpose": "CRM 正式 API 落庫驗收包，核對 lead_forms、lead_contact_logs、lead_dedupe_queues、audit_logs、RBAC、CSRF 與 Viewer 遮罩",
+      "auth": "admin:super_admin|consultant",
+      "response": ["format", "status", "backend_target", "local_context", "required_controls", "test_cases", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/privacy-requests",
+      "purpose": "個資查詢、更正與刪除請求隊列",
+      "auth": "admin:super_admin|consultant|compliance_reviewer",
+      "query": ["status", "type", "page"],
+      "response": ["items", "page", "total"]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/privacy-requests/:lead_id",
+      "purpose": "標記個資請求已完成處理並寫入審計紀錄",
+      "auth": "admin:super_admin|consultant|compliance_reviewer",
+      "request": ["request_status", "note"],
+      "response": ["lead", "audit_log"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/data-retention-purge-plan",
+      "purpose": "資料保留、匿名化、到期刪除與 legal hold 月檢排程交接包",
+      "auth": "admin:super_admin|data_manager|compliance_reviewer",
+      "response": ["format", "policy", "retention_rules", "summary", "purge_candidates", "required_evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/privacy-fulfillment-verification",
+      "purpose": "個資查詢、更正與刪除正式履約驗收包，核對 privacy_request_tasks、lead_forms 遮罩/刪除、audit_logs、RBAC、CSRF 與下游匯出脫敏",
+      "auth": "admin:super_admin|consultant|compliance_reviewer",
+      "response": ["format", "status", "backend_target", "local_context", "required_controls", "test_cases", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/line-segments",
+      "purpose": "Line OA 分群同步隊列，僅列出已同意 Line 的潛客標籤",
+      "auth": "admin:super_admin|consultant|content_editor",
+      "query": ["tag", "source", "page"],
+      "response": ["items", "page", "total"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/line-oa-setup",
+      "purpose": "Line OA 設定交接包，包含歡迎語、圖文選單入口、quick reply、自動回覆原則、標籤與分群同步隊列",
+      "auth": "admin:super_admin|consultant|content_editor",
+      "response": ["format", "welcome_messages", "rich_menu", "quick_replies", "tags", "reply_principles", "segment_sync_queue", "compliance_boundaries", "records", "record_summary", "setup_steps", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/line-oa-handoff-check",
+      "purpose": "正式 Line OA 導向驗收包，核對正式加友 URL、站內 CTA、免費健檢成功承接、quick reply、退訂入口與外部留痕欄位",
+      "auth": "admin:super_admin|consultant|content_editor",
+      "response": ["format", "status", "line_oa_url", "official_url_ready", "source_files", "cta_routes", "quick_reply_checks", "handoff_steps", "evidence_fields", "compliance_boundaries", "records", "record_summary", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/line-optout-complaints",
+      "purpose": "Line 退訂、停止接收與投訴處理隊列，僅輸出去識別處理欄位、SLA、關鍵字、證據欄位與需升級合規/個資請求的待辦",
+      "auth": "admin:super_admin|consultant|compliance_reviewer",
+      "query": ["status", "type", "page"],
+      "response": ["format", "summary", "intake_keywords", "sla", "handling_steps", "evidence_fields", "items", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/line-optout-api-verification",
+      "purpose": "Line 退訂/投訴正式 API 驗收包，核對 line_optout_complaint_tasks、個資/法務升級、審計留痕、RBAC、CSRF 與去識別欄位回傳",
+      "auth": "admin:super_admin|consultant|compliance_reviewer",
+      "response": ["format", "status", "backend_target", "local_context", "required_controls", "test_cases", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/products",
+      "purpose": "新增資料庫條目",
+      "auth": "admin:super_admin|data_manager",
+      "request": ["title", "type", "category", "source_url", "updated_at", "summary", "checks"],
+      "response": ["product", "audit_log"]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/products/:id",
+      "purpose": "更新資料庫條目與復核狀態",
+      "auth": "admin:super_admin|data_manager",
+      "request": ["title", "status", "source_url", "updated_at", "summary", "checks"],
+      "response": ["product", "audit_log"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/articles",
+      "purpose": "新增文章",
+      "auth": "admin:super_admin|content_editor",
+      "request": ["title", "slug", "category", "body", "seo_title", "seo_description", "status", "updated_at"],
+      "response": ["article", "audit_log"]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/articles/:id",
+      "purpose": "更新文章與發布狀態",
+      "auth": "admin:super_admin|content_editor",
+      "request": ["title", "body", "status", "updated_at"],
+      "response": ["article", "audit_log"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/articles/:id/review",
+      "purpose": "提交文章審核動作，支援送審、核准發布、退回草稿與送回待審",
+      "auth": "admin:super_admin|content_editor|compliance_reviewer",
+      "request": ["status", "action", "note", "reviewer"],
+      "response": ["article", "audit_log"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/compliance/review",
+      "purpose": "提交合規審核紀錄，可附帶文案即時預檢結果",
+      "auth": "admin:super_admin|compliance_reviewer",
+      "request": ["type", "target", "result", "note", "reviewer", "scan_payload"],
+      "response": ["review", "audit_log"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit-logs",
+      "purpose": "審計日誌",
+      "auth": "admin:super_admin|compliance_reviewer",
+      "query": ["actor", "action", "target", "page"],
+      "response": ["items", "page", "total"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/retrospective",
+      "purpose": "數據復盤報告，彙整事件漏斗、來源、熱門頁面、錯誤摘要與下週優化建議",
+      "auth": "admin:super_admin|viewer|consultant|content_editor|data_manager|compliance_reviewer",
+      "query": ["period_start", "period_end", "source"],
+      "response": ["funnel", "engagement", "lead_summary", "top_paths", "quality", "next_actions", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/tracking-consent-audit",
+      "purpose": "外部追蹤同意檢查包，核對 GA4、Meta Pixel、Server Event 是否在 analytics 同意後才轉發",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "consent_status", "consent_record", "external_destinations", "event_counts", "policy", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/utm-attribution",
+      "purpose": "UTM 與投流歸因報表，按 source/medium/campaign/content/term 聚合 CTA、表單、Line 點擊與線索轉換",
+      "auth": "admin:super_admin|viewer|consultant|content_editor|data_manager|compliance_reviewer",
+      "query": ["period_start", "period_end", "utm_source", "utm_campaign"],
+      "response": ["summary", "campaigns", "next_actions", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/server-event-replay",
+      "purpose": "Server Event 正式接入前後的去識別事件重放隊列，用於核對 GA4、Meta Pixel 與伺服器事件端點",
+      "auth": "admin:super_admin|viewer|consultant|content_editor|data_manager|compliance_reviewer",
+      "response": ["format", "destinations", "counts", "event_name_counts", "missing_required_event_names", "queue", "replay_steps", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/monitoring-receipt-checklist",
+      "purpose": "GA4、Meta Pixel、Server Event 與 Sentry 正式收件驗收清單",
+      "auth": "admin:super_admin|viewer|consultant|content_editor|data_manager|compliance_reviewer",
+      "response": ["format", "destinations", "summary", "required_events", "missing_required_events", "receipt_checks", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/sentry-error-verification",
+      "purpose": "Sentry 前台與後端錯誤收件驗收包，核對測試錯誤、敏感欄位遮罩、environment/release 標籤、source map 與事故留痕",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "status", "destinations", "required_controls", "test_cases", "recent_local_errors", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/analytics-debug-verification",
+      "purpose": "GA4 DebugView 與 Meta Events Manager 驗證包，彙整本機事件映射、追蹤同意、必要事件、Debug 步驟與外部證據欄位",
+      "auth": "admin:super_admin|viewer|consultant|content_editor|data_manager|compliance_reviewer",
+      "response": ["format", "status", "destinations", "event_mappings", "debug_steps", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ad-campaigns",
+      "purpose": "廣告落地頁投流前檢查清單與 UTM 範例",
+      "auth": "admin:super_admin|content_editor|compliance_reviewer",
+      "query": ["slug", "review_status"],
+      "response": ["items", "utm_standard", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/conversion-optimization-backlog",
+      "purpose": "投流與落地頁轉換優化待辦，依 UTM 歸因、表單、Line 承接與合規護欄產生下一輪測試項目",
+      "auth": "admin:super_admin|content_editor|compliance_reviewer",
+      "query": ["priority", "slug"],
+      "response": ["format", "summary", "experiment_rules", "items", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/launch-health",
+      "purpose": "上線健康檢查，彙整 sitemap、robots、錯誤頁、GA4、Meta Pixel、Sentry、Search Console 與 Line OA 配置狀態",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["ready_count", "pending_count", "items", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/launch-cutover-audit",
+      "purpose": "正式切換阻擋項隊列，彙整待填正式輸入、可外部執行項、人工複核項與本地前置缺失",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "source", "generated_from", "counts", "summary", "items", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/launch-execution-plan",
+      "purpose": "上線執行計畫，按波次與 owner 分組正式切換任務",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "source", "summary", "waves", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/launch-countdown-plan",
+      "purpose": "上線倒數計畫，按 D-3 到 D+1 節點拆解正式切換任務與 manual checks",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "source", "summary", "slots", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/release-readiness",
+      "purpose": "發布凍結與回滾交接包，彙整健康檢查、正式配置、驗收、備份、遷移、部署命令與回滾步驟",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "release_scope", "readiness", "required_commands", "deployment_checks", "rollback_plan", "artifact_summary", "blockers", "handoff_notes", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/operations-tasks",
+      "purpose": "運維任務隊列，彙整上線配置、SEO、合規、資料來源、個資、驗收、備份、Line OA 與發布待辦",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "status_counts", "tasks", "next_review_cycle", "runbook", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/incident-response-package",
+      "purpose": "事故響應與回滾記錄包，彙整錯誤摘要、P0/P1 觸發條件、回應步驟、驗證命令與相關交接包",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "severity_hint", "signals", "top_error_sources", "recent_errors", "severity_triggers", "response_steps", "verification_commands", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/seo-submission-package",
+      "purpose": "SEO 收錄提交交接包，彙整 canonical、sitemap、robots、RSS、Search Console 驗證與提交步驟",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "base_url", "search_console", "assets", "counts", "canonical_pages", "dynamic_url_patterns", "submission_steps", "blockers", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/search-console-verification-package",
+      "purpose": "Search Console 正式屬性驗證與 sitemap 提交核對包，彙整驗證方式、需重生資產、提交目標、URL Inspection 抽查與外部留痕欄位",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "status", "property", "assets_to_regenerate", "validation_commands", "submission_targets", "verification_steps", "url_inspection_samples", "evidence_fields", "records", "record_summary", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/config-readiness",
+      "purpose": "正式配置交接包，彙整 site-config.json 內 SEO、追蹤、後端、安全與 Line OA 的待填/待驗證項",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["ready_count", "pending_count", "items", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site-config-update-package",
+      "purpose": "site-config.json 正式配置更新草稿預檢與人工合併交接包",
+      "auth": "admin:super_admin|data_manager|compliance_reviewer",
+      "response": ["format", "target_file", "status", "draft_keys", "validation", "patch", "current_config_summary", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site-config-approval-package",
+      "purpose": "site-config.json 正式配置變更簽核包，彙整草稿預檢、待配置服務、審批角色、合併後命令與外部留痕要求",
+      "auth": "admin:super_admin|data_manager|compliance_reviewer",
+      "response": ["format", "target_file", "status", "approval_policy", "summary", "pending_services", "draft_package", "approval_checklist", "post_merge_commands", "required_external_evidence", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/production-env-template",
+      "purpose": "正式部署環境變數模板，列出 site-config.json、API server、CI secrets 與備份任務需要的變數名稱、來源路徑、部署端與密鑰處理原則",
+      "auth": "admin:super_admin|data_manager|compliance_reviewer",
+      "response": ["format", "configured_count", "pending_count", "secret_count", "target_files", "validation_commands", "items", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/formal-config-input-packet",
+      "purpose": "正式配置待填總覽，按 owner 收斂 base_url、GA4、Meta Pixel、Server Event、Search Console、Line OA、正式後端、Sentry 與條件性 Turnstile 配置，提供 site-config patch 模板與後續命令",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "ready_count", "pending_count", "conditional_pending_count", "required_inputs", "conditional_inputs", "secret_only_inputs", "records", "record_summary", "owner_handoff", "site_config_patch_template", "follow_up_commands", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/domain-cutover-package",
+      "purpose": "正式網域切換交接包，彙整 base_url、canonical、SEO 資產、Search Console、重生命令、切換步驟與阻擋項",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "base_url", "status", "summary", "assets", "required_commands", "cutover_steps", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/host-fallback-deployment-check",
+      "purpose": "正式主機 404/500/server error fallback 部署核對包，彙整錯誤頁路徑、平台限制、驗證步驟、留痕欄位與阻擋項",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "status", "source_files", "critical_routes", "platform_notes", "verification_steps", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/backend-cutover-roadmap",
+      "purpose": "正式後端接入路線圖，彙整遷移順序、必要端點、安全控制、rehearsal 命令、完成門檻與相關驗收匯出包",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "source", "summary", "priority_sequence", "migration_order", "critical_endpoints", "security_controls", "rehearsal_commands", "completion_gates", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/backend-acceptance-matrix",
+      "purpose": "正式 API 驗收矩陣，彙整後端模式、必要端點、驗收證據、正式接入阻擋項與來源文件",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "backend_mode", "api_base_url", "summary", "endpoints", "records", "record_summary", "required_validation", "source_documents", "related_exports", "blockers", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/acceptance-checklist",
+      "purpose": "上線驗收清單，對應專案計畫第 17 章業務、UI、合規、技術與 SEO 驗收",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["ready_count", "pending_count", "items", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/project-plan-coverage-report",
+      "purpose": "計畫文檔覆蓋度對賬報告，按 1-23 章說明哪些章節已本地閉環，哪些只剩正式配置、正式後端或法務簽核",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "source", "ready_count", "local_ready_external_pending_count", "chapters", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/plan-requirement-trace",
+      "purpose": "計畫文檔第 17 / 21 章逐條需求追蹤，對照 ready、external_pending、manual_browser、not_applicable 與 missing",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "plan_path", "source", "counts", "items", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/project-phase-audit",
+      "purpose": "模板套用 Phase 0-8 階段對賬，說明哪些階段已本地閉環、哪些仍待正式配置、正式後端或法務簽核",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "source", "counts", "external_pending", "phases", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/local-audit-matrix",
+      "purpose": "本機驗收命令對照，按命令分組說明哪些可直接作為本地閉環審計執行，哪些仍需外部配置或人工瀏覽器留痕",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "source", "summary", "status_definitions", "items", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/external-verification-evidence",
+      "purpose": "外部配置驗證留痕包，保存 GA4、Meta Pixel、Server Event、Sentry、Search Console、Line OA、後端 API 與法務複核證據",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "summary", "items", "records", "source_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/external-execution-packet",
+      "purpose": "外部執行交接隊列，按 owner 彙整可開始執行的正式切換任務、依賴項、next_action、證據欄位與完成後命令",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "actionable_items", "ready_for_external_execution_count", "pending_human_review_count", "items", "records", "record_summary", "follow_up_commands", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/launch-handoff-manifest",
+      "purpose": "最終上線總交接清單，將正式配置待填、外部執行、計畫覆蓋、驗收與發布狀態聚合成唯一交接來源",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "template_policy", "summary", "recommended_sequence", "pending_config_inputs", "external_execution_items", "owner_handoff", "checkpoint_records", "required_commands", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/browser-acceptance-report",
+      "purpose": "瀏覽器人工驗收留痕包，保存桌面/手機 viewport、頁面、結果、證據備註與待驗項",
+      "auth": "admin:super_admin|viewer|data_manager|compliance_reviewer",
+      "response": ["format", "base_url", "passed_count", "pending_count", "items", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/legal-compliance-review",
+      "purpose": "正式投流、SEO 大量收錄或 Line OA 對外承接前的法務/合規送審包",
+      "auth": "admin:super_admin|compliance_reviewer",
+      "response": ["format", "status_counts", "items", "required_external_review", "evidence_files", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/legal-external-review-evidence",
+      "purpose": "法務/合規外部複核留痕包，保存簽核狀態、去識別證據摘要、開放項目與送審包版本",
+      "auth": "admin:super_admin|compliance_reviewer",
+      "response": ["format", "status", "summary", "required_external_review", "evidence_package", "signoff_requirements", "open_items", "records", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/compliance-api-persistence-package",
+      "purpose": "正式合規審核 API 落庫驗收包，核對 POST /api/admin/compliance/review、compliance_reviews、audit_logs、RBAC、CSRF 與 scan_payload 脫敏",
+      "auth": "admin:super_admin|compliance_reviewer",
+      "response": ["format", "status", "backend_target", "local_context", "required_controls", "test_cases", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/form-risk-control",
+      "purpose": "表單風險與防刷檢查包，彙整 Turnstile、蜜罐、限流、重複提交、device_id 與隱私同意風險",
+      "auth": "admin:super_admin|compliance_reviewer",
+      "response": ["format", "controls", "counts", "duplicate_groups", "repeated_devices", "risk_notes", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/turnstile-backend-verification",
+      "purpose": "正式 POST /api/leads 的 Turnstile 後端驗收包，核對 siteverify、secret 管理、蜜罐、限流、去重、負向測試與去識別證據欄位",
+      "auth": "admin:super_admin|compliance_reviewer",
+      "response": ["format", "status", "frontend_config", "backend_target", "required_controls", "negative_test_cases", "validation_steps", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/source-review-queue",
+      "purpose": "資料來源復核隊列，列出來源待核驗、需更新、來源占位或超過復核週期的資料庫條目",
+      "auth": "admin:super_admin|data_manager|compliance_reviewer",
+      "query": ["status", "reason", "category", "page"],
+      "response": ["items", "page", "total", "review_cycle_days", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/source-verification-evidence",
+      "purpose": "資料來源復核證據留痕包，保存官方來源 URL、復核結果、角色與證據摘要",
+      "auth": "admin:super_admin|data_manager|compliance_reviewer",
+      "query": ["product_id", "result", "period_start", "period_end", "page"],
+      "response": ["format", "counts", "queue_snapshot", "records", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/institution-import-verification",
+      "purpose": "機構資料正式導入驗收包，核對 institutions.json、institutions、institution_source_versions、來源留痕與 audit_logs",
+      "auth": "admin:super_admin|data_manager|compliance_reviewer",
+      "response": ["format", "status", "source_file", "target_tables", "counts", "status_counts", "import_rows", "stale_or_unverified_items", "validation_steps", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/public-feedback-intake",
+      "purpose": "公眾資料回報、內容錯誤、合規疑慮與個資請求分流交接包，定義 contact-us.html 收件欄位、禁止欄位、SLA、分派規則與正式工單入庫要求",
+      "auth": "admin:super_admin|data_manager|compliance_reviewer|content_editor",
+      "response": ["format", "source_page", "summary", "intake_types", "required_fields", "forbidden_fields", "triage_rules", "sla", "sample_queue", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/public-feedback-api-verification",
+      "purpose": "公眾資料回報正式 API 驗收包，核對 POST /api/public-feedback、public_feedback_tickets、分流任務、禁止欄位拒收、限流與 audit_logs",
+      "auth": "admin:super_admin|data_manager|compliance_reviewer|content_editor",
+      "response": ["format", "status", "backend_target", "local_context", "required_controls", "test_cases", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/content-version-snapshot",
+      "purpose": "內容版本快照，彙整產品、文章、FAQ 覆蓋、發布狀態、內容審計與正式還原順序",
+      "auth": "admin:super_admin|content_editor|data_manager|compliance_reviewer",
+      "response": ["format", "counts", "product_overrides", "article_overrides", "faq_overrides", "audit_trail", "restore_order", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/content-api-cutover-package",
+      "purpose": "前台內容 API 切換驗收包，核對 products/articles/institutions/search 公開端點、seed 數量、發布狀態、來源連結與 fallback 邊界",
+      "auth": "admin:super_admin|content_editor|data_manager|compliance_reviewer",
+      "response": ["format", "status", "backend_target", "seed_counts", "content_state", "required_api_checks", "validation_steps", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/migration-package",
+      "purpose": "正式後端遷移交接包，彙整 seed JSON、本機內容覆蓋、潛客、合規審核、審計、來源復核、個資請求與 Line 分群隊列",
+      "auth": "admin:super_admin|data_manager",
+      "response": ["format", "seed_data", "local_state", "review_queues", "import_order", "summary", "generated_at", "exported_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/import-validation-package",
+      "purpose": "正式資料導入驗收包，核對 seed 數量、測試資料排除、來源復核、個資請求、Line 分群與導入後抽查",
+      "auth": "admin:super_admin|data_manager",
+      "response": ["format", "source_package", "summary", "import_checks", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/backup-restore-drill-plan",
+      "purpose": "正式資料庫備份與還原演練交接包，彙整每日備份、每週還原、RPO/RTO、證據欄位、抽查步驟與外部阻擋項",
+      "auth": "admin:super_admin|data_manager",
+      "response": ["format", "status", "backend_mode", "rpo_rto", "schedule", "restore_steps", "evidence_fields", "local_mvp_reference", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/backup-receipt-verification",
+      "purpose": "正式資料庫備份收據與還原結果驗收包，核對 backup_jobs、backup_restore_drill_results、checksum、加密、RPO/RTO 與 audit_logs",
+      "auth": "admin:super_admin|data_manager",
+      "response": ["format", "status", "backend_target", "required_receipts", "receipt_fields", "restore_drill_fields", "validation_steps", "latest_plan_status", "evidence_fields", "blockers", "related_exports", "generated_at"]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/seo-indexing-followup-queue",
+      "purpose": "SEO 收錄跟進隊列，列出正式 Search Console 驗證後需檢查的首頁、資料庫、分類、產品、文章與落地頁 URL、優先級、檢查動作與證據欄位",
+      "auth": "admin:super_admin|content_editor|data_manager",
+      "response": ["format", "base_url", "search_console_configured", "summary", "evidence_fields", "items", "blockers", "related_exports", "generated_at"]
+    }
+  ]
+}

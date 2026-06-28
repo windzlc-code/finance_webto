@@ -1,0 +1,272 @@
+{
+  "format": "tfse_source_verification_evidence",
+  "version": "2026-06-28",
+  "generated_at": "2026-06-28T12:30:00+08:00",
+  "generated_by_role": "data_manager",
+  "review_cycle_days": 90,
+  "privacy_note": "來源復核留痕只保存資料 ID、官方來源 URL、結果、角色與證據備註摘要，不保存使用者個資。",
+  "counts": {
+    "total": 25,
+    "approved": 25,
+    "needs_revision": 0,
+    "rejected": 0
+  },
+  "queue_snapshot": [],
+  "records": [
+    {
+      "id": "source_evidence_product_bank_credit",
+      "item_type": "product",
+      "product_id": "product_bank_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_salary_credit",
+      "item_type": "product",
+      "product_id": "product_salary_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_no_salary_credit",
+      "item_type": "product",
+      "product_id": "product_no_salary_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_public_sector_credit",
+      "item_type": "product",
+      "product_id": "product_public_sector_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_business_credit",
+      "item_type": "product",
+      "product_id": "product_business_credit",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_sme_working_capital",
+      "item_type": "product",
+      "product_id": "product_sme_working_capital",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_card_finance",
+      "item_type": "product",
+      "product_id": "product_card_finance",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為信用卡費用與消費金融資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_insurance_finance",
+      "item_type": "product",
+      "product_id": "product_insurance_finance",
+      "result": "approved",
+      "source_url": "https://www.fsc.gov.tw/",
+      "evidence_note": "已核對金管會官方公開資訊，可作為保險與理財公開資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_mortgage",
+      "item_type": "product",
+      "product_id": "product_mortgage",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_first_home",
+      "item_type": "product",
+      "product_id": "product_first_home",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_mortgage_increase",
+      "item_type": "product",
+      "product_id": "product_mortgage_increase",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_second_mortgage",
+      "item_type": "product",
+      "product_id": "product_second_mortgage",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方公開資訊，可作為銀行商品與借貸資訊的主管機關來源入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_finance_vehicle",
+      "item_type": "product",
+      "product_id": "product_finance_vehicle",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_used_car",
+      "item_type": "product",
+      "product_id": "product_used_car",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_motorcycle",
+      "item_type": "product",
+      "product_id": "product_motorcycle",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_consumer_installment",
+      "item_type": "product",
+      "product_id": "product_consumer_installment",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_home_appliance",
+      "item_type": "product",
+      "product_id": "product_home_appliance",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_medical_installment",
+      "item_type": "product",
+      "product_id": "product_medical_installment",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為合法公司基本公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_credit_union",
+      "item_type": "product",
+      "product_id": "product_credit_union",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_credit_union_member",
+      "item_type": "product",
+      "product_id": "product_credit_union_member",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_credit_union_local",
+      "item_type": "product",
+      "product_id": "product_credit_union_local",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_product_credit_union_small",
+      "item_type": "product",
+      "product_id": "product_credit_union_small",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_inst_bank_public",
+      "item_type": "institution",
+      "product_id": "inst_bank_public",
+      "result": "approved",
+      "source_url": "https://www.banking.gov.tw/",
+      "evidence_note": "已核對銀行局官方網站與資訊揭露入口，適合作為銀行公開資訊的機構來源。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_inst_finance_company_public",
+      "item_type": "institution",
+      "product_id": "inst_finance_company_public",
+      "result": "approved",
+      "source_url": "https://findbiz.nat.gov.tw/",
+      "evidence_note": "已核對經濟部商工登記公示資料查詢服務，可作為公司登記與公開資訊查核入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    },
+    {
+      "id": "source_evidence_inst_credit_union_public",
+      "item_type": "institution",
+      "product_id": "inst_credit_union_public",
+      "result": "approved",
+      "source_url": "https://www.culroc.org.tw/",
+      "evidence_note": "已核對中華民國儲蓄互助協會公開資訊，可作為儲蓄互助社公開服務資訊入口。",
+      "reviewer_role": "data_manager",
+      "reviewed_at": "2026-06-28T12:30:00+08:00"
+    }
+  ],
+  "related_exports": [
+    "tfse_source_review_queue",
+    "tfse_content_version_snapshot",
+    "tfse_formal_backend_migration_package"
+  ]
+}

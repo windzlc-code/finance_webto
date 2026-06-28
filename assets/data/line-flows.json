@@ -1,0 +1,95 @@
+{
+  "welcome": [
+    "歡迎加入 TFSE金融便民中心。",
+    "本中心提供公開金融資訊整理、免費財務健檢與法令資訊導引。",
+    "我們不代辦貸款、不代收證件、不保證核貸。",
+    "請選擇您想了解的資訊類型："
+  ],
+  "quick_replies": [
+    {
+      "label": "銀行信貸資訊",
+      "tag": "need_credit_loan",
+      "href": "credit-loan.html",
+      "reply": "先閱讀信貸條件、負債比與信用紀錄相關資訊，再回到合法金融機構確認最新條件。",
+      "boundary": "TFSE 僅整理公開資訊，不代辦、不送件、不保證核貸。",
+      "article_href": "articles/bank-credit-application-conditions.html",
+      "database_href": "database.html?type=bank",
+      "free_check_href": "free-check.html?needs=credit_loan&utm_source=line&utm_medium=oa_menu&utm_campaign=line_credit_loan"
+    },
+    {
+      "label": "房屋融資資訊",
+      "tag": "need_mortgage",
+      "href": "mortgage.html",
+      "reply": "先確認房貸、轉貸、增貸與二胎資訊來源、費用與契約風險。",
+      "boundary": "TFSE 僅整理公開資訊，不代表銀行或任何金融機構。",
+      "article_href": "articles/mortgage-refinance-increase-difference.html",
+      "database_href": "database.html?type=bank",
+      "free_check_href": "free-check.html?needs=mortgage&utm_source=line&utm_medium=oa_menu&utm_campaign=line_mortgage"
+    },
+    {
+      "label": "車輛分期資訊",
+      "tag": "need_vehicle",
+      "href": "vehicle-finance.html",
+      "reply": "先核對公司合法性、總費用、提前清償與個資交付風險。",
+      "boundary": "TFSE 不代收證件、帳戶、卡號或密碼，也不承諾任何審核結果。",
+      "article_href": "articles/vehicle-installment-before-check.html",
+      "database_href": "database.html?type=finance_company",
+      "free_check_href": "free-check.html?needs=vehicle&utm_source=line&utm_medium=oa_menu&utm_campaign=line_vehicle"
+    },
+    {
+      "label": "儲互社資訊",
+      "tag": "need_credit_union",
+      "href": "credit-union.html",
+      "reply": "先了解會員制度、章程、服務範圍與公開公告。",
+      "boundary": "TFSE 不是儲蓄互助社，僅提供公開來源查詢方向。",
+      "article_href": "articles/credit-union-member-guide.html",
+      "database_href": "database.html?type=credit_union",
+      "free_check_href": "free-check.html?needs=credit_union&utm_source=line&utm_medium=oa_menu&utm_campaign=line_credit_union"
+    },
+    {
+      "label": "債務法令諮詢",
+      "tag": "need_debt_law",
+      "href": "debt-law.html",
+      "reply": "先查前置協商、更生清算、法扶與申訴檢舉等公開資源。",
+      "boundary": "TFSE 不代辦協商或法律程序，重大問題請洽合格法律服務。",
+      "article_href": "articles/debt-negotiation-public-resources.html",
+      "database_href": "source-policy.html",
+      "free_check_href": "free-check.html?needs=debt_law&utm_source=line&utm_medium=oa_menu&utm_campaign=line_debt_law"
+    },
+    {
+      "label": "免費財務健檢",
+      "tag": "form_submitted",
+      "href": "free-check.html",
+      "reply": "只留下低敏需求資料，取得分類與文章建議；不需上傳證件。",
+      "boundary": "健檢結果不是核貸結果，僅作公開資訊查詢與法令導引。",
+      "article_href": "articles/free-check-data-privacy.html",
+      "database_href": "database.html",
+      "free_check_href": "free-check.html?utm_source=line&utm_medium=oa_menu&utm_campaign=line_free_check"
+    }
+  ],
+  "tags": [
+    "need_credit_loan",
+    "need_mortgage",
+    "need_vehicle",
+    "need_installment",
+    "need_credit_union",
+    "need_debt_law",
+    "segment_employee",
+    "segment_business_owner",
+    "segment_property_owner",
+    "segment_high_debt",
+    "source_fb",
+    "source_ig",
+    "source_tiktok",
+    "source_seo",
+    "line_opt_in",
+    "form_submitted",
+    "consulted"
+  ],
+  "reply_principles": [
+    "每則回覆先說明 TFSE 僅整理公開資訊，不代表金融機構。",
+    "提供一篇入門文章或分類頁，不以話術催促使用者提交資料。",
+    "導回資料庫或來源政策，提醒自行向合法金融機構確認。",
+    "可提供免費健檢入口，但不得要求上傳證件、金融卡、帳戶或密碼。"
+  ]
+}

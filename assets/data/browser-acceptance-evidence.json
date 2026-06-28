@@ -1,0 +1,111 @@
+{
+  "format": "tfse_browser_acceptance_evidence_seed",
+  "source": "tools/browser_acceptance_verify.mjs",
+  "generated_at": "2026-06-28T13:32:16.395Z",
+  "base_url": "http://127.0.0.1:4173",
+  "passed_count": 135,
+  "failed_count": 0,
+  "records": [
+    {
+      "item_key": "no_text_overlap",
+      "item_label": "頁面不出現文字重疊",
+      "group": "UI 驗收",
+      "viewport": "desktop+mobile",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證首頁、資料庫、文章、免費健檢與 Admin 在桌面/手機 viewport 的 layout 與 text fit 均通過。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "desktop layout /index.html",
+        "desktop text fit /index.html",
+        "desktop layout /database.html",
+        "desktop text fit /database.html",
+        "desktop layout /articles.html",
+        "desktop text fit /articles.html",
+        "desktop layout /free-check.html",
+        "desktop text fit /free-check.html",
+        "desktop layout /admin.html",
+        "desktop text fit /admin.html",
+        "mobile layout /index.html",
+        "mobile text fit /index.html",
+        "mobile layout /database.html",
+        "mobile text fit /database.html",
+        "mobile layout /articles.html",
+        "mobile text fit /articles.html",
+        "mobile layout /free-check.html",
+        "mobile text fit /free-check.html",
+        "mobile layout /admin.html",
+        "mobile text fit /admin.html"
+      ]
+    },
+    {
+      "item_key": "mobile_browser",
+      "item_label": "手機端測試通過",
+      "group": "上線最終檢查",
+      "viewport": "390x844,430x932",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證手機版主要頁面無橫向溢出，且 mobile menu 開合、子選單與主要 CTA 可用。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "mobile layout /index.html",
+        "mobile text fit /index.html",
+        "mobile layout /database.html",
+        "mobile text fit /database.html",
+        "mobile layout /articles.html",
+        "mobile text fit /articles.html",
+        "mobile layout /free-check.html",
+        "mobile text fit /free-check.html",
+        "mobile layout /admin.html",
+        "mobile text fit /admin.html",
+        "mobile menu opens with TFSE links",
+        "mobile submenu expands",
+        "mobile menu closes"
+      ]
+    },
+    {
+      "item_key": "admin_login_browser",
+      "item_label": "後台登入測試通過",
+      "group": "上線最終檢查",
+      "viewport": "1440x900",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證 Admin 登入前受保護區塊隱藏，登入後 CRM 與驗收面板可見。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "admin protection before login",
+        "admin login"
+      ]
+    },
+    {
+      "item_key": "form_submit_browser",
+      "item_label": "表單提交測試通過",
+      "group": "上線最終檢查",
+      "viewport": "1440x900",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證免費健檢提交、UTM 寫入、Admin 可見線索並可更新跟進狀態與審計。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "lead submission and UTM capture",
+        "lead visible in admin",
+        "admin lead follow-up update and audit",
+        "admin lead status filter"
+      ]
+    },
+    {
+      "item_key": "public_feedback_intake",
+      "item_label": "聯絡頁可提交低敏資料回報",
+      "group": "業務閉環",
+      "viewport": "1440x900",
+      "result": "passed",
+      "evidence_note": "Playwright smoke 已驗證 contact.html 低敏資料回報在本機模式可建立工單，且切換正式 API 模式後仍可成功提交。",
+      "checked_by_role": "automation",
+      "checked_at": "2026-06-28T13:32:16.395Z",
+      "source_labels": [
+        "public feedback local submission",
+        "formal API public feedback submission"
+      ]
+    }
+  ]
+}

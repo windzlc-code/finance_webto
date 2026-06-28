@@ -1,0 +1,114 @@
+[
+  {
+    "slug": "free-check",
+    "title": "不知道該查哪類金融資訊？先做免費財務健檢",
+    "short_title": "免費健檢",
+    "pain": "需求很多、資訊分散時，先用低敏資料整理方向，再回到合法來源確認。",
+    "category_slug": "credit-loan",
+    "need_label": "免費財務健檢",
+    "product_categories": ["credit_loan", "mortgage", "debt_law"],
+    "article_keywords": ["免費財務健檢", "信貸", "房貸", "債務"],
+    "faq": [
+      ["免費健檢會收證件嗎？", "不會。表單只收稱呼、手機、Line ID、地區、需求與身份類型等低敏資料。"],
+      ["健檢結果是核貸結果嗎？", "不是。TFSE 僅提供公開資訊整理與查詢方向，不承諾任何金融結果。"]
+    ]
+  },
+  {
+    "slug": "credit-loan",
+    "title": "查銀行信貸門檻前，先整理負債比與信用條件",
+    "short_title": "信貸查詢",
+    "pain": "信貸資訊容易混在廣告與代辦話術中，先理解公開條件與風險邊界。",
+    "category_slug": "credit-loan",
+    "need_label": "信貸與企業融資",
+    "product_categories": ["credit_loan"],
+    "article_keywords": ["信貸", "負債比", "信用紀錄", "企業"],
+    "faq": [
+      ["TFSE 會查聯徵嗎？", "不會。本站不查聯徵，不送件，只協助整理資訊方向。"],
+      ["可以保證信貸過件嗎？", "不可以。任何保證結果的說法都需要提高警覺。"]
+    ]
+  },
+  {
+    "slug": "mortgage-second",
+    "title": "房貸轉貸、增貸或二胎資訊，先看公開條件與費用",
+    "short_title": "房貸二胎",
+    "pain": "房貸與二胎涉及抵押、費用與契約條款，應先查明來源再行動。",
+    "category_slug": "mortgage",
+    "need_label": "房貸與二胎資訊",
+    "product_categories": ["mortgage"],
+    "article_keywords": ["房貸", "轉貸", "增貸", "二胎"],
+    "faq": [
+      ["TFSE 會媒合房貸或二胎嗎？", "不會。本站僅整理公開資訊，不代表銀行或任何金融機構。"],
+      ["查詢前要準備什麼？", "可先整理房屋狀況、既有貸款、費用問題與想確認的官方來源。"]
+    ]
+  },
+  {
+    "slug": "vehicle-installment",
+    "title": "車輛融資與分期查詢，先確認合約費用與公司資訊",
+    "short_title": "車輛分期",
+    "pain": "只看月付金容易忽略總費用、提前清償與合約條款。",
+    "category_slug": "vehicle-finance",
+    "need_label": "車輛與分期",
+    "product_categories": ["vehicle"],
+    "article_keywords": ["車", "融資", "分期", "合約"],
+    "faq": [
+      ["車融查詢要注意什麼？", "先確認公司合法性、合約費用、提前清償與個資交付風險。"],
+      ["可以交付證件請人處理嗎？", "不建議。TFSE 不代收證件，也提醒不要交付敏感資料。"]
+    ]
+  },
+  {
+    "slug": "credit-union",
+    "title": "儲蓄互助社資訊查詢，先了解會員制度與在地規定",
+    "short_title": "儲互社",
+    "pain": "各社規定可能不同，應回到章程、公告與合法來源確認。",
+    "category_slug": "credit-union",
+    "need_label": "儲蓄互助社",
+    "product_categories": ["credit_union"],
+    "article_keywords": ["儲蓄互助社", "會員", "在地"],
+    "faq": [
+      ["儲互社條件都一樣嗎？", "不一定。會員資格、服務範圍與章程費用需以各社公告為準。"],
+      ["TFSE 是儲互社嗎？", "不是。TFSE 只整理公開資訊與查詢方向。"]
+    ]
+  },
+  {
+    "slug": "debt-consult",
+    "title": "債務協商與法令資訊，先查公開資源與合法管道",
+    "short_title": "債務法令",
+    "pain": "高負債情境容易遇到誇大承諾，應先理解法令資源與申訴管道。",
+    "category_slug": "debt-law",
+    "need_label": "債務法令",
+    "product_categories": ["debt_law"],
+    "article_keywords": ["債務", "前置協商", "法扶", "更生清算"],
+    "faq": [
+      ["TFSE 會代辦協商嗎？", "不會。本站只整理公開法令與資源，重大法律問題應洽詢專業法律服務。"],
+      ["看到保證降息或協商成功怎麼辦？", "請提高警覺，先查證來源、合約與費用。"]
+    ]
+  },
+  {
+    "slug": "business-working-capital",
+    "title": "企業週轉資訊查詢，先分清需求、條件與公開來源",
+    "short_title": "企業週轉",
+    "pain": "企業資金需求要先釐清用途、收入型態、費用與合法查詢路徑。",
+    "category_slug": "credit-loan",
+    "need_label": "企業主週轉",
+    "product_categories": ["credit_loan"],
+    "article_keywords": ["企業主", "週轉", "企業", "信貸"],
+    "faq": [
+      ["TFSE 會承諾企業額度嗎？", "不會。本站不承諾額度、速度或核准結果。"],
+      ["企業主可以先整理哪些資訊？", "可先整理資金用途、週轉期限、公開來源問題與想確認的合約費用。"]
+    ]
+  },
+  {
+    "slug": "anti-fraud",
+    "title": "看到保證核貸、免審核、內部管道？先看金融防詐清單",
+    "short_title": "防詐清單",
+    "pain": "可疑話術常要求預繳費用、交付證件或提供金融卡資訊，應先停止並查證。",
+    "category_slug": "anti-fraud",
+    "need_label": "金融防詐",
+    "product_categories": ["anti_fraud"],
+    "article_keywords": ["防詐", "詐騙", "保證核貸", "個資"],
+    "faq": [
+      ["哪些話術最需要警覺？", "保證核貸、免審核、內部管道、預繳費用、代收證件、要求金融卡密碼。"],
+      ["遇到可疑訊息怎麼做？", "停止提供資料，回到主管機關、165 或合法機構官方管道查證。"]
+    ]
+  }
+]

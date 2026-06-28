@@ -1,0 +1,28 @@
+{
+  "name": "TFSE金融便民中心",
+  "short_name": "TFSE",
+  "description": "TFSE 僅彙整公開合法金融商品與法令資訊，提供資料庫、金融知識與免費財務健檢需求整理。",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1292ee",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "education", "business"],
+  "icons": [
+    {
+      "src": "assets/images/favicon.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/images/logo/tfse-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
