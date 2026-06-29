@@ -71,6 +71,7 @@ REQUIRED_MARKERS = (
     "python3 tools/api_contract_audit.py",
     "python3 tools/backend_schema_audit.py",
     "python3 tools/performance_budget_audit.py",
+    "python3 tools/sclaw_comparison_audit.py --markdown",
     "python3 tools/accessibility_audit.py",
     "python3 tools/validate_site_config.py",
     "python3 tools/acceptance_audit.py",

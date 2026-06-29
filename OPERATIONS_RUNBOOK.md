@@ -21,6 +21,7 @@ python3 tools/backend_schema_audit.py
 python3 tools/crm_capability_audit.py --markdown
 python3 tools/performance_budget_audit.py
 python3 tools/navigation_consistency_audit.py
+python3 tools/sclaw_comparison_audit.py --markdown
 python3 tools/accessibility_audit.py
 python3 tools/production_env_template.py --markdown
 python3 tools/production_config_readiness.py --markdown
