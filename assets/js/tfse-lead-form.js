@@ -5,6 +5,8 @@
     var SUBMIT_COOLDOWN_MS = 60000;
     var configPromise = null;
     var turnstileScriptPromise = null;
+    var cooldownTimer = null;
+    var leadDialogEscHandler = null;
 
     function getQueryValue(name) {
         var params = new URLSearchParams(window.location.search);
@@ -210,6 +212,148 @@
         message.classList.remove("success", "error");
         if (type) message.classList.add(type);
         message.innerHTML = html;
+        message.hidden = !html;
+    }
+
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttr(value) {
+        return escapeHtml(value).replace(/`/g, "&#096;");
+    }
+
+    function normalizeTaiwanMobile(value) {
+        var raw = String(value || "").trim();
+        var digits = raw.replace(/\D/g, "");
+        if (raw.charAt(0) === "+") {
+            if (digits.indexOf("886") !== 0) return "";
+        }
+        if (digits.indexOf("00886") === 0) digits = digits.slice(2);
+        if (digits.indexOf("8860") === 0) digits = "0" + digits.slice(4);
+        if (digits.indexOf("8869") === 0) digits = "0" + digits.slice(3);
+        return digits;
+    }
+
+    function taiwanMobileError(value) {
+        var phone = normalizeTaiwanMobile(value);
+        if (!phone) return "請填寫有效的台灣手機號碼，例如 0912-345-678 或 +886912345678。";
+        if (!/^09\d{8}$/.test(phone)) return "手機格式不正確：台灣手機需為 09 開頭共 10 碼，或使用 +8869 開頭的國際格式。";
+        if (/^09(\d)\1{7}$/.test(phone)) return "手機號碼看起來不是真實號碼，請確認後再送出。";
+        return "";
+    }
+
+    function validatePhoneField(form, message) {
+        var field = form && form.elements.phone;
+        if (!field) return true;
+        var error = taiwanMobileError(field.value);
+        field.setCustomValidity(error);
+        if (error) {
+            setMessage(message, error, "error");
+            field.reportValidity();
+            field.focus();
+            return false;
+        }
+        field.value = normalizeTaiwanMobile(field.value);
+        return true;
+    }
+
+    function closeLeadDialog() {
+        var dialog = document.querySelector("[data-lead-dialog]");
+        if (dialog) dialog.remove();
+        if (leadDialogEscHandler) {
+            document.removeEventListener("keydown", leadDialogEscHandler);
+            leadDialogEscHandler = null;
+        }
+        document.body.classList.remove("tfse-dialog-open");
+    }
+
+    function showLeadDialog(options) {
+        options = options || {};
+        closeLeadDialog();
+        var overlay = document.createElement("div");
+        overlay.className = "tfse-lead-dialog";
+        overlay.setAttribute("data-lead-dialog", "");
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-labelledby", "tfseLeadDialogTitle");
+        overlay.innerHTML = [
+            "<div class=\"tfse-lead-dialog__panel\">",
+                "<button type=\"button\" class=\"tfse-lead-dialog__close\" data-lead-dialog-close aria-label=\"關閉提示\"><i class=\"fa fa-times\" aria-hidden=\"true\"></i></button>",
+                "<div class=\"tfse-lead-dialog__icon\"><i class=\"fa fa-check\" aria-hidden=\"true\"></i></div>",
+                "<h3 id=\"tfseLeadDialogTitle\">" + escapeHtml(options.title || "已收到您的免費健檢需求") + "</h3>",
+                "<div class=\"tfse-lead-dialog__body\">" + (options.body || "") + "</div>",
+                "<div class=\"tfse-lead-dialog__actions\">" + (options.actions || "") + "<button type=\"button\" class=\"tfse-dialog-secondary\" data-lead-dialog-close>我知道了</button></div>",
+            "</div>"
+        ].join("");
+        overlay.addEventListener("click", function (event) {
+            if (event.target === overlay || event.target.closest("[data-lead-dialog-close]")) closeLeadDialog();
+        });
+        leadDialogEscHandler = function (event) {
+            if (event.key !== "Escape") return;
+            closeLeadDialog();
+        };
+        document.addEventListener("keydown", leadDialogEscHandler);
+        document.body.appendChild(overlay);
+        document.body.classList.add("tfse-dialog-open");
+        var closeButton = overlay.querySelector("[data-lead-dialog-close]");
+        if (closeButton) closeButton.focus();
+    }
+
+    function submitButton(form) {
+        return form ? form.querySelector("[data-lead-submit]") : null;
+    }
+
+    function setSubmitState(form, disabled, html) {
+        var button = submitButton(form);
+        if (!button) return;
+        if (!button.getAttribute("data-default-label")) {
+            button.setAttribute("data-default-label", button.innerHTML);
+        }
+        button.disabled = !!disabled;
+        button.classList.toggle("is-loading", !!disabled);
+        button.innerHTML = html || button.getAttribute("data-default-label") || "送出免費健檢需求";
+    }
+
+    function countdownText(ms) {
+        return Math.max(0, Math.ceil(ms / 1000));
+    }
+
+    function clearCooldownTimer() {
+        if (cooldownTimer) window.clearInterval(cooldownTimer);
+        cooldownTimer = null;
+    }
+
+    function renderCooldown(form, message, baseHtml, type, submittedAt, options) {
+        options = options || {};
+        var remaining = SUBMIT_COOLDOWN_MS - (Date.now() - submittedAt);
+        if (remaining <= 0) {
+            clearCooldownTimer();
+            setSubmitState(form, false);
+            if (baseHtml && !options.silentInline) setMessage(message, baseHtml + "<div class=\"tfse-lead-countdown is-ready\"><strong>可再次提交</strong><span>若要補充另一筆需求，現在可以送出。</span></div>", type);
+            if (options.silentInline) setMessage(message, "", "");
+            return;
+        }
+        var seconds = countdownText(remaining);
+        setSubmitState(form, true, "<span class=\"tfse-btn-spinner\"></span> " + seconds + " 秒後可再次提交");
+        if (!options.silentInline) {
+            setMessage(message, (baseHtml || "系統已收到您的需求。") + "<div class=\"tfse-lead-countdown\"><strong>" + seconds + "</strong><span>秒後可再次提交，避免重複送件。</span></div>", type || "success");
+        } else {
+            setMessage(message, "", "");
+        }
+    }
+
+    function startCooldown(form, message, baseHtml, type, submittedAt, options) {
+        clearCooldownTimer();
+        renderCooldown(form, message, baseHtml, type, submittedAt, options);
+        cooldownTimer = window.setInterval(function () {
+            renderCooldown(form, message, baseHtml, type, submittedAt, options);
+        }, 1000);
     }
 
     function findRecentDuplicate(leads, phone, needs) {
@@ -254,13 +398,13 @@
 
     function renderLinks(items) {
         return items.map(function (item) {
-            return "<a href=\"" + item.href + "\">" + item.title + "</a>";
+            return "<a href=\"" + escapeAttr(item.href) + "\">" + escapeHtml(item.title) + "</a>";
         }).join("、");
     }
 
     function renderLineCta(line) {
         var target = line.external ? " target=\"_blank\" rel=\"noopener\"" : "";
-        return "<a data-line-cta=\"lead-success\" class=\"btn btn-primary btn-hover-secondary mt-3\" href=\"" + line.url + "\"" + target + ">" + line.label + "</a>";
+        return "<a data-line-cta=\"lead-success\" class=\"btn btn-primary btn-hover-secondary mt-3\" href=\"" + escapeAttr(line.url) + "\"" + target + ">" + escapeHtml(line.label) + "</a>";
     }
 
     function bindLeadForm() {
@@ -273,21 +417,47 @@
         }
         setHiddenUtmFields(form);
         setupTurnstile(form, document.querySelector(".form-messege"));
+        if (form.elements.phone) {
+            form.elements.phone.addEventListener("input", function () {
+                form.elements.phone.setCustomValidity("");
+            });
+            form.elements.phone.addEventListener("blur", function () {
+                if (!form.elements.phone.value.trim()) return;
+                var error = taiwanMobileError(form.elements.phone.value);
+                form.elements.phone.setCustomValidity(error);
+            });
+            form.elements.phone.addEventListener("invalid", function () {
+                var message = document.querySelector(".form-messege");
+                setMessage(message, form.elements.phone.validationMessage || "請填寫有效的手機號碼。", "error");
+            });
+        }
+        var initialRemaining = SUBMIT_COOLDOWN_MS - (Date.now() - getLastSubmittedAt());
+        if (initialRemaining > 0) {
+            startCooldown(form, document.querySelector(".form-messege"), "剛剛已送出一筆需求，後台會保存可查詢的紀錄。", "success", getLastSubmittedAt());
+        }
 
         form.addEventListener("submit", function (event) {
         event.preventDefault();
         event.stopImmediatePropagation();
 
         var message = document.querySelector(".form-messege");
+        clearCooldownTimer();
         setHiddenUtmFields(form);
 
+        if (!validatePhoneField(form, message)) {
+            setSubmitState(form, false);
+            return;
+        }
+
         if (!form.checkValidity()) {
+            setSubmitState(form, false);
             form.reportValidity();
             setMessage(message, "請先完成必填欄位與隱私權同意。TFSE 僅收低敏需求資料，請勿填寫證件、帳戶、卡號或密碼。", "error");
             return;
         }
 
         if (form.elements.website && form.elements.website.value) {
+            setSubmitState(form, false);
             setMessage(message, "系統已擋下疑似自動提交。若您是一般使用者，請重新整理後再送出。", "error");
             return;
         }
@@ -295,12 +465,15 @@
         var now = Date.now();
         var remaining = SUBMIT_COOLDOWN_MS - (now - getLastSubmittedAt());
         if (remaining > 0) {
-            setMessage(message, "為保護個資與避免重複提交，請約 " + Math.ceil(remaining / 1000) + " 秒後再試。", "error");
+            startCooldown(form, message, "為保護個資與避免重複提交，請稍後再試。", "error", getLastSubmittedAt());
             return;
         }
+        setSubmitState(form, true, "<span class=\"tfse-btn-spinner\"></span> 正在送出並保存資料");
+        setMessage(message, "<strong>正在送出...</strong><br>系統正在保存您的免費健檢需求，請不要重複點擊。", "success");
 
         requireTurnstileToken(form).then(function (hasTurnstileToken) {
         if (!hasTurnstileToken) {
+            setSubmitState(form, false);
             setMessage(message, "請先完成安全驗證後再送出。", "error");
             return;
         }
@@ -312,14 +485,20 @@
         var leads = getStoredLeads();
 
         if (findRecentDuplicate(leads, form.elements.phone ? form.elements.phone.value : "", needs)) {
-            setMessage(message, "系統已偵測到 24 小時內相同手機與需求的紀錄，請至 <a href=\"admin.html\">CRM</a> 查看，或加入 <a href=\"free-check.html#line-cta\">Line 官方帳號承接說明</a>。", "error");
+            setSubmitState(form, false);
+            setMessage(message, "", "");
+            showLeadDialog({
+                title: "已收到相同需求",
+                body: "<p>系統已偵測到 24 小時內相同手機與需求的紀錄，後台已保留既有案件，避免重複聯繫。</p>",
+                actions: "<a href=\"admin.html\" class=\"tfse-dialog-primary\">前往 CRM 查看紀錄</a><a href=\"free-check.html#line-cta\" class=\"tfse-dialog-link\">Line 官方帳號承接說明</a>"
+            });
             return;
         }
 
         var payload = {
             id: makeId(),
             display_name: form.elements.display_name ? form.elements.display_name.value : (form.elements.name ? form.elements.name.value : ""),
-            phone: form.elements.phone ? form.elements.phone.value : "",
+            phone: form.elements.phone ? normalizeTaiwanMobile(form.elements.phone.value) : "",
             line_id: form.elements.line_id ? form.elements.line_id.value : (form.elements.email ? form.elements.email.value : ""),
             region: form.elements.region ? form.elements.region.value : "",
             needs: needs,
@@ -358,7 +537,13 @@
             var modeLabel = result && result.mode === "api" ? "正式 API 已接收" : "本機 MVP 已保存";
             loadConfig().then(function (config) {
                 var line = lineConfig(config);
-                setMessage(message, "已收到您的免費財務健檢需求（" + modeLabel + "）。TFSE 僅提供公開金融資訊整理與法令諮詢導引，不代辦貸款、不代收證件、不保證核貸。若需辦理金融業務，請親洽合法金融機構。<br>推薦分類：" + renderLinks(recommendations.categories) + "<br>推薦文章：" + renderLinks(recommendations.articles) + "<br><a href=\"admin.html\">前往 CRM 查看紀錄</a> ｜ " + renderLineCta(line), "success");
+                var successHtml = "<p><strong>您的免費財務健檢需求已提交成功。</strong></p><p>狀態：" + modeLabel + "。TFSE 僅提供公開金融資訊整理與法令諮詢導引，不代辦貸款、不代收證件、不保證核貸。</p><p>推薦分類：" + renderLinks(recommendations.categories) + "</p><p>推薦文章：" + renderLinks(recommendations.articles) + "</p>";
+                showLeadDialog({
+                    title: "已提交成功",
+                    body: successHtml,
+                    actions: "<a href=\"admin.html\" class=\"tfse-dialog-primary\">前往 CRM 查看紀錄</a>" + renderLineCta(line).replace("btn btn-primary btn-hover-secondary mt-3", "tfse-dialog-link")
+                });
+                startCooldown(form, message, successHtml, "success", now, { silentInline: true });
 
                 if (window.TFSETrack) {
                     window.TFSETrack("lead_submit", {
@@ -380,10 +565,12 @@
                 resetTurnstile(form);
             });
         }).catch(function (error) {
+            setSubmitState(form, false);
             if (window.TFSEReportError) window.TFSEReportError("lead_submit_failed", error && error.message ? error.message : error, {});
             setMessage(message, "提交時發生錯誤，請稍後再試，或改由 Line 官方帳號承接說明聯繫。", "error");
         });
         }).catch(function (error) {
+            setSubmitState(form, false);
             if (window.TFSEReportError) window.TFSEReportError("turnstile_check_failed", error && error.message ? error.message : error, {});
             setMessage(message, "安全驗證檢查失敗，請稍後再試。", "error");
         });

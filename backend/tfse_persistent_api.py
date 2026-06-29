@@ -22,11 +22,13 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "assets" / "data"
 DEFAULT_DB = ROOT / "data" / "tfse.sqlite3"
-DEFAULT_ADMIN_PASSWORD = "TFSE-MVP-2026"
+DEFAULT_ADMIN_PASSWORD = "admin123"
 LEAD_STATUS_RE = re.compile(r"^/api/admin/leads/([^/]+)/status$")
 PRIVACY_REQUEST_RE = re.compile(r"^/api/admin/privacy-requests/([^/]+)$")
 PRODUCT_DETAIL_RE = re.compile(r"^/api/products/([^/]+)$")
 ARTICLE_DETAIL_RE = re.compile(r"^/api/articles/([^/]+)$")
+ADMIN_PRODUCT_RE = re.compile(r"^/api/admin/products/([^/]+)$")
+ADMIN_ARTICLE_RE = re.compile(r"^/api/admin/articles/([^/]+)$")
 SENSITIVE_PATTERNS = [
     re.compile(r"\b[A-Z][12]\d{8}\b", re.I),
     re.compile(r"\b\d{12,19}\b"),
@@ -138,7 +140,7 @@ def first(query: dict, key: str, default: str = "") -> str:
     return value[0] if value else default
 
 
-def filter_products(query: dict) -> list[dict]:
+def filter_products_items(source_items: list[dict], query: dict) -> list[dict]:
     keyword = first(query, "keyword")
     product_type = first(query, "type")
     category = first(query, "category")
@@ -146,7 +148,7 @@ def filter_products(query: dict) -> list[dict]:
     region = first(query, "region")
     status = first(query, "status")
     items = []
-    for item in PRODUCTS:
+    for item in source_items:
         if product_type and item.get("type") != product_type:
             continue
         if category and item.get("category") != category:
@@ -174,12 +176,16 @@ def filter_products(query: dict) -> list[dict]:
     return items
 
 
-def filter_articles(query: dict) -> list[dict]:
+def filter_products(query: dict) -> list[dict]:
+    return filter_products_items(PRODUCTS, query)
+
+
+def filter_articles_items(source_items: list[dict], query: dict, default_status: str = "published") -> list[dict]:
     keyword = first(query, "keyword")
     category = first(query, "category")
-    status = first(query, "status") or "published"
+    status = first(query, "status") or default_status
     items = []
-    for item in ARTICLES:
+    for item in source_items:
         if status and item.get("status") != status:
             continue
         if category and item.get("category") != category:
@@ -198,6 +204,10 @@ def filter_articles(query: dict) -> list[dict]:
                 continue
         items.append(item)
     return items
+
+
+def filter_articles(query: dict) -> list[dict]:
+    return filter_articles_items(ARTICLES, query, "published")
 
 
 def filter_institutions(query: dict) -> list[dict]:
@@ -350,6 +360,19 @@ class Store:
                 );
                 CREATE INDEX IF NOT EXISTS idx_lead_rate_limits_ip_created ON lead_rate_limits(ip_hash, created_at DESC);
                 CREATE INDEX IF NOT EXISTS idx_lead_rate_limits_device_created ON lead_rate_limits(device_id, created_at DESC);
+                CREATE TABLE IF NOT EXISTS content_records (
+                    item_type TEXT NOT NULL,
+                    id TEXT NOT NULL,
+                    slug TEXT NOT NULL DEFAULT '',
+                    status TEXT NOT NULL DEFAULT '',
+                    payload_json TEXT NOT NULL,
+                    updated_by_role TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY(item_type, id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_content_records_type_status ON content_records(item_type, status, updated_at DESC);
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_content_records_type_slug ON content_records(item_type, slug);
                 """
             )
 
@@ -570,6 +593,82 @@ class Store:
             task = conn.execute("SELECT * FROM privacy_request_tasks WHERE id = ?", (task_id,)).fetchone()
         return {"lead": public_lead(updated_lead), "privacy_request": dict(task), "audit_log": audit}
 
+    def merged_content_items(self, item_type: str, seed_items: list[dict]) -> list[dict]:
+        merged: dict[str, dict] = {}
+        order: list[str] = []
+        for item in seed_items:
+            item_id = str(item.get("id") or item.get("slug") or "")
+            if not item_id:
+                continue
+            merged[item_id] = dict(item)
+            order.append(item_id)
+        with self.conn() as conn:
+            rows = conn.execute(
+                "SELECT * FROM content_records WHERE item_type = ? ORDER BY updated_at DESC",
+                (item_type,),
+            ).fetchall()
+        for row in rows:
+            payload = json.loads(row["payload_json"] or "{}")
+            item_id = str(payload.get("id") or row["id"])
+            payload["id"] = item_id
+            payload["slug"] = str(payload.get("slug") or row["slug"] or item_id)
+            payload["status"] = str(payload.get("status") or row["status"] or "")
+            payload["updated_at"] = str(payload.get("updated_at") or row["updated_at"])
+            if item_id not in merged:
+                order.append(item_id)
+                merged[item_id] = {}
+            merged[item_id].update(payload)
+        return [merged[item_id] for item_id in order if item_id in merged]
+
+    def list_products(self, query: dict | None = None) -> list[dict]:
+        return filter_products_items(self.merged_content_items("product", PRODUCTS), query or {})
+
+    def get_product_by_slug(self, slug: str) -> dict | None:
+        return next((item for item in self.list_products({}) if item.get("slug") == slug), None)
+
+    def list_articles(self, query: dict | None = None, public_only: bool = False) -> list[dict]:
+        default_status = "published" if public_only else ""
+        return filter_articles_items(self.merged_content_items("article", ARTICLES), query or {}, default_status)
+
+    def get_article_by_slug(self, slug: str, public_only: bool = False) -> dict | None:
+        return next((item for item in self.list_articles({}, public_only=public_only) if item.get("slug") == slug), None)
+
+    def upsert_content(self, item_type: str, payload: dict, actor_role: str, content_id: str = "") -> dict:
+        now = now_iso()
+        item = dict(payload or {})
+        item_id = str(content_id or item.get("id") or f"{item_type}_{secrets.token_hex(6)}")
+        item["id"] = item_id
+        item["slug"] = str(item.get("slug") or item_id).strip().replace(" ", "-")
+        item["status"] = str(item.get("status") or ("draft" if item_type == "article" else "來源待核驗"))
+        item["updated_at"] = str(item.get("updated_at") or now[:10])
+        item["admin_updated_at"] = now
+        item["admin_updated_by_role"] = actor_role
+        with self.conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO content_records(item_type, id, slug, status, payload_json, updated_by_role, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(item_type, id) DO UPDATE SET
+                    slug = excluded.slug,
+                    status = excluded.status,
+                    payload_json = excluded.payload_json,
+                    updated_by_role = excluded.updated_by_role,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    item_type,
+                    item_id,
+                    item["slug"],
+                    item["status"],
+                    json.dumps(item, ensure_ascii=False),
+                    actor_role,
+                    now,
+                    now,
+                ),
+            )
+        audit = self.audit(f"{item_type}_content_upsert", item_id, item["status"], actor_role)
+        return {"item": item, "audit_log": audit}
+
     def create_compliance_review(self, payload: dict, actor_role: str) -> dict:
         review_id = "review_" + secrets.token_hex(8)
         review = {
@@ -680,6 +779,25 @@ class Store:
         self.audit("public_feedback_submit", ticket_id, str(payload.get("feedback_type") or ""))
         return ticket
 
+    def list_public_feedback(self) -> list[dict]:
+        with self.conn() as conn:
+            rows = conn.execute(
+                """
+                SELECT ticket_id, feedback_type, page_url, summary, status, assigned_role, payload_json, received_at
+                FROM public_feedback_tickets
+                ORDER BY received_at DESC
+                LIMIT 200
+                """
+            ).fetchall()
+        items = []
+        for row in rows:
+            payload = json.loads(row["payload_json"] or "{}")
+            item = dict(row)
+            item["payload"] = payload
+            item["related_task_type"] = item.get("feedback_type") or payload.get("feedback_type") or "content_review"
+            items.append(item)
+        return items
+
     def audit_logs(self) -> list[dict]:
         with self.conn() as conn:
             rows = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 200").fetchall()
@@ -694,6 +812,8 @@ class Store:
                 "public_feedback": conn.execute("SELECT COUNT(1) FROM public_feedback_tickets").fetchone()[0],
                 "compliance_reviews": conn.execute("SELECT COUNT(1) FROM compliance_reviews").fetchone()[0],
                 "privacy_requests": conn.execute("SELECT COUNT(1) FROM privacy_request_tasks").fetchone()[0],
+                "content_products": conn.execute("SELECT COUNT(1) FROM content_records WHERE item_type = 'product'").fetchone()[0],
+                "content_articles": conn.execute("SELECT COUNT(1) FROM content_records WHERE item_type = 'article'").fetchone()[0],
             }
         return {"ok": True, "service": "tfse_persistent_api", "db_path": str(self.db_path), "generated_at": now_iso(), **counts}
 
@@ -773,6 +893,14 @@ class Handler(BaseHTTPRequestHandler):
             return None
         return role, payload
 
+    def _require_csrf(self, session_payload: dict) -> bool:
+        expected = str((session_payload or {}).get("csrf_token") or "")
+        provided = str(self.headers.get("X-CSRF-Token") or "")
+        if expected and provided and hmac.compare_digest(expected, provided):
+            return True
+        self._write_json({"error": "csrf_token_required"}, status=403)
+        return False
+
     def do_OPTIONS(self) -> None:
         self._set_headers(status=204, content_type="text/plain; charset=utf-8")
 
@@ -790,11 +918,11 @@ class Handler(BaseHTTPRequestHandler):
             self._write_json(self.store.health())
             return
         if path == "/api/products":
-            items = filter_products(query)
+            items = self.store.list_products(query)
             self._write_json({"items": items, "page": 1, "total": len(items)})
             return
         if path == "/api/articles":
-            items = filter_articles(query)
+            items = self.store.list_articles(query, public_only=True)
             self._write_json({"items": items, "page": 1, "total": len(items)})
             return
         if path == "/api/institutions":
@@ -807,13 +935,13 @@ class Handler(BaseHTTPRequestHandler):
         product_match = PRODUCT_DETAIL_RE.match(path)
         if product_match:
             slug = product_match.group(1)
-            product = next((item for item in PRODUCTS if item.get("slug") == slug), None)
+            product = self.store.get_product_by_slug(slug)
             self._write_json(product or {"error": "product_not_found", "slug": slug}, status=200 if product else 404)
             return
         article_match = ARTICLE_DETAIL_RE.match(path)
         if article_match:
             slug = article_match.group(1)
-            article = next((item for item in ARTICLES if item.get("slug") == slug and item.get("status") == "published"), None)
+            article = self.store.get_article_by_slug(slug, public_only=True)
             self._write_json(article or {"error": "article_not_found", "slug": slug}, status=200 if article else 404)
             return
         if path == "/api/admin/auth/session":
@@ -825,6 +953,18 @@ class Handler(BaseHTTPRequestHandler):
                 return
             self._write_json({"items": self.store.list_leads()})
             return
+        if path == "/api/admin/products":
+            if not self._require_admin():
+                return
+            items = self.store.list_products(query)
+            self._write_json({"items": items, "page": 1, "total": len(items)})
+            return
+        if path == "/api/admin/articles":
+            if not self._require_admin():
+                return
+            items = self.store.list_articles(query, public_only=False)
+            self._write_json({"items": items, "page": 1, "total": len(items)})
+            return
         if path == "/api/admin/audit-logs":
             if not self._require_admin():
                 return
@@ -834,6 +974,12 @@ class Handler(BaseHTTPRequestHandler):
             if not self._require_admin():
                 return
             items = self.store.list_privacy_requests()
+            self._write_json({"items": items, "total": len(items)})
+            return
+        if path == "/api/admin/public-feedback-intake":
+            if not self._require_admin():
+                return
+            items = self.store.list_public_feedback()
             self._write_json({"items": items, "total": len(items)})
             return
         self._write_json({"error": "not_found", "path": path}, status=404)
@@ -884,8 +1030,28 @@ class Handler(BaseHTTPRequestHandler):
                 admin = self._require_admin()
                 if not admin:
                     return
-                role, _ = admin
+                role, session = admin
+                if not self._require_csrf(session):
+                    return
                 self._write_json(self.store.create_compliance_review(payload, role))
+                return
+            if path == "/api/admin/products":
+                admin = self._require_admin()
+                if not admin:
+                    return
+                role, session = admin
+                if not self._require_csrf(session):
+                    return
+                self._write_json(self.store.upsert_content("product", payload, role))
+                return
+            if path == "/api/admin/articles":
+                admin = self._require_admin()
+                if not admin:
+                    return
+                role, session = admin
+                if not self._require_csrf(session):
+                    return
+                self._write_json(self.store.upsert_content("article", payload, role))
                 return
             self._write_json({"error": "not_found", "path": path}, status=404)
         except ValueError as exc:
@@ -897,17 +1063,27 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         match = LEAD_STATUS_RE.match(path)
         privacy_match = PRIVACY_REQUEST_RE.match(path)
-        if not match and not privacy_match:
+        product_match = ADMIN_PRODUCT_RE.match(path)
+        article_match = ADMIN_ARTICLE_RE.match(path)
+        if not match and not privacy_match and not product_match and not article_match:
             self._write_json({"error": "not_found", "path": path}, status=404)
             return
         admin = self._require_admin()
         if not admin:
             return
-        role, _ = admin
+        role, session = admin
+        if not self._require_csrf(session):
+            return
         payload = self._read_json()
         if match:
             updated = self.store.update_lead_status(match.group(1), payload, role)
             self._write_json(updated or {"error": "lead_not_found", "id": match.group(1)}, status=200 if updated else 404)
+            return
+        if product_match:
+            self._write_json(self.store.upsert_content("product", payload, role, product_match.group(1)))
+            return
+        if article_match:
+            self._write_json(self.store.upsert_content("article", payload, role, article_match.group(1)))
             return
         updated = self.store.update_privacy_request(privacy_match.group(1), payload, role)
         self._write_json(updated or {"error": "lead_not_found", "id": privacy_match.group(1)}, status=200 if updated else 404)

@@ -15,16 +15,13 @@
 | 原模板页面/类型 | 当前文件 | TFSE 页面角色 | 业务脚本/数据 |
 |---|---|---|---|
 | Home / Landing | `index.html` | 金融便民首页、品牌首屏、查询面板、资料库入口、免费健检 CTA | `tfse-home-query.js`, `tfse-lead-form.js`, `categories.json`, `articles.json` |
-| Home variation | `index-2.html` | 资料库入口备用首页，保留模板骨架用于资料库导流 | `tfse-lead-form.js` |
-| Home variation | `index-3.html` | 免费健检入口备用首页，保留模板骨架用于表单导流 | `tfse-lead-form.js` |
 | About | `about.html` | 关于 TFSE、平台定位、资料来源和非代办边界 | shared scripts |
-| Services / Products | `service.html`, `database.html` | 全类金融商品资料库，含搜索、筛选、来源与更新时间 | `tfse-products.js`, `tfse-database.js`, `products.json` |
+| Services / Products | `database.html` | 全类金融商品资料库，含搜索、筛选、来源与更新时间 | `tfse-products.js`, `tfse-database.js`, `products.json` |
 | Work / Portfolio | `work.html` | 金融分类入口 | `tfse-categories.js`, `categories.json` |
-| Work detail | `work-details.html` | 金融商品详情页，展示公开资讯、来源、复核状态和合规 CTA | `tfse-products.js`, `products.json` |
 | Category aliases | `mortgage.html`, `credit-loan.html`, `vehicle-finance.html`, `installment.html`, `credit-union.html`, `debt-law.html`, `insurance-finance.html`, `anti-fraud.html`, `category.html` | 八大金融分类页和动态分类页 | `tfse-categories.js`, `categories.json`, `products.json`, `articles.json` |
-| Blog list/grid/classic | `articles.html`, `blog-grid.html`, `blog-classic.html` | 金融知识内容中心和专栏列表 | `tfse-articles.js`, `articles.json` |
-| Blog detail | `blog-details.html`, `articles/*.html` | 金融知识文章详情，底部导向资料库和免费健检 | `tfse-articles.js`, `articles.json` |
-| Product detail | `work-details.html`, `products/*.html` | 金融商品详情，显示来源、更新时间、相关资讯和健检 CTA | `tfse-products.js`, `products.json`, `articles.json`, `categories.json` |
+| Blog list/grid/classic | `articles.html` | 金融知识内容中心和专栏列表 | `tfse-articles.js`, `articles.json` |
+| Blog detail | `articles/*.html` | 金融知识文章详情，底部导向资料库和免费健检 | `tfse-articles.js`, `articles.json` |
+| Product detail | `products/*.html` | 金融商品详情，显示来源、更新时间、相关资讯和健检 CTA | `tfse-products.js`, `products.json`, `articles.json`, `categories.json` |
 | Contact / Form | `free-check.html` | 免费财务健检表单、低敏资料收集、Line CTA、FAQ | `tfse-lead-form.js`, `tfse-line.js`, `tfse-faq.js`, `faq.json`, `line-flows.json` |
 | Contact page | `contact.html` | 联络我们、个资删除/更正请求入口说明 | shared scripts |
 | Landing page | `lp.html`, `lp/*.html` | 8 个广告落地页，复用同一套模板区块、FAQ、UTM 与表单 | `tfse-landing-pages.js`, `landing-pages.json`, `tfse-lead-form.js` |
@@ -32,6 +29,17 @@
 | Admin / Dashboard | `admin.html` | 静态 MVP Admin CRM、资料管理、文章审核、合规、报表、备份、上线检查 | `tfse-admin.js`, `tfse-api.js`, all JSON seeds |
 | Policy pages | `privacy.html`, `terms.html`, `disclaimer.html`, `source-policy.html` | 隐私权、使用条款、免责声明、资料来源政策 | `tfse-institutions.js` on source policy |
 | Error pages | `404.html`, `500.html` | 错误页，导回资料库、文章和免费健检 | shared scripts |
+
+## 已清理的重复入口
+
+下列页面曾是模板演示或早期备用入口，容易和正式功能重复。现在只保留为 `noindex` 兼容跳转页，并在静态部署平台通过 `_redirects` 指向唯一正式页面。
+
+| 旧入口 | 正式页面 |
+|---|---|
+| `index-2.html`, `index-3.html` | `index.html` |
+| `service.html`, `work-details.html` | `database.html` |
+| `blog-grid.html`, `blog-classic.html`, `blog-details.html` | `articles.html` |
+| `contact-us.html` | `contact.html` |
 
 ## 模板区块映射
 

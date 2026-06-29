@@ -12,6 +12,26 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "site-config.json"
 BASE_URL_RE = re.compile(r"https://[^\"'\s<>]+(?:/finance_webto)?")
 KNOWN_HOST_RE = re.compile(r"https://(?:windzlc-code\.github\.io/finance_webto|www\.tfse\.tw|tfse\.tw)")
+REDIRECT_CANONICAL_PATHS = {
+    "index-2.html": "",
+    "index-3.html": "",
+    "service.html": "database.html",
+    "work-details.html": "database.html",
+    "blog-grid.html": "articles.html",
+    "blog-classic.html": "articles.html",
+    "blog-details.html": "articles.html",
+    "contact-us.html": "contact.html",
+}
+LEGACY_LINK_TARGETS = {
+    "blog-classic.html": "articles.html",
+    "blog-grid.html": "articles.html",
+    "blog-details.html": "articles.html",
+    "service.html": "database.html",
+    "work-details.html": "database.html",
+    "contact-us.html": "contact.html",
+    "index-2.html": "index.html",
+    "index-3.html": "index.html",
+}
 
 
 def load_json(path):
@@ -28,6 +48,13 @@ def site_url(path=""):
     return f"{base}/{path}" if path else f"{base}/"
 
 
+def normalize_legacy_links(text):
+    for legacy, target in LEGACY_LINK_TARGETS.items():
+        text = text.replace(f'href="{legacy}"', f'href="{target}"')
+        text = text.replace(f"href='{legacy}'", f"href='{target}'")
+    return text
+
+
 def product_detail_path(slug):
     return f"products/{quote(str(slug))}.html"
 
@@ -40,8 +67,8 @@ def canonical_path_for_html(path):
     relative = path.relative_to(ROOT).as_posix()
     if relative == "index.html":
         return ""
-    if relative == "contact-us.html":
-        return "contact.html"
+    if relative in REDIRECT_CANONICAL_PATHS:
+        return REDIRECT_CANONICAL_PATHS[relative]
     return relative
 
 
@@ -150,6 +177,8 @@ def base_structured_data(config, path):
         },
     ]
     relative = path.relative_to(ROOT).as_posix()
+    if relative in REDIRECT_CANONICAL_PATHS:
+        return {"@context": "https://schema.org", "@graph": graph}
     if relative in ("articles.html", "blog-grid.html", "blog-classic.html"):
         articles = [
             item for item in load_json(ROOT / "assets/data/articles.json")
@@ -248,17 +277,18 @@ def with_base_href(text, href):
 def generate_alias_pages():
     products = load_json(ROOT / "assets/data/products.json")
     articles = load_json(ROOT / "assets/data/articles.json")
-    product_template = (ROOT / "work-details.html").read_text(encoding="utf-8")
-    article_template = (ROOT / "blog-details.html").read_text(encoding="utf-8")
-    contact_template = (ROOT / "contact-us.html").read_text(encoding="utf-8")
+    product_template = (ROOT / "tools/templates/product-detail.html").read_text(encoding="utf-8")
+    article_template = (ROOT / "tools/templates/article-detail.html").read_text(encoding="utf-8")
+    contact_template = (ROOT / "tools/templates/contact.html").read_text(encoding="utf-8")
 
     product_dir = ROOT / "products"
     article_dir = ROOT / "articles"
     product_dir.mkdir(exist_ok=True)
     article_dir.mkdir(exist_ok=True)
 
-    product_template = with_base_href(product_template, "../")
-    article_template = with_base_href(article_template, "../")
+    product_template = with_base_href(normalize_legacy_links(product_template), "../")
+    article_template = with_base_href(normalize_legacy_links(article_template), "../")
+    contact_template = normalize_legacy_links(contact_template)
 
     for item in products:
         (product_dir / f"{item['slug']}.html").write_text(product_template, encoding="utf-8")

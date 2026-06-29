@@ -2,6 +2,7 @@
     "use strict";
 
     var configPromise = null;
+    var adminSessionCache = {};
 
     function loadConfig() {
         if (configPromise) return configPromise;
@@ -163,6 +164,38 @@
         }
     }
 
+    function getStoredAdminSession() {
+        try {
+            return JSON.parse(sessionStorage.getItem("tfse_admin_api_session") || "{}");
+        } catch (error) {
+            return adminSessionCache || {};
+        }
+    }
+
+    function saveStoredAdminSession(data) {
+        if (data && data.csrf_token) {
+            adminSessionCache = {
+                csrf_token: data.csrf_token,
+                role: data.role || "",
+                expires_at: data.expires_at || ""
+            };
+        }
+        try {
+            if (data && data.csrf_token) sessionStorage.setItem("tfse_admin_api_session", JSON.stringify(adminSessionCache));
+        } catch (error) {
+            // Keep API usable even if storage is unavailable.
+        }
+    }
+
+    function clearStoredAdminSession() {
+        adminSessionCache = {};
+        try {
+            sessionStorage.removeItem("tfse_admin_api_session");
+        } catch (error) {
+            // Ignore storage failures in private browsing or locked-down contexts.
+        }
+    }
+
     function requestJson(url, options, ms) {
         var controller = window.AbortController ? new AbortController() : null;
         var timer = controller ? setTimeout(function () { controller.abort(); }, ms) : null;
@@ -170,6 +203,14 @@
             headers: { "Content-Type": "application/json" },
             credentials: "include"
         }, options || {});
+        var method = String(requestOptions.method || "GET").toUpperCase();
+        var needsCsrf = method !== "GET" && url.indexOf("/api/admin/") !== -1 && url.indexOf("/api/admin/auth/login") === -1;
+        if (needsCsrf) {
+            var session = getStoredAdminSession();
+            if (session.csrf_token) {
+                requestOptions.headers = Object.assign({}, requestOptions.headers || {}, { "X-CSRF-Token": session.csrf_token });
+            }
+        }
         if (controller) requestOptions.signal = controller.signal;
 
         return fetch(url, requestOptions)
@@ -220,6 +261,50 @@
         } catch (error) {
             // Ignore storage failures in private browsing or locked-down contexts.
         }
+    }
+
+    function getStoredAdminContent(type) {
+        try {
+            return JSON.parse(localStorage.getItem("tfse_admin_" + type) || "[]");
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function saveStoredAdminContent(type, items) {
+        try {
+            localStorage.setItem("tfse_admin_" + type, JSON.stringify(items || []));
+        } catch (error) {
+            // Ignore storage failures in private browsing or locked-down contexts.
+        }
+    }
+
+    function upsertStoredAdminContent(type, item) {
+        var items = getStoredAdminContent(type);
+        var next = Object.assign({}, item || {});
+        next.id = next.id || ("admin_" + type + "_" + Date.now().toString(36));
+        var replaced = false;
+        items = items.map(function (existing) {
+            if (existing && existing.id === next.id) {
+                replaced = true;
+                return Object.assign({}, existing, next);
+            }
+            return existing;
+        });
+        if (!replaced) items.unshift(next);
+        saveStoredAdminContent(type, items);
+        return next;
+    }
+
+    function mergeAdminContent(staticItems, storedItems, params, filterFn) {
+        var merged = {};
+        (staticItems || []).forEach(function (item) {
+            if (item && item.id) merged[item.id] = item;
+        });
+        (storedItems || []).slice().reverse().forEach(function (item) {
+            if (item && item.id) merged[item.id] = Object.assign({}, merged[item.id] || {}, item);
+        });
+        return filterFn(Object.keys(merged).map(function (id) { return merged[id]; }), params);
     }
 
     function localSubmitPublicFeedback(payload) {
@@ -283,6 +368,19 @@
         });
     }
 
+    function listPublicFeedback() {
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/public-feedback-intake");
+            if (!url) return { mode: "localStorage", items: getStoredPublicFeedback() };
+            return requestJson(url, { method: "GET" }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            }).catch(function (error) {
+                reportApiFallback("GET /api/admin/public-feedback-intake", error);
+                return { mode: "api_fallback_localStorage", items: getStoredPublicFeedback(), error: error.message };
+            });
+        });
+    }
+
     function listLeads() {
         return loadConfig().then(function (config) {
             var url = endpoint(config, "/api/admin/leads");
@@ -313,6 +411,109 @@
                     data.error = error.message;
                     return data;
                 });
+            });
+        });
+    }
+
+    function adminListProducts(params) {
+        params = params || {};
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/products");
+            if (!url || backendMode(config) !== "api") {
+                return loadStaticJson("assets/data/products.json", []).then(function (items) {
+                    var mergedItems = mergeAdminContent(items, getStoredAdminContent("products"), params, filterProducts);
+                    return { mode: "localStorage", items: mergedItems, page: 1, total: mergedItems.length };
+                });
+            }
+            return requestJson(url + queryString(params), { method: "GET" }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            }).catch(function (error) {
+                reportApiFallback("GET /api/admin/products", error);
+                return loadStaticJson("assets/data/products.json", []).then(function (items) {
+                    var mergedItems = mergeAdminContent(items, getStoredAdminContent("products"), params, filterProducts);
+                    return { mode: "api_fallback_localStorage", items: mergedItems, page: 1, total: mergedItems.length, error: error.message };
+                });
+            });
+        });
+    }
+
+    function saveAdminProduct(id, payload) {
+        payload = Object.assign({}, payload || {});
+        return loadConfig().then(function (config) {
+            var path = id ? "/api/admin/products/" + encodeURIComponent(id) : "/api/admin/products";
+            var url = endpoint(config, path);
+            if (!url || backendMode(config) !== "api") {
+                return { mode: "localStorage", item: upsertStoredAdminContent("products", Object.assign({ id: id || payload.id }, payload)) };
+            }
+            return requestJson(url, {
+                method: id ? "PATCH" : "POST",
+                body: JSON.stringify(payload)
+            }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            }).catch(function (error) {
+                reportApiFallback((id ? "PATCH" : "POST") + " /api/admin/products", error);
+                return { mode: "api_fallback_localStorage", item: upsertStoredAdminContent("products", Object.assign({ id: id || payload.id }, payload)), error: error.message };
+            });
+        });
+    }
+
+    function adminListArticles(params) {
+        params = params || {};
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/articles");
+            if (!url || backendMode(config) !== "api") {
+                return loadStaticJson("assets/data/articles.json", []).then(function (items) {
+                    var mergedItems = mergeAdminContent(items, getStoredAdminContent("articles"), params, filterArticles);
+                    return { mode: "localStorage", items: mergedItems, page: 1, total: mergedItems.length };
+                });
+            }
+            return requestJson(url + queryString(params), { method: "GET" }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            }).catch(function (error) {
+                reportApiFallback("GET /api/admin/articles", error);
+                return loadStaticJson("assets/data/articles.json", []).then(function (items) {
+                    var mergedItems = mergeAdminContent(items, getStoredAdminContent("articles"), params, filterArticles);
+                    return { mode: "api_fallback_localStorage", items: mergedItems, page: 1, total: mergedItems.length, error: error.message };
+                });
+            });
+        });
+    }
+
+    function saveAdminArticle(id, payload) {
+        payload = Object.assign({}, payload || {});
+        return loadConfig().then(function (config) {
+            var path = id ? "/api/admin/articles/" + encodeURIComponent(id) : "/api/admin/articles";
+            var url = endpoint(config, path);
+            if (!url || backendMode(config) !== "api") {
+                return { mode: "localStorage", item: upsertStoredAdminContent("articles", Object.assign({ id: id || payload.id }, payload)) };
+            }
+            return requestJson(url, {
+                method: id ? "PATCH" : "POST",
+                body: JSON.stringify(payload)
+            }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            }).catch(function (error) {
+                reportApiFallback((id ? "PATCH" : "POST") + " /api/admin/articles", error);
+                return { mode: "api_fallback_localStorage", item: upsertStoredAdminContent("articles", Object.assign({ id: id || payload.id }, payload)), error: error.message };
+            });
+        });
+    }
+
+    function saveComplianceReview(payload) {
+        payload = Object.assign({}, payload || {});
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/compliance/review");
+            if (!url || backendMode(config) !== "api") {
+                return { mode: "localStorage", review: payload };
+            }
+            return requestJson(url, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            }).catch(function (error) {
+                reportApiFallback("POST /api/admin/compliance/review", error);
+                return { mode: "api_fallback_localStorage", review: payload, error: error.message };
             });
         });
     }
@@ -355,6 +556,7 @@
                     role: credentials.role || "viewer"
                 })
             }, timeoutMs(config)).then(function (data) {
+                saveStoredAdminSession(data);
                 return Object.assign({ mode: "api", authenticated: true }, data);
             });
         });
@@ -371,9 +573,11 @@
                 };
             }
             return requestJson(url, { method: "GET" }, timeoutMs(config)).then(function (data) {
+                saveStoredAdminSession(data);
                 return Object.assign({ mode: "api", authenticated: !!data.authenticated }, data);
             }).catch(function (error) {
                 if (error && error.status === 401) {
+                    clearStoredAdminSession();
                     return { mode: "api", authenticated: false };
                 }
                 reportApiFallback("GET /api/admin/auth/session", error);
@@ -396,7 +600,11 @@
                 method: "POST",
                 body: JSON.stringify({})
             }, timeoutMs(config)).then(function (data) {
+                clearStoredAdminSession();
                 return Object.assign({ mode: "api", authenticated: false }, data);
+            }).catch(function (error) {
+                clearStoredAdminSession();
+                throw error;
             });
         });
     }
@@ -533,11 +741,17 @@
         saveStoredPublicFeedback: saveStoredPublicFeedback,
         submitLead: submitLead,
         submitPublicFeedback: submitPublicFeedback,
+        listPublicFeedback: listPublicFeedback,
         listLeads: listLeads,
         updateLeadStatus: updateLeadStatus,
         loginAdmin: loginAdmin,
         getAdminSession: getAdminSession,
         logoutAdmin: logoutAdmin,
+        adminListProducts: adminListProducts,
+        saveAdminProduct: saveAdminProduct,
+        adminListArticles: adminListArticles,
+        saveAdminArticle: saveAdminArticle,
+        saveComplianceReview: saveComplianceReview,
         listProducts: listProducts,
         getProduct: getProduct,
         listArticles: listArticles,

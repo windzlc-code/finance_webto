@@ -108,33 +108,24 @@
         }).join("");
     }
 
-    function renderForm(page) {
+    function freeCheckUrl(page) {
+        var params = new URLSearchParams(window.location.search || "");
+        params.set("source", "landing");
+        params.set("slug", page.slug || "");
+        return "free-check.html?" + params.toString();
+    }
+
+    function renderFreeCheckEntry(page) {
         return [
-            "<form action=\"#\" id=\"contact-form\" method=\"post\">",
-            "<div class=\"row mb-n4\">",
-            "<div class=\"col-md-6 col-12 mb-4\"><input type=\"text\" placeholder=\"稱呼 *\" name=\"display_name\" required></div>",
-            "<div class=\"col-md-6 col-12 mb-4\"><input type=\"tel\" placeholder=\"手機 *\" name=\"phone\" required></div>",
-            "<div class=\"col-md-6 col-12 mb-4\"><input type=\"text\" placeholder=\"Line ID（選填）\" name=\"line_id\"></div>",
-            "<div class=\"col-md-6 col-12 mb-4\"><input type=\"text\" placeholder=\"所在地區\" name=\"region\"></div>",
-            "<div class=\"col-md-6 col-12 mb-4\"><input type=\"text\" name=\"needs\" value=\"" + escapeHtml(page.need_label) + "\" aria-label=\"需求類型\"></div>",
-            "<div class=\"col-md-6 col-12 mb-4\"><input type=\"text\" placeholder=\"身份類型：上班族 / 企業主 / 其他\" name=\"occupation_type\"></div>",
-            "<div class=\"col-md-6 col-12 mb-4\"><input type=\"text\" placeholder=\"收入型態：固定薪轉 / 接案 / 營業收入\" name=\"income_type\"></div>",
-            "<div class=\"col-12 mb-4\"><textarea name=\"message\" placeholder=\"目前困擾（選填）\"></textarea></div>",
-            "<div class=\"col-12 mb-4\"><label><input type=\"checkbox\" name=\"consent_privacy\" required> 我已閱讀並同意隱私權政策，了解 TFSE 僅作資訊整理與法令導引。</label></div>",
-            "<div class=\"col-12 mb-6\"><label><input type=\"checkbox\" name=\"consent_line\"> 我同意透過 Line 接收公開金融資訊與健檢結果提醒。</label></div>",
-            "<input type=\"hidden\" name=\"source_url\" value=\"" + escapeHtml(landingPath(page)) + "\">",
-            "<input type=\"hidden\" name=\"utm_source\">",
-            "<input type=\"hidden\" name=\"utm_medium\">",
-            "<input type=\"hidden\" name=\"utm_campaign\">",
-            "<input type=\"hidden\" name=\"utm_content\">",
-            "<input type=\"hidden\" name=\"utm_term\">",
-            "<input type=\"hidden\" name=\"cf_turnstile_response\">",
-            "<input type=\"text\" name=\"website\" tabindex=\"-1\" autocomplete=\"off\" aria-hidden=\"true\" style=\"position:absolute;left:-9999px;opacity:0;height:0;width:0;\">",
-            "<div class=\"col-12 mb-4\" data-turnstile-field hidden></div>",
-            "<div class=\"col-12 text-center mb-4\"><button class=\"btn btn-primary btn-hover-secondary\" type=\"submit\" data-lead-submit>送出免費健檢需求</button></div>",
-            "</div>",
-            "</form>",
-            "<p class=\"form-messege\" aria-live=\"polite\">送出後顯示：已收到您的免費財務健檢需求。若需辦理金融業務，請親洽合法金融機構。</p>"
+            "<div class=\"tfse-unique-entry\">",
+            "<p>為避免同一需求在多個頁面重複填寫，投流頁只保留導流卡片。正式填寫、儲存與後台查詢都統一在免費健檢頁完成。</p>",
+            "<ul class=\"agency-list\">",
+            "<li class=\"item\"><div class=\"icon\"><i class=\"fas fa-check\"></i></div><div class=\"text\">目前需求：" + escapeHtml(page.need_label || "金融資訊查詢") + "</div></li>",
+            "<li class=\"item\"><div class=\"icon\"><i class=\"fas fa-check\"></i></div><div class=\"text\">不收證件、帳戶、卡號、密碼等敏感資料。</div></li>",
+            "<li class=\"item\"><div class=\"icon\"><i class=\"fas fa-check\"></i></div><div class=\"text\">送出後進入同一套 TFSE 後台線索管理。</div></li>",
+            "</ul>",
+            "<div class=\"text-center mt-6\"><a class=\"btn btn-primary btn-hover-secondary\" href=\"" + escapeHtml(freeCheckUrl(page)) + "\">前往唯一免費健檢入口</a></div>",
+            "</div>"
         ].join("");
     }
 
@@ -162,13 +153,13 @@
 
         root.innerHTML = [
             "<div class=\"section section-padding-t90-b100\"><div class=\"container\"><div class=\"row row-cols-lg-2 row-cols-1 align-items-center mb-n6\">",
-            "<div class=\"col mb-6\"><div class=\"section-title-two\"><span class=\"sub-title\">合法資訊查詢，不代辦、不收證件</span><h2 class=\"title\">" + escapeHtml(page.title) + "</h2></div><p>" + escapeHtml(page.pain) + "</p><p>TFSE 僅整理公開合法金融商品與法令資訊，所有融資、貸款業務須民眾親自洽詢合法金融機構辦理。</p><a class=\"btn btn-primary btn-hover-secondary mt-4\" href=\"#lp-form\">填寫免費健檢</a> <a class=\"btn btn-outline-secondary mt-4\" href=\"category.html?slug=" + escapeHtml(page.category_slug) + "\">查看分類資訊</a></div>",
+            "<div class=\"col mb-6\"><div class=\"section-title-two\"><span class=\"sub-title\">合法資訊查詢，不代辦、不收證件</span><h2 class=\"title\">" + escapeHtml(page.title) + "</h2></div><p>" + escapeHtml(page.pain) + "</p><p>TFSE 僅整理公開合法金融商品與法令資訊，所有融資、貸款業務須民眾親自洽詢合法金融機構辦理。</p><a class=\"btn btn-primary btn-hover-secondary mt-4\" href=\"" + escapeHtml(freeCheckUrl(page)) + "\">前往免費健檢</a> <a class=\"btn btn-outline-secondary mt-4\" href=\"category.html?slug=" + escapeHtml(page.category_slug) + "\">查看分類資訊</a></div>",
             "<div class=\"col mb-6\"><div class=\"about-image-area\"><div class=\"about-image js-tilt\"><img src=\"assets/images/about/about-3.jpg\" alt=\"公開金融資訊查詢\"></div><div class=\"about-image js-tilt\"><img src=\"assets/images/about/about-7.jpg\" alt=\"金融便民資訊整理\"></div></div></div>",
             "</div></div></div>",
             "<div class=\"section section-padding-t90-b100\" data-bg-color=\"#f8faff\"><div class=\"container\"><div class=\"section-title text-center\"><h2 class=\"title fz-32\">三步完成資訊整理</h2></div><div class=\"row row-cols-lg-3 row-cols-md-3 row-cols-1 mb-n6\"><div class=\"col mb-6\"><div class=\"icon-box box-border text-center\"><div class=\"content\"><h3 class=\"title\">選擇需求</h3><p>確認想查詢的金融資訊類型與目前情境。</p></div></div></div><div class=\"col mb-6\"><div class=\"icon-box box-border text-center\"><div class=\"content\"><h3 class=\"title\">查看資訊</h3><p>閱讀公開資訊、注意事項、FAQ 與來源政策。</p></div></div></div><div class=\"col mb-6\"><div class=\"icon-box box-border text-center\"><div class=\"content\"><h3 class=\"title\">填寫健檢</h3><p>留下低敏資料，取得後續分類與文章建議。</p></div></div></div></div></div></div>",
             "<div class=\"section section-padding-t90-b100\"><div class=\"container\"><div class=\"section-title text-center\"><h2 class=\"title fz-32\">對應資訊卡片</h2></div><div class=\"row row-cols-lg-3 row-cols-md-2 row-cols-1 mb-n6\">" + renderCards(matchedProducts, "product") + renderCards(matchedArticles, "article") + "</div></div></div>",
             "<div class=\"faq-section section section-padding-top\" data-bg-color=\"#f8faff\"><div class=\"container\"><div class=\"row row-cols-lg-2 row-cols-1 mb-n6\"><div class=\"col mb-6\"><div class=\"faq-content\"><div class=\"section-title-two\"><span class=\"sub-title\">常見問題</span><h3 class=\"title\">投流頁資訊邊界</h3></div><div class=\"agency-accordion max-mb-n30\" id=\"lpFaq\">" + renderFaq(page) + "</div></div></div><div class=\"col mb-6 pl-xl-12\"><div class=\"about-image-area faq-image-area\"><div class=\"about-image right-n50 js-tilt\"><img src=\"assets/images/faq/faq-2.jpg\" alt=\"金融資訊查詢\"></div><div class=\"about-image js-tilt\"><img src=\"assets/images/faq/faq-1.jpg\" alt=\"合規提醒\"></div></div></div></div></div></div>",
-            "<div id=\"lp-form\" class=\"section section-padding contact-section\"><div class=\"container\"><div class=\"row row-cols-lg-2 row-cols-1 align-items-center\"><div class=\"col\"><div class=\"contact-Information me-xl-7\"><div class=\"section-title-two\"><span class=\"sub-title\">不代辦、不收證件、不保證核貸</span><h3 class=\"title\">免費財務健檢查詢</h3></div><p>請勿填寫身分證字號、帳戶、卡號、密碼或證件資料。送出後資料會保存到本機示範 CRM，並保留 UTM 來源。</p><p id=\"line-cta\"><a href=\"free-check.html#line-cta\">Line 官方帳號承接說明</a></p></div></div><div class=\"col mt-lg-0 mt-md-10 mt-8\"><div class=\"contact-form-area box-shadow\"><div class=\"section-title text-center mb-7\"><h2 class=\"title fz-28\">留下需求，取得查詢方向</h2><p class=\"sub-title\">只收低敏需求資料。</p></div>" + renderForm(page) + "</div></div></div></div></div>"
+            "<div id=\"lp-form\" class=\"section section-padding contact-section\"><div class=\"container\"><div class=\"row row-cols-lg-2 row-cols-1 align-items-center\"><div class=\"col\"><div class=\"contact-Information me-xl-7\"><div class=\"section-title-two\"><span class=\"sub-title\">不代辦、不收證件、不保證核貸</span><h3 class=\"title\">免費財務健檢查詢</h3></div><p>請勿填寫身分證字號、帳戶、卡號、密碼或證件資料。TFSE 將所有免費健檢送件集中到唯一入口，避免重複資料和後台混亂。</p><p id=\"line-cta\"><a href=\"free-check.html#line-cta\">Line 官方帳號承接說明</a></p></div></div><div class=\"col mt-lg-0 mt-md-10 mt-8\"><div class=\"contact-form-area box-shadow\"><div class=\"section-title text-center mb-7\"><h2 class=\"title fz-28\">統一前往正式填寫頁</h2><p class=\"sub-title\">只在免費健檢頁收集低敏需求資料。</p></div>" + renderFreeCheckEntry(page) + "</div></div></div></div></div>"
         ].join("");
 
         if (window.TFSETrack) {

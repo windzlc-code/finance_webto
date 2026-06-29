@@ -306,6 +306,13 @@ class Handler(BaseHTTPRequestHandler):
                 return
             self._write_json({"items": AUDIT_LOGS})
             return
+        if path == "/api/admin/public-feedback-intake":
+            _, role = role_from_request(self)
+            if not role:
+                self._write_json({"error": "unauthorized"}, status=401)
+                return
+            self._write_json({"items": PUBLIC_FEEDBACK, "total": len(PUBLIC_FEEDBACK)})
+            return
         self._write_json({"error": "not_found", "path": path}, status=404)
 
     def do_POST(self):

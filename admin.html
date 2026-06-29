@@ -51,9 +51,23 @@
     <link rel="apple-touch-icon" href="assets/images/favicon.png">
 </head>
 
-<body class="tfse-final-page tfse-final-admin-page tfse-original-page-skin tfse-crm-page tfse-database-page">
+<body class="tfse-final-page tfse-final-admin-page tfse-admin-standalone tfse-original-page-skin tfse-crm-page tfse-database-page">
 
     <div id="page">
+        <header class="tfse-admin-standalone-head" aria-label="TFSE 後台管理">
+            <a class="tfse-admin-standalone-brand" href="admin.html">
+                <img src="assets/images/logo/tfse-logo.png" alt="TFSE金融便民中心">
+                <span>
+                    <strong>TFSE 後台管理</strong>
+                    <small>完成度、CRM、資料、合規與上線交接</small>
+                </span>
+            </a>
+            <div class="tfse-admin-standalone-actions">
+                <a href="index.html">返回前台</a>
+                <a href="free-check.html">查看免費健檢</a>
+            </div>
+        </header>
+
         <!-- Header Section Start -->
         <div class="header-section header-transparent sticky-header section">
             <div class="header-inner">
@@ -106,15 +120,12 @@
                                             <span class="menu-toggle"><i class="far fa-angle-down"></i></span>
                                             <ul class="sub-menu">
                                                 <li><a href="articles.html"><span class="menu-text">知識列表</span></a></li>
-                                                <li><a href="blog-classic.html"><span class="menu-text">知識專欄</span></a></li>
-                                                <li><a href="blog-details.html"><span class="menu-text">文章詳情</span></a></li>
+                                                <li><a href="articles.html"><span class="menu-text">知識專欄</span></a></li>
+                                                <li><a href="articles.html"><span class="menu-text">文章詳情</span></a></li>
                                             </ul>
                                         </li>
                                         <li>
                                             <a href="free-check.html"><span class="menu-text">免費健檢</span></a>
-                                        </li>
-                                        <li>
-                                            <a href="admin.html"><span class="menu-text">CRM</span></a>
                                         </li>
                                     </ul>
                                 </nav>
@@ -229,16 +240,29 @@
                         <p>線索、健檢、合規掃描與追蹤報表集中管理。</p>
                     </div>
                     <div class="tfse-crm-actions">
-                        <span class="tfse-crm-date-pill"><i class="fa fa-calendar"></i> 2026-06-27（六）</span>
+                        <span class="tfse-crm-date-pill" data-admin-current-date><i class="fa fa-calendar"></i> --</span>
                         <button type="button" data-admin-refresh><i class="fa fa-sync-alt"></i> 更新資料</button>
                     </div>
                 </div>
-                <div class="tfse-crm-metrics" aria-label="CRM 指標">
-                    <article><span>今日待處理</span><strong>28</strong><small>較昨日 +5</small><i class="fa fa-clipboard-list"></i></article>
-                    <article><span>免費健檢名單</span><strong>45</strong><small>待聯繫 18</small><i class="fa fa-heart"></i></article>
-                    <article><span>來源追蹤（本月）</span><strong>152</strong><small>有效來源 8</small><i class="fa fa-search"></i></article>
-                    <article><span>合規掃描（本月）</span><strong>12</strong><small>需檢視 3</small><i class="fa fa-shield-alt"></i></article>
-                    <article><span>Line OA 佇列</span><strong>15</strong><small>待回覆 7</small><i class="fab fa-line"></i></article>
+
+                <section class="tfse-admin-visual-console" data-admin-visual-console aria-label="TFSE 後台可視化工作台">
+                    <div class="tfse-visual-loading">
+                        <p>後台工作台載入中。</p>
+                    </div>
+                </section>
+
+                <section class="tfse-admin-completion" data-admin-completion-overview aria-label="完成度總覽">
+                    <div class="tfse-admin-completion-loading">
+                        <p>完成度總覽載入中。</p>
+                    </div>
+                </section>
+
+                <div class="tfse-crm-metrics" aria-label="CRM 指標" data-admin-real-metrics>
+                    <article><span>今日待處理</span><strong>0</strong><small>讀取真實線索中</small><i class="fa fa-clipboard-list"></i></article>
+                    <article><span>免費健檢名單</span><strong>0</strong><small>待聯繫 0</small><i class="fa fa-heart"></i></article>
+                    <article><span>來源追蹤（本月）</span><strong>0</strong><small>有效來源 0</small><i class="fa fa-search"></i></article>
+                    <article><span>合規掃描（本月）</span><strong>0</strong><small>需檢視 0</small><i class="fa fa-shield-alt"></i></article>
+                    <article><span>資料回報工單</span><strong>0</strong><small>待處理 0</small><i class="fa fa-inbox"></i></article>
                 </div>
                 <div class="section-title text-center" data-aos="fade-up">
                     <h2 class="title fz-32">潛客列表與跟進紀錄</h2>
@@ -310,7 +334,6 @@
                         <button class="btn btn-primary btn-hover-secondary" data-admin-export>匯出 JSON</button>
                     </div>
                     <div class="col-lg-12 col-md-12 col-12 mb-4">
-                        <button class="btn btn-light btn-hover-primary" data-admin-seed>產生本機測試資料</button>
                     </div>
                 </div>
 
@@ -366,6 +389,35 @@
                 <div class="section-title text-center" data-aos="fade-up">
                     <h2 class="title fz-32">資料庫、文章與合規審核</h2>
                     <p class="sub-title">提供本機 MVP 管理檢視；正式版需接入伺服器登入、資料庫、版本紀錄與審計日誌。</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-6 col-12 mb-8">
+                        <div class="sidebar-widget">
+                            <h5 class="title">新增資料庫條目</h5>
+                            <form data-admin-product-create-form>
+                                <input class="mt-3" name="title" type="text" placeholder="資料標題，例如：銀行信貸公開資訊" required>
+                                <input class="mt-3" name="category" type="text" placeholder="分類，例如：信貸 / 房貸 / 債務法令">
+                                <textarea class="mt-3" name="summary" placeholder="資料摘要，僅填公開資訊說明"></textarea>
+                                <input class="mt-3" name="source_url" type="url" placeholder="官方來源 URL，需使用 https">
+                                <button class="btn btn-primary btn-hover-secondary mt-4" type="submit">新增資料</button>
+                            </form>
+                            <div class="mt-3" data-admin-product-create-status></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-12 mb-8">
+                        <div class="sidebar-widget">
+                            <h5 class="title">新增文章草稿</h5>
+                            <form data-admin-article-create-form>
+                                <input class="mt-3" name="title" type="text" placeholder="文章標題" required>
+                                <input class="mt-3" name="category" type="text" placeholder="分類，例如：信貸知識 / 防詐提醒">
+                                <textarea class="mt-3" name="summary" placeholder="文章摘要"></textarea>
+                                <textarea class="mt-3" name="seo_description" placeholder="SEO 描述"></textarea>
+                                <button class="btn btn-primary btn-hover-secondary mt-4" type="submit">新增文章草稿</button>
+                            </form>
+                            <div class="mt-3" data-admin-article-create-status></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -1234,7 +1286,7 @@
                                     <li><a href="source-policy.html">來源政策</a></li>
                                     <li><a href="privacy.html">隱私權政策</a></li>
                                     <li><a href="disclaimer.html">免責聲明</a></li>
-                                    <li><a href="blog-classic.html">常見問題</a></li>
+                                    <li><a href="articles.html">常見問題</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -1250,7 +1302,6 @@
                                     <li><a href="free-check.html#line-cta">Line 諮詢</a></li>
                                     <li><a href="free-check.html">免費健檢</a></li>
                                     <li><a href="contact.html">聯絡我們</a></li>
-                                    <li><a href="admin.html">Admin CRM</a></li>
                                     <li><a href="disclaimer.html">合規問答</a></li>
                                 </ul>
                             </div>
@@ -1326,15 +1377,12 @@
                             <span class="menu-toggle"><i class="far fa-angle-down"></i></span>
                             <ul class="sub-menu">
                                 <li><a href="articles.html"><span class="menu-text">知識列表</span></a></li>
-                                <li><a href="blog-classic.html"><span class="menu-text">知識專欄</span></a></li>
-                                <li><a href="blog-details.html"><span class="menu-text">文章詳情</span></a></li>
+                                <li><a href="articles.html"><span class="menu-text">知識專欄</span></a></li>
+                                <li><a href="articles.html"><span class="menu-text">文章詳情</span></a></li>
                             </ul>
                         </li>
                         <li>
                                             <a href="free-check.html"><span class="menu-text">免費健檢</span></a>
-                                        </li>
-                                        <li>
-                                            <a href="admin.html"><span class="menu-text">CRM</span></a>
                                         </li>
                     </ul>
                 </nav>

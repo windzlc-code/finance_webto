@@ -17,12 +17,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def request_json(opener, base_url: str, method: str, path: str, payload: dict | None = None, timeout: float = 5.0) -> dict:
+def request_json(opener, base_url: str, method: str, path: str, payload: dict | None = None, timeout: float = 5.0, csrf_token: str = "") -> dict:
     data = None
     headers = {"Accept": "application/json"}
     if payload is not None:
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         headers["Content-Type"] = "application/json"
+    if csrf_token:
+        headers["X-CSRF-Token"] = csrf_token
     request = urllib.request.Request(base_url.rstrip("/") + path, data=data, headers=headers, method=method)
     with opener.open(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8") or "{}")
@@ -140,13 +142,26 @@ def main() -> int:
             if duplicate.get("id") != "lead_smoke_001" or not duplicate.get("duplicate"):
                 raise AssertionError(f"duplicate lead was not reused: {duplicate}")
 
-            login = request_json(opener, base_url, "POST", "/api/admin/auth/login", {"password": "TFSE-MVP-2026", "role": "super_admin"})
+            login = request_json(opener, base_url, "POST", "/api/admin/auth/login", {"password": "admin123", "role": "super_admin"})
             if not login.get("authenticated"):
                 raise AssertionError(f"admin login failed: {login}")
+            csrf_token = login.get("csrf_token") or ""
+            if not csrf_token:
+                raise AssertionError(f"admin login did not return csrf token: {login}")
 
             leads = request_json(opener, base_url, "GET", "/api/admin/leads")
             if not any(item.get("id") == "lead_smoke_001" for item in leads.get("items", [])):
                 raise AssertionError(f"submitted lead not visible in admin list: {leads}")
+
+            expect_json_error(
+                opener,
+                base_url,
+                "PATCH",
+                "/api/admin/leads/lead_smoke_001/status",
+                {"status": "contacted"},
+                403,
+                "csrf_token_required",
+            )
 
             patched = request_json(
                 opener,
@@ -154,9 +169,60 @@ def main() -> int:
                 "PATCH",
                 "/api/admin/leads/lead_smoke_001/status",
                 {"status": "contacted", "note": "smoke follow-up", "assigned_to": "consultant", "contact_log": {"channel": "line", "outcome": "sent"}},
+                csrf_token=csrf_token,
             )
             if (patched.get("lead") or {}).get("status") != "contacted":
                 raise AssertionError(f"lead status update failed: {patched}")
+
+            product = request_json(
+                opener,
+                base_url,
+                "POST",
+                "/api/admin/products",
+                {
+                    "id": "product_smoke_001",
+                    "slug": "product-smoke-001",
+                    "title": "Smoke 測試公開金融資訊",
+                    "category": "信貸知識",
+                    "summary": "後台新增資料 smoke test",
+                    "status": "已核驗",
+                    "source_url": "https://example.gov.tw/source",
+                },
+                csrf_token=csrf_token,
+            )
+            if (product.get("item") or {}).get("id") != "product_smoke_001":
+                raise AssertionError(f"admin product create failed: {product}")
+            product_patch = request_json(opener, base_url, "PATCH", "/api/admin/products/product_smoke_001", {"title": "Smoke 測試公開金融資訊更新", "status": "需更新"}, csrf_token=csrf_token)
+            if (product_patch.get("item") or {}).get("status") != "需更新":
+                raise AssertionError(f"admin product patch failed: {product_patch}")
+            products = request_json(opener, base_url, "GET", "/api/admin/products")
+            if not any(item.get("id") == "product_smoke_001" and item.get("title") == "Smoke 測試公開金融資訊更新" for item in products.get("items", [])):
+                raise AssertionError(f"admin product not visible: {products}")
+
+            article = request_json(
+                opener,
+                base_url,
+                "POST",
+                "/api/admin/articles",
+                {
+                    "id": "article_smoke_001",
+                    "slug": "article-smoke-001",
+                    "title": "Smoke 測試文章草稿",
+                    "category": "防詐提醒",
+                    "summary": "後台新增文章 smoke test",
+                    "seo_description": "測試文章描述",
+                    "status": "draft",
+                },
+                csrf_token=csrf_token,
+            )
+            if (article.get("item") or {}).get("id") != "article_smoke_001":
+                raise AssertionError(f"admin article create failed: {article}")
+            article_patch = request_json(opener, base_url, "PATCH", "/api/admin/articles/article_smoke_001", {"title": "Smoke 測試文章已發布", "status": "published"}, csrf_token=csrf_token)
+            if (article_patch.get("item") or {}).get("status") != "published":
+                raise AssertionError(f"admin article patch failed: {article_patch}")
+            articles = request_json(opener, base_url, "GET", "/api/admin/articles")
+            if not any(item.get("id") == "article_smoke_001" and item.get("status") == "published" for item in articles.get("items", [])):
+                raise AssertionError(f"admin article not visible: {articles}")
 
             feedback = request_json(opener, base_url, "POST", "/api/public-feedback", {"feedback_type": "content_review", "summary": "公開資料回報測試", "page_url": "/source-policy.html"})
             if not feedback.get("ticket_id"):
@@ -174,6 +240,7 @@ def main() -> int:
                     "note": "smoke compliance review",
                     "scan_payload": {"forbidden_terms": [], "privacy_notice": True},
                 },
+                csrf_token=csrf_token,
             )
             if not (compliance.get("review") or {}).get("id"):
                 raise AssertionError(f"compliance review missing: {compliance}")
@@ -184,6 +251,7 @@ def main() -> int:
                 "PATCH",
                 "/api/admin/privacy-requests/lead_smoke_001",
                 {"request_type": "delete", "request_status": "completed", "note": "smoke privacy fulfillment"},
+                csrf_token=csrf_token,
             )
             if (privacy.get("privacy_request") or {}).get("request_status") != "completed":
                 raise AssertionError(f"privacy request update failed: {privacy}")
@@ -217,7 +285,10 @@ def main() -> int:
                             "lead_duplicate_reuse",
                             "admin_login",
                             "admin_lead_list",
+                            "admin_csrf_reject_without_token",
                             "lead_status_patch",
+                            "admin_product_create_patch",
+                            "admin_article_create_patch",
                             "public_feedback",
                             "compliance_review",
                             "privacy_request_fulfillment",

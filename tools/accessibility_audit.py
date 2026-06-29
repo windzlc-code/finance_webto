@@ -118,12 +118,9 @@ def audit_html():
 def audit_landing_renderer():
     failures = []
     script = (ROOT / "assets/js/tfse-landing-pages.js").read_text(encoding="utf-8", errors="ignore")
-    for field in REQUIRED_LEAD_FIELDS:
-        if not text_has_field(script, field):
-            failures.append(f"tfse-landing-pages.js: generated lead form missing field {field}")
-    for marker in ('class=\\"form-messege\\" aria-live=\\"polite\\"', 'data-lead-submit', 'aria-label=\\"需求類型\\"'):
+    for marker in ("renderFreeCheckEntry", "tfse-unique-entry", "前往唯一免費健檢入口", "free-check.html?"):
         if marker not in script:
-            failures.append(f"tfse-landing-pages.js: missing generated accessibility marker {marker}")
+            failures.append(f"tfse-landing-pages.js: missing unique free-check entry marker {marker}")
     return failures
 
 

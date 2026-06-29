@@ -211,7 +211,7 @@
             counts[article.category] = (counts[article.category] || 0) + 1;
         });
         categories.innerHTML = Object.keys(counts).map(function (category) {
-            return "<li><a href=\"blog-classic.html\"><span class=\"text\">" + escapeHtml(category) + "</span> <span class=\"count\">" + counts[category] + "</span></a></li>";
+            return "<li><a href=\"articles.html?category=" + encodeURIComponent(category) + "\"><span class=\"text\">" + escapeHtml(category) + "</span> <span class=\"count\">" + counts[category] + "</span></a></li>";
         }).join("");
     }
 
@@ -230,7 +230,7 @@
     function renderTags() {
         if (!tags) return;
         tags.innerHTML = allKeywords().map(function (keyword) {
-            return "<a href=\"blog-classic.html\">" + escapeHtml(keyword) + "</a>";
+            return "<a href=\"articles.html?q=" + encodeURIComponent(keyword) + "\">" + escapeHtml(keyword) + "</a>";
         }).join("");
     }
 

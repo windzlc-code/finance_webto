@@ -10,6 +10,8 @@
     var exportButton = document.querySelector("[data-admin-export]");
     var seedButton = document.querySelector("[data-admin-seed]");
     var refreshButton = document.querySelector("[data-admin-refresh]");
+    var currentDatePill = document.querySelector("[data-admin-current-date]");
+    var realMetricsPanel = document.querySelector("[data-admin-real-metrics]");
     var followUpsPanel = document.querySelector("[data-admin-follow-ups]");
     var followUpsExportButton = document.querySelector("[data-admin-follow-ups-export]");
     var contactLogExportButton = document.querySelector("[data-admin-contact-log-export]");
@@ -17,6 +19,8 @@
     var leadDedupePanel = document.querySelector("[data-admin-lead-dedupe]");
     var leadDedupeExportButton = document.querySelector("[data-admin-lead-dedupe-export]");
     var productsTable = document.querySelector("[data-admin-products]");
+    var productCreateForm = document.querySelector("[data-admin-product-create-form]");
+    var productCreateStatus = document.querySelector("[data-admin-product-create-status]");
     var sourceReviewPanel = document.querySelector("[data-admin-source-review]");
     var sourceReviewExportButton = document.querySelector("[data-admin-source-review-export]");
     var sourceEvidencePanel = document.querySelector("[data-admin-source-evidence]");
@@ -31,6 +35,8 @@
     var publicFeedbackExportButton = document.querySelector("[data-admin-public-feedback-export]");
     var publicFeedbackApiExportButton = document.querySelector("[data-admin-public-feedback-api-export]");
     var articlesTable = document.querySelector("[data-admin-articles]");
+    var articleCreateForm = document.querySelector("[data-admin-article-create-form]");
+    var articleCreateStatus = document.querySelector("[data-admin-article-create-status]");
     var articleReviewPanel = document.querySelector("[data-admin-article-review]");
     var contentVersionsPanel = document.querySelector("[data-admin-content-versions]");
     var contentVersionsExportButton = document.querySelector("[data-admin-content-versions-export]");
@@ -47,6 +53,8 @@
     var roleSelect = document.querySelector("[data-admin-role]");
     var loginButton = document.querySelector("[data-admin-login]");
     var loginMessage = document.querySelector("[data-admin-login-message]");
+    var visualConsolePanel = document.querySelector("[data-admin-visual-console]");
+    var completionOverviewPanel = document.querySelector("[data-admin-completion-overview]");
     var securityMatrixPanel = document.querySelector("[data-admin-security-matrix]");
     var securityMatrixExportButton = document.querySelector("[data-admin-security-matrix-export]");
     var securityHeadersExportButton = document.querySelector("[data-admin-security-headers-export]");
@@ -222,8 +230,22 @@
     var browserAcceptanceSeedRecords = [];
     var sourceEvidenceSeedRecords = [];
     var adminRecordSeedData = {};
-    var adminPassword = "TFSE-MVP-2026";
+    var visualConsoleState = {
+        tab: "dashboard",
+        status: "all",
+        source: "all",
+        owner: "all",
+        query: "",
+        selectedLeadId: "",
+        page: 1,
+        pageSize: 8
+    };
+    var adminPassword = "admin123";
     var leadSourceMode = "localStorage";
+    var publicFeedbackSourceMode = "localStorage";
+    var productSourceMode = "static";
+    var articleSourceMode = "static";
+    var publicFeedbackItemsCache = [];
     var editingProductId = "";
     var editingArticleId = "";
     var editingFaqId = "";
@@ -236,6 +258,15 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    function makeAdminSlug(value, fallbackPrefix) {
+        var base = String(value || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+        return base || (fallbackPrefix + "-" + Date.now().toString(36));
     }
 
     function formatAdminSnippet(content) {
@@ -266,7 +297,9 @@
 
     function getLeads() {
         try {
-            return JSON.parse(localStorage.getItem("tfse_leads") || "[]");
+            return JSON.parse(localStorage.getItem("tfse_leads") || "[]").filter(function (lead) {
+                return lead && !lead.is_sample && (lead.tags || []).indexOf("sample_lead") === -1 && String(lead.id || "").indexOf("lead_sample_") !== 0;
+            });
         } catch (error) {
             return [];
         }
@@ -296,7 +329,81 @@
             renderAttribution();
             renderConversionBacklog();
             renderLineOptout();
+            renderRealMetrics();
+            renderVisualConsole();
             return result;
+        });
+    }
+
+    function syncPublicFeedbackFromApi() {
+        if (!window.TFSEApi || !window.TFSEApi.listPublicFeedback) {
+            publicFeedbackItemsCache = safeReadStorage("tfse_public_feedback_tickets", []);
+            renderPublicFeedback();
+            return Promise.resolve({ mode: "localStorage", items: publicFeedbackItemsCache });
+        }
+        return window.TFSEApi.listPublicFeedback().then(function (result) {
+            publicFeedbackSourceMode = result.mode || "localStorage";
+            publicFeedbackItemsCache = Array.isArray(result.items) ? result.items : [];
+            if (result.mode === "api") {
+                try {
+                    localStorage.setItem("tfse_public_feedback_tickets", JSON.stringify(publicFeedbackItemsCache));
+                } catch (error) {
+                    // Keep admin rendering resilient when storage is unavailable.
+                }
+            }
+            renderRealMetrics();
+            renderPublicFeedback();
+            return result;
+        });
+    }
+
+    function syncAdminContentFromApi() {
+        if (!isAuthenticated()) {
+            productSourceMode = "static";
+            articleSourceMode = "static";
+            renderProducts();
+            renderArticles();
+            renderContentVersions();
+            renderCompliance();
+            return Promise.resolve({ mode: "static_unauthenticated" });
+        }
+        if (!window.TFSEApi || !window.TFSEApi.adminListProducts || !window.TFSEApi.adminListArticles) {
+            renderProducts();
+            renderArticles();
+            renderContentVersions();
+            renderCompliance();
+            return Promise.resolve({ mode: "static" });
+        }
+        return Promise.all([
+            window.TFSEApi.adminListProducts({}),
+            window.TFSEApi.adminListArticles({ status: "" })
+        ]).then(function (results) {
+            var productResult = results[0] || {};
+            var articleResult = results[1] || {};
+            productSourceMode = productResult.mode || productSourceMode;
+            articleSourceMode = articleResult.mode || articleSourceMode;
+            if (Array.isArray(productResult.items)) {
+                productData = productResult.items;
+            }
+            if (Array.isArray(articleResult.items)) {
+                articleData = articleResult.items;
+            }
+            renderProducts();
+            renderArticles();
+            renderContentVersions();
+            renderCompliance();
+            renderSourceReview();
+            return {
+                mode: productSourceMode + "/" + articleSourceMode,
+                products: productData.length,
+                articles: articleData.length
+            };
+        }).catch(function (error) {
+            addAudit("admin_content_sync_failed", error && error.message ? error.message : error);
+            renderProducts();
+            renderArticles();
+            renderCompliance();
+            return { mode: "api_error", error: error };
         });
     }
 
@@ -595,8 +702,7 @@
     function renderAfterLogin() {
         renderAuthState();
         renderAdminSecurityMatrix();
-        renderProducts();
-        renderArticles();
+        syncAdminContentFromApi();
         renderFaq();
         renderContentVersions();
         renderAdCampaigns();
@@ -630,6 +736,7 @@
         renderAttribution();
         renderConversionBacklog();
         renderAudit();
+        renderVisualConsole();
     }
 
     function syncAuthFromApi() {
@@ -679,6 +786,13 @@
         reviews.unshift(record);
         localStorage.setItem("tfse_compliance_reviews", JSON.stringify(reviews.slice(0, 100)));
         addAudit("compliance_review_save", record.target + ":" + record.result);
+        if (window.TFSEApi && window.TFSEApi.saveComplianceReview) {
+            window.TFSEApi.saveComplianceReview(record).then(function (result) {
+                addAudit("compliance_review_persist", record.target + ":" + (result.mode || "localStorage"));
+            }).catch(function (error) {
+                addAudit("compliance_review_persist_failed", record.target + ":" + (error && error.message ? error.message : error));
+            });
+        }
     }
 
     function safeReadStorage(key, fallback) {
@@ -694,10 +808,7 @@
     }
 
     function adminSeedRecords(key, sourceTag) {
-        var records = adminRecordSeedData && Array.isArray(adminRecordSeedData[key]) ? adminRecordSeedData[key] : [];
-        return records.map(function (record) {
-            return Object.assign({ source: sourceTag || "seed_admin_record" }, record);
-        });
+        return [];
     }
 
     function recordSignature(record) {
@@ -714,7 +825,7 @@
     }
 
     function mergeSeededRecords(storageKey, seedRecords) {
-        var records = safeReadStorage(storageKey, []).concat(seedRecords || []);
+        var records = safeReadStorage(storageKey, []);
         var seen = {};
         return records.filter(function (record) {
             if (!record || typeof record !== "object") return false;
@@ -1509,7 +1620,7 @@
     }
 
     function getBrowserAcceptanceRecords() {
-        return mergeSeededRecords("tfse_browser_acceptance_records", browserAcceptanceSeedRecords || []).filter(function (record) {
+        return mergeSeededRecords("tfse_browser_acceptance_records", []).filter(function (record) {
             return !!record.item_key;
         });
     }
@@ -3337,7 +3448,7 @@
             custom("17.5 SEO 验收", "内链。", "ready", "首頁、分類、文章、產品與免費健檢之間已建立站內導流。", "custom_internal_links"),
             custom("17.5 SEO 验收", "首页 metadata。", "ready", "首頁 metadata 已納入靜態驗收。", "custom_home_metadata"),
             custom("17.5 SEO 验收", "分类页 metadata。", "ready", "category + 8 個金融分類頁 metadata 已納入靜態驗收。", "custom_category_metadata"),
-            custom("17.5 SEO 验收", "文章页 metadata。", "ready", "articles.html、blog-details.html 與 " + articleCount + " 篇文章詳情 metadata 已納入靜態驗收。", "custom_article_metadata"),
+            custom("17.5 SEO 验收", "文章页 metadata。", "ready", "articles.html 與 " + articleCount + " 篇 articles/ 文章詳情 metadata 已納入靜態驗收。", "custom_article_metadata"),
             custom("17.5 SEO 验收", "产品页 metadata。", "ready", productCount + " 個產品詳情頁 metadata 已納入靜態驗收。", "custom_product_metadata"),
             custom("21. 上线前最终检查", "所有页面都有标题和描述。", "ready", "全站 metadata 基線已由 verify_static_site.py 檢查。", "custom_metadata_all"),
             fromAcceptance("21. 上线前最终检查", "所有页面都有免责声明或页脚免责声明。", "disclaimer"),
@@ -3704,7 +3815,7 @@
         var backendUrl = String(backend.api_base_url || "").trim();
         var backendMode = String(backend.mode || "").trim();
         var sentryDsn = String(analytics.sentry_dsn || "").trim();
-        var lineOfficialReady = isHttpsUrl(lineUrl) && lineUrl !== "free-check.html#line-cta" && lineUrl !== "contact-us.html#line-cta" && lineUrl !== "contact.html#line-cta";
+        var lineOfficialReady = isHttpsUrl(lineUrl) && lineUrl !== "free-check.html#line-cta" && lineUrl !== "contact.html#line-cta";
         var backendReady = backendMode === "api" && isHttpsUrl(backendUrl);
         var items = [];
 
@@ -6367,6 +6478,7 @@
         renderLaunchHandoffManifest();
         renderOwnerCutoverBundle();
         renderReleaseDayRunsheet();
+        renderCompletionOverview();
     }
 
     function renderLaunchCutoverAudit() {
@@ -6505,6 +6617,126 @@
                 return "<p><strong>跟進前待辦</strong><br>" + escapeHtml(item) + "</p>";
             }).join("") : "<p>URL 跟進隊列已可交給 Search Console 檢查；實際 coverage/indexed 狀態仍需外部留痕。</p>",
             preview
+        ].join("");
+    }
+
+    function simpleStatusText(status) {
+        var map = {
+            ready: "已完成",
+            manual_external: "需人工確認",
+            manual_browser: "需人工驗收",
+            pending_external: "待外部處理",
+            pending: "待處理",
+            hold: "暫停上線",
+            needs_review: "待複核",
+            monitor: "需持續觀察",
+            external_pending: "待外部配置",
+            local_closed_external_blocked: "本地已完成，卡在外部"
+        };
+        return map[status] || status || "待確認";
+    }
+
+    function completionPriorityScore(task) {
+        var statusScore = {
+            hold: 7,
+            pending_external: 6,
+            external_pending: 6,
+            pending: 5,
+            needs_review: 4,
+            manual_external: 3,
+            manual_browser: 3,
+            monitor: 2,
+            ready: 0
+        };
+        return (task.priority === "high" ? 10 : 0) + (statusScore[task.status] || 1);
+    }
+
+    function completionJumpButton(selector, label, style) {
+        return "<button type=\"button\" class=\"" + escapeHtml(style || "tfse-completion-link") + "\" data-admin-completion-jump=\"" + escapeHtml(selector) + "\">" + escapeHtml(label) + "</button>";
+    }
+
+    function renderCompletionOverview() {
+        if (!completionOverviewPanel) return;
+        var closure = planClosurePayload();
+        var release = releaseReadinessPayload();
+        var launch = launchHealthPayload();
+        var external = externalVerificationPayload();
+        var operations = operationsTaskPayload();
+        var handoff = launchHandoffManifestPayload();
+        var blockers = (closure.external_blockers || []).slice(0, 5);
+        var activeTasks = operations.tasks.filter(function (task) {
+            return task.status !== "ready";
+        }).sort(function (a, b) {
+            return completionPriorityScore(b) - completionPriorityScore(a);
+        });
+        var readyTotal = closure.summary.acceptance_ready + closure.summary.acceptance_not_applicable;
+        var acceptanceTotal = readyTotal + closure.summary.acceptance_local_blockers + closure.summary.acceptance_external_blockers;
+        var completionPercent = acceptanceTotal ? Math.round((readyTotal / acceptanceTotal) * 100) : 0;
+        var productionClosed = closure.summary.production_closed;
+        var heroClass = productionClosed ? "is-ready" : "is-blocked";
+        var heroTitle = productionClosed ? "可以進入正式上線" : "本地已完成，正式上線還差外部事項";
+        var heroNote = productionClosed
+            ? "目前閉環檢查沒有阻擋項，仍建議匯出交接包並做最後人工確認。"
+            : "網站內容、功能與本地驗收已完成；剩下的多是正式配置、外部平台、備份與法務留痕。";
+        var quickActions = [
+            completionJumpButton("[data-admin-operations-tasks]", "看待辦清單", "tfse-completion-primary"),
+            completionJumpButton("[data-admin-config-input-packet]", "填正式配置", "tfse-completion-link"),
+            completionJumpButton("[data-admin-external-execution-form]", "保存外部留痕", "tfse-completion-link"),
+            completionJumpButton("[data-admin-launch-handoff-form]", "保存交接決議", "tfse-completion-link")
+        ].join("");
+        completionOverviewPanel.innerHTML = [
+            "<div class=\"tfse-completion-hero " + heroClass + "\">",
+                "<div>",
+                    "<span class=\"tfse-completion-eyebrow\">完成度總覽</span>",
+                    "<h3>" + escapeHtml(heroTitle) + "</h3>",
+                    "<p>" + escapeHtml(heroNote) + "</p>",
+                    "<div class=\"tfse-completion-actions\">" + quickActions + "</div>",
+                "</div>",
+                "<div class=\"tfse-completion-score\" aria-label=\"驗收完成度\">",
+                    "<b>" + completionPercent + "%</b>",
+                    "<span>驗收完成度</span>",
+                    "<small>" + escapeHtml(simpleStatusText(closure.summary.closure_status)) + "</small>",
+                "</div>",
+            "</div>",
+            "<div class=\"tfse-completion-kpis\">",
+                "<article><i class=\"fa fa-check-circle\"></i><span>本地閉環</span><strong>" + (closure.summary.local_closed ? "已完成" : "未完成") + "</strong><small>本地阻擋 " + closure.summary.acceptance_local_blockers + " 項</small></article>",
+                "<article><i class=\"fa fa-cloud-upload-alt\"></i><span>正式上線</span><strong>" + (productionClosed ? "可推進" : "待外部") + "</strong><small>外部阻擋 " + closure.summary.acceptance_external_blockers + " 項</small></article>",
+                "<article><i class=\"fa fa-heartbeat\"></i><span>健康檢查</span><strong>" + launch.ready_count + " / " + launch.items.length + "</strong><small>待配置 " + launch.pending_count + " 項</small></article>",
+                "<article><i class=\"fa fa-clipboard-list\"></i><span>運維任務</span><strong>" + operations.tasks.length + " 項</strong><small>高優先未完成 " + activeTasks.filter(function (task) { return task.priority === "high"; }).length + " 項</small></article>",
+                "<article><i class=\"fa fa-shield-alt\"></i><span>外部驗證</span><strong>" + external.summary.verified_items + " / " + external.summary.required_items + "</strong><small>已配置 " + external.summary.configured_items + " 項</small></article>",
+            "</div>",
+            "<div class=\"tfse-completion-grid\">",
+                "<div class=\"tfse-completion-card tfse-completion-next\">",
+                    "<div class=\"tfse-completion-card-head\"><span>照這個順序做</span>" + completionJumpButton("[data-admin-owner-cutover-bundle]", "看 Owner 包", "tfse-completion-mini") + "</div>",
+                    activeTasks.slice(0, 5).map(function (task, index) {
+                        return [
+                            "<article>",
+                                "<b>" + (index + 1) + "</b>",
+                                "<div><strong>" + escapeHtml(task.title) + "</strong>",
+                                "<p>" + escapeHtml(task.next_action) + "</p>",
+                                "<small>" + escapeHtml(task.group) + " ｜ " + escapeHtml(task.owner_role) + " ｜ " + escapeHtml(simpleStatusText(task.status)) + "</small></div>",
+                            "</article>"
+                        ].join("");
+                    }).join("") || "<p>目前沒有未完成任務。</p>",
+                "</div>",
+                "<div class=\"tfse-completion-card\">",
+                    "<div class=\"tfse-completion-card-head\"><span>目前卡在哪</span>" + completionJumpButton("[data-admin-launch-cutover-audit]", "看阻擋項", "tfse-completion-mini") + "</div>",
+                    blockers.map(function (item) {
+                        return "<p><strong>" + escapeHtml(item.label) + "</strong><br>" + escapeHtml(item.evidence) + "</p>";
+                    }).join("") || "<p>目前沒有外部阻擋。</p>",
+                    "<div class=\"tfse-completion-handoff\">",
+                        "<span>交接留痕</span><strong>" + handoff.summary.checkpoint_records + " 筆</strong>",
+                        "<span>發布狀態</span><strong>" + escapeHtml(simpleStatusText(release.readiness.release_status)) + "</strong>",
+                    "</div>",
+                "</div>",
+            "</div>",
+            "<div class=\"tfse-completion-exportbar\">",
+                "<span>要交付給老板、運維或外部人員時，優先匯出這幾個包：</span>",
+                completionJumpButton("[data-admin-plan-closure-export]", "閉環總表", "tfse-completion-export"),
+                completionJumpButton("[data-admin-operations-tasks-export]", "任務隊列", "tfse-completion-export"),
+                completionJumpButton("[data-admin-release-readiness-export]", "發布交接", "tfse-completion-export"),
+                completionJumpButton("[data-admin-launch-handoff-export]", "總交接清單", "tfse-completion-export"),
+            "</div>"
         ].join("");
     }
 
@@ -7179,15 +7411,28 @@
     }
 
     function saveArticleOverride(articleId, fields) {
+        var current = articleView(articleData.filter(function (item) { return item.id === articleId; })[0] || { id: articleId });
+        var payload = Object.assign({}, current, fields, { id: articleId });
         var overrides = getArticleOverrides();
         overrides[articleId] = Object.assign({}, overrides[articleId] || {}, fields, {
             local_updated_at: new Date().toISOString()
         });
         localStorage.setItem("tfse_article_overrides", JSON.stringify(overrides));
-        addAudit("article_content_update", articleId);
+        addAudit("article_content_update", articleId + ":" + articleSourceMode);
+        if (window.TFSEApi && window.TFSEApi.saveAdminArticle) {
+            window.TFSEApi.saveAdminArticle(articleId, payload).then(function (result) {
+                articleSourceMode = result.mode || articleSourceMode;
+                addAudit("article_content_persist", articleId + ":" + articleSourceMode);
+                if (result.item && result.mode === "api") syncAdminContentFromApi();
+            }).catch(function (error) {
+                addAudit("article_content_persist_failed", articleId + ":" + (error && error.message ? error.message : error));
+            });
+        }
     }
 
     function saveArticleStatus(articleId, nextStatus, action) {
+        var current = articleView(articleData.filter(function (item) { return item.id === articleId; })[0] || { id: articleId });
+        var payload = Object.assign({}, current, { id: articleId, status: nextStatus, updated_at: new Date().toISOString().slice(0, 10) });
         var overrides = getArticleStatusOverrides();
         overrides[articleId] = nextStatus;
         localStorage.setItem("tfse_article_status", JSON.stringify(overrides));
@@ -7197,7 +7442,16 @@
             local_updated_at: new Date().toISOString()
         });
         localStorage.setItem("tfse_article_overrides", JSON.stringify(contentOverrides));
-        addAudit(action || "article_status_update", articleId + ":" + nextStatus);
+        addAudit(action || "article_status_update", articleId + ":" + nextStatus + ":" + articleSourceMode);
+        if (window.TFSEApi && window.TFSEApi.saveAdminArticle) {
+            window.TFSEApi.saveAdminArticle(articleId, payload).then(function (result) {
+                articleSourceMode = result.mode || articleSourceMode;
+                addAudit((action || "article_status_update") + "_persist", articleId + ":" + nextStatus + ":" + articleSourceMode);
+                if (result.item && result.mode === "api") syncAdminContentFromApi();
+            }).catch(function (error) {
+                addAudit("article_status_persist_failed", articleId + ":" + (error && error.message ? error.message : error));
+            });
+        }
     }
 
     function getFaqOverrides() {
@@ -7420,7 +7674,7 @@
         var sourceEvidence = sourceEvidencePayload();
         var privacy = privacyRequestPayload();
         var legal = legalReviewPayload();
-        var localTickets = safeReadStorage("tfse_public_feedback_tickets", []);
+        var localTickets = publicFeedbackItemsCache.length ? publicFeedbackItemsCache : safeReadStorage("tfse_public_feedback_tickets", []);
         var intakeTypes = [
             { type: "source_update", label: "資料來源更新", owner_role: "data_manager", sla: "3 個工作天內確認官方來源" },
             { type: "content_error", label: "內容錯誤回報", owner_role: "content_editor", sla: "3 個工作天內判斷是否修正文案或送審" },
@@ -7438,6 +7692,7 @@
             summary: {
                 intake_types: intakeTypes.length,
                 local_feedback_tickets: localTickets.length,
+                feedback_source_mode: publicFeedbackSourceMode,
                 source_review_items: sourceQueue.items.length,
                 source_evidence_records: sourceEvidence.records.length,
                 privacy_requests: privacy.items.length,
@@ -7544,15 +7799,28 @@
     }
 
     function saveProductOverride(productId, fields) {
+        var current = productView(productData.filter(function (item) { return item.id === productId; })[0] || { id: productId });
+        var payload = Object.assign({}, current, fields, { id: productId });
         var overrides = getProductOverrides();
         overrides[productId] = Object.assign({}, overrides[productId] || {}, fields, {
             local_updated_at: new Date().toISOString()
         });
         localStorage.setItem("tfse_product_overrides", JSON.stringify(overrides));
-        addAudit("product_content_update", productId);
+        addAudit("product_content_update", productId + ":" + productSourceMode);
+        if (window.TFSEApi && window.TFSEApi.saveAdminProduct) {
+            window.TFSEApi.saveAdminProduct(productId, payload).then(function (result) {
+                productSourceMode = result.mode || productSourceMode;
+                addAudit("product_content_persist", productId + ":" + productSourceMode);
+                if (result.item && result.mode === "api") syncAdminContentFromApi();
+            }).catch(function (error) {
+                addAudit("product_content_persist_failed", productId + ":" + (error && error.message ? error.message : error));
+            });
+        }
     }
 
     function saveProductStatus(productId, nextStatus) {
+        var current = productView(productData.filter(function (item) { return item.id === productId; })[0] || { id: productId });
+        var payload = Object.assign({}, current, { id: productId, status: nextStatus, updated_at: new Date().toISOString().slice(0, 10) });
         var overrides = getProductStatusOverrides();
         overrides[productId] = nextStatus;
         localStorage.setItem("tfse_product_status", JSON.stringify(overrides));
@@ -7562,7 +7830,16 @@
             local_updated_at: new Date().toISOString()
         });
         localStorage.setItem("tfse_product_overrides", JSON.stringify(contentOverrides));
-        addAudit("product_status_update", productId + ":" + nextStatus);
+        addAudit("product_status_update", productId + ":" + nextStatus + ":" + productSourceMode);
+        if (window.TFSEApi && window.TFSEApi.saveAdminProduct) {
+            window.TFSEApi.saveAdminProduct(productId, payload).then(function (result) {
+                productSourceMode = result.mode || productSourceMode;
+                addAudit("product_status_persist", productId + ":" + nextStatus + ":" + productSourceMode);
+                if (result.item && result.mode === "api") syncAdminContentFromApi();
+            }).catch(function (error) {
+                addAudit("product_status_persist_failed", productId + ":" + (error && error.message ? error.message : error));
+            });
+        }
     }
 
     function formatDate(value) {
@@ -7572,6 +7849,32 @@
         } catch (error) {
             return value;
         }
+    }
+
+    function renderCurrentDatePill() {
+        if (!currentDatePill) return;
+        var now = new Date();
+        var weekday = ["日", "一", "二", "三", "四", "五", "六"][now.getDay()];
+        currentDatePill.innerHTML = '<i class="fa fa-calendar"></i> ' + now.toLocaleDateString("zh-TW") + "（" + weekday + "）";
+    }
+
+    function renderRealMetrics() {
+        if (!realMetricsPanel) return;
+        var leads = getLeads();
+        var followUps = followUpPayload();
+        var legal = legalReviewPayload();
+        var sourceCounts = visualTopCounts(leads, visualSourceOfLead);
+        var pendingFeedback = publicFeedbackItemsCache.filter(function (item) {
+            return (item.status || "queued") !== "closed" && (item.status || "queued") !== "resolved";
+        }).length;
+        var legalReviewCount = (legal.status_counts.needs_review || 0) + (legal.status_counts.external_pending || 0) + (legal.status_counts.manual_external || 0);
+        realMetricsPanel.innerHTML = [
+            "<article><span>今日待處理</span><strong>" + (followUps.counts.overdue_or_unscheduled || 0) + "</strong><small>高優先 " + (followUps.counts.high_priority || 0) + "</small><i class=\"fa fa-clipboard-list\"></i></article>",
+            "<article><span>免費健檢名單</span><strong>" + leads.length + "</strong><small>待聯繫 " + leads.filter(function (lead) { return (lead.status || "new") === "new"; }).length + "</small><i class=\"fa fa-heart\"></i></article>",
+            "<article><span>來源追蹤（本月）</span><strong>" + Object.keys(sourceCounts).length + "</strong><small>有效來源 " + leads.length + "</small><i class=\"fa fa-search\"></i></article>",
+            "<article><span>合規掃描（本月）</span><strong>" + legal.items.length + "</strong><small>需檢視 " + legalReviewCount + "</small><i class=\"fa fa-shield-alt\"></i></article>",
+            "<article><span>資料回報工單</span><strong>" + publicFeedbackItemsCache.length + "</strong><small>待處理 " + pendingFeedback + "</small><i class=\"fa fa-inbox\"></i></article>"
+        ].join("");
     }
 
     function loadJson(path, fallback) {
@@ -7586,57 +7889,46 @@
     }
 
     function seedLeads() {
-        var now = new Date().toISOString();
-        saveLeads([
-            {
-                id: "lead_sample_1",
-                display_name: "林小姐",
-                phone: "09xx-xxx-123",
-                line_id: "lin_tfse",
-                region: "台中",
-                needs: "信貸與債務法令",
-                occupation_type: "上班族",
-                message: "想先了解負債比與前置協商資訊。",
-                consent_privacy: true,
-                consent_line: true,
-                consent_version: "privacy-2026-06-27",
-                source_channel: "seo",
-                source_url: "contact.html?utm_source=seo",
-                utm_source: "seo",
-                utm_medium: "organic",
-                utm_campaign: "",
-                status: "new",
-                tags: ["form_submitted", "need_credit_loan", "need_debt_law", "segment_employee", "sample_lead"],
-                is_sample: true,
-                notes: [],
-                submitted_at: now,
-                updated_at: now
-            },
-            {
-                id: "lead_sample_2",
-                display_name: "陳先生",
-                phone: "09xx-xxx-456",
-                line_id: "",
-                region: "新北",
-                needs: "房貸與二胎資訊",
-                occupation_type: "有房產持有者",
-                message: "想知道資料庫有哪些公開來源。",
-                consent_privacy: true,
-                consent_line: false,
-                consent_version: "privacy-2026-06-27",
-                source_channel: "direct",
-                source_url: "contact.html",
-                utm_source: "",
-                utm_medium: "",
-                utm_campaign: "",
-                status: "contacted",
-                tags: ["form_submitted", "need_mortgage", "segment_property_owner", "sample_lead"],
-                is_sample: true,
-                notes: ["已提醒親洽合法金融機構確認條件。"],
-                submitted_at: now,
-                updated_at: now
-            }
-        ].concat(getLeads().filter(function (lead) { return lead.id.indexOf("lead_sample_") !== 0; })));
+        addAudit("seed_leads_disabled", "後台已禁止產生測試線索，請使用前台表單提交真實資料。");
+    }
+
+    function createAdminProduct(payload) {
+        var id = "product_admin_" + Date.now().toString(36);
+        var item = Object.assign({
+            id: id,
+            slug: makeAdminSlug(payload.title, "product"),
+            type: "admin_created",
+            category: payload.category || "未分類",
+            audience: "公開金融資訊查詢",
+            region: "台灣",
+            status: "來源待核驗",
+            updated_at: new Date().toISOString().slice(0, 10)
+        }, payload);
+        productData.unshift(item);
+        saveProductOverride(id, item);
+        renderProducts();
+        renderContentVersions();
+        renderCompliance();
+        return item;
+    }
+
+    function createAdminArticle(payload) {
+        var id = "article_admin_" + Date.now().toString(36);
+        var item = Object.assign({
+            id: id,
+            slug: makeAdminSlug(payload.title, "article"),
+            category: payload.category || "未分類",
+            status: "draft",
+            keywords: [],
+            updated_at: new Date().toISOString().slice(0, 10)
+        }, payload);
+        articleData.unshift(item);
+        saveArticleOverride(id, item);
+        renderArticles();
+        renderArticleReview();
+        renderContentVersions();
+        renderCompliance();
+        return item;
     }
 
     function filteredLeads() {
@@ -7660,6 +7952,549 @@
             var sourceHaystack = [lead.source_channel, lead.utm_source, lead.utm_medium].join(" ");
             var matchesSource = sourceValue === "all" || sourceHaystack.indexOf(sourceValue) !== -1;
             return matchesSearch && matchesStatus && matchesTag && matchesSource;
+        });
+    }
+
+    function visualStatusLabel(value) {
+        return {
+            new: "待聯繫",
+            contacted: "已聯繫",
+            info_sent: "已發資料",
+            consulted: "諮詢中",
+            unresponsive: "待回覆",
+            spam: "無效",
+            closed: "成交",
+            ready: "合規通過",
+            needs_review: "需檢視",
+            external_pending: "待外部設定",
+            manual_external: "待人工驗收"
+        }[value || "new"] || value || "待聯繫";
+    }
+
+    function visualSourceLabel(value) {
+        return {
+            seo: "Google 搜尋",
+            direct: "官網免費健檢",
+            facebook: "FB/IG 廣告",
+            paid_social: "社群廣告",
+            line: "LINE OA",
+            referral: "合作夥伴轉介"
+        }[value || "direct"] || value || "官網";
+    }
+
+    function visualOwnerLabel(value) {
+        return {
+            consultant: "顧問組",
+            data_manager: "資料管理",
+            compliance_reviewer: "合規審核",
+            admin: "管理員"
+        }[value || "consultant"] || value || "顧問組";
+    }
+
+    function visualSourceOfLead(lead) {
+        return lead.utm_source || lead.source_channel || "direct";
+    }
+
+    function visualOwnerOfLead(lead) {
+        return lead.assigned_to || "consultant";
+    }
+
+    function visualFilteredLeads() {
+        var query = String(visualConsoleState.query || "").trim().toLowerCase();
+        var tabStatus = {
+            consult: "consulted",
+            clients: "closed"
+        };
+        return getLeads().filter(function (lead) {
+            var sourceValue = visualSourceOfLead(lead);
+            var ownerValue = visualOwnerOfLead(lead);
+            var statusValue = lead.status || "new";
+            var haystack = [
+                lead.display_name,
+                lead.phone,
+                lead.line_id,
+                lead.region,
+                lead.needs,
+                sourceValue,
+                ownerValue,
+                (lead.tags || []).join(" ")
+            ].join(" ").toLowerCase();
+            return (!query || haystack.indexOf(query) !== -1)
+                && (!tabStatus[visualConsoleState.tab] || statusValue === tabStatus[visualConsoleState.tab])
+                && (visualConsoleState.status === "all" || statusValue === visualConsoleState.status)
+                && (visualConsoleState.source === "all" || sourceValue === visualConsoleState.source)
+                && (visualConsoleState.owner === "all" || ownerValue === visualConsoleState.owner);
+        }).sort(function (a, b) {
+            return String(b.updated_at || b.submitted_at || "").localeCompare(String(a.updated_at || a.submitted_at || ""));
+        });
+    }
+
+    function visualTopCounts(items, getter) {
+        return items.reduce(function (bucket, item) {
+            var key = getter(item) || "direct";
+            bucket[key] = (bucket[key] || 0) + 1;
+            return bucket;
+        }, {});
+    }
+
+    function visualCountRows(counts, labeler, total) {
+        var keys = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+        if (!keys.length) keys = ["direct"];
+        return keys.slice(0, 6).map(function (key) {
+            var count = counts[key] || 0;
+            var percent = total ? Math.round((count / total) * 100) : 0;
+            return [
+                "<div class=\"tfse-visual-bar-row\">",
+                "<span>" + escapeHtml(labeler(key)) + "</span>",
+                "<b><i style=\"width:" + percent + "%\"></i></b>",
+                "<em>" + count + "（" + percent + "%）</em>",
+                "</div>"
+            ].join("");
+        }).join("");
+    }
+
+    function visualMetricPayload() {
+        var leads = getLeads();
+        var followUps = followUpPayload();
+        var legal = legalReviewPayload();
+        var lineItems = lineSegmentPayload().items || [];
+        var sourceCounts = visualTopCounts(leads, visualSourceOfLead);
+        return {
+            leads: leads,
+            followUps: followUps,
+            legal: legal,
+            lineItems: lineItems,
+            sourceCounts: sourceCounts,
+            metrics: [
+                {
+                    label: "今日待處理",
+                    value: followUps.counts.overdue_or_unscheduled || followUps.counts.total || 0,
+                    hint: "高優先 " + (followUps.counts.high_priority || 0),
+                    icon: "fa-clipboard-list",
+                    tone: "blue"
+                },
+                {
+                    label: "免費健檢名單",
+                    value: leads.length,
+                    hint: "待聯繫 " + leads.filter(function (lead) { return (lead.status || "new") === "new"; }).length,
+                    icon: "fa-heart",
+                    tone: "gold"
+                },
+                {
+                    label: "來源追蹤（本月）",
+                    value: Object.keys(sourceCounts).length,
+                    hint: "有效來源 " + leads.length,
+                    icon: "fa-search",
+                    tone: "green"
+                },
+                {
+                    label: "合規掃描（本月）",
+                    value: legal.items.length,
+                    hint: "需檢視 " + ((legal.status_counts.needs_review || 0) + (legal.status_counts.external_pending || 0) + (legal.status_counts.manual_external || 0)),
+                    icon: "fa-shield-alt",
+                    tone: "blue"
+                },
+                {
+                    label: "Line OA 佇列",
+                    value: lineItems.length,
+                    hint: "可分群 " + lineItems.filter(function (item) { return (item.tags || []).length; }).length,
+                    icon: "fa-comments",
+                    tone: "green"
+                }
+            ]
+        };
+    }
+
+    function visualRenderMetricCards(metrics) {
+        return metrics.map(function (item) {
+            return [
+                "<article class=\"tfse-visual-metric is-" + escapeHtml(item.tone) + "\">",
+                "<span>" + escapeHtml(item.label) + "</span>",
+                "<strong>" + escapeHtml(item.value) + "</strong>",
+                "<small>" + escapeHtml(item.hint) + "</small>",
+                "<i class=\"fa " + escapeHtml(item.icon) + "\"></i>",
+                "</article>"
+            ].join("");
+        }).join("");
+    }
+
+    function visualRenderLeadRows(leads, emptyText) {
+        if (!leads.length) {
+            return "<tr><td colspan=\"7\" class=\"tfse-visual-empty\">" + escapeHtml(emptyText || "目前沒有符合篩選的真實線索。請從前台免費健檢表單提交，或確認正式 API 已連線。") + "</td></tr>";
+        }
+        var start = (visualConsoleState.page - 1) * visualConsoleState.pageSize;
+        return leads.slice(start, start + visualConsoleState.pageSize).map(function (lead) {
+            var statusValue = lead.status || "new";
+            var selectedClass = lead.id === visualConsoleState.selectedLeadId ? " is-selected" : "";
+            return [
+                "<tr class=\"" + selectedClass + "\" data-visual-row=\"" + escapeHtml(lead.id) + "\">",
+                "<td>" + escapeHtml(formatDate(lead.submitted_at || lead.updated_at)) + "</td>",
+                "<td><strong>" + escapeHtml(lead.display_name || "未命名") + "</strong><small>手機末三碼 " + escapeHtml(phoneLast3(lead.phone) || "---") + "</small></td>",
+                "<td>" + escapeHtml(visualSourceLabel(visualSourceOfLead(lead))) + "</td>",
+                "<td><span class=\"tfse-visual-status is-" + escapeHtml(statusValue) + "\">" + escapeHtml(visualStatusLabel(statusValue)) + "</span></td>",
+                "<td>" + escapeHtml(visualOwnerLabel(visualOwnerOfLead(lead))) + "</td>",
+                "<td>" + escapeHtml(lead.next_follow_up_at || "今日回覆") + "</td>",
+                "<td><button type=\"button\" class=\"tfse-visual-mini-btn\" data-visual-lead-view=\"" + escapeHtml(lead.id) + "\">檢視</button></td>",
+                "</tr>"
+            ].join("");
+        }).join("");
+    }
+
+    function visualSelectedLead(leads) {
+        var selected = leads.filter(function (lead) { return lead.id === visualConsoleState.selectedLeadId; })[0];
+        return selected || leads[0] || getLeads()[0] || null;
+    }
+
+    function visualLeadActionButtons(lead) {
+        return "<div class=\"tfse-visual-status-actions\"><button type=\"button\" data-visual-status-set=\"contacted\" data-visual-status-lead=\"" + escapeHtml(lead.id) + "\">已聯繫</button><button type=\"button\" data-visual-status-set=\"info_sent\" data-visual-status-lead=\"" + escapeHtml(lead.id) + "\">已發資料</button><button type=\"button\" data-visual-status-set=\"closed\" data-visual-status-lead=\"" + escapeHtml(lead.id) + "\">成交</button></div>";
+    }
+
+    function visualLeadField(label, value) {
+        return "<div class=\"tfse-visual-detail-field\"><span>" + escapeHtml(label) + "</span><strong>" + escapeHtml(value || "-") + "</strong></div>";
+    }
+
+    function visualRenderLeadFullDetail(lead) {
+        if (!lead) return "";
+        var tags = (lead.tags || []).join("、");
+        var categories = (lead.recommended_categories || []).join("、");
+        var articles = (lead.recommended_articles || []).join("、");
+        var notes = (lead.notes || []).slice(-3).join(" / ");
+        return [
+            "<div class=\"tfse-visual-detail-panel\" tabindex=\"-1\" data-visual-lead-detail-panel>",
+            "<div class=\"tfse-visual-detail-head\"><div><span>表單詳情</span><h4>" + escapeHtml(lead.display_name || "未命名線索") + "</h4></div><button type=\"button\" data-visual-lead-close>收起</button></div>",
+            "<div class=\"tfse-visual-detail-grid\">",
+            visualLeadField("姓名/稱呼", lead.display_name),
+            visualLeadField("手機", lead.phone),
+            visualLeadField("Line ID", lead.line_id),
+            visualLeadField("所在地區", lead.region),
+            visualLeadField("需求類型", lead.needs),
+            visualLeadField("身份類型", lead.occupation_type),
+            visualLeadField("收入型態", lead.income_type),
+            visualLeadField("目前狀態", visualStatusLabel(lead.status || "new")),
+            visualLeadField("來源", visualSourceLabel(visualSourceOfLead(lead))),
+            visualLeadField("負責人", visualOwnerLabel(visualOwnerOfLead(lead))),
+            visualLeadField("提交時間", formatDate(lead.submitted_at)),
+            visualLeadField("更新時間", formatDate(lead.updated_at || lead.submitted_at)),
+            "</div>",
+            "<div class=\"tfse-visual-detail-message\"><span>目前困擾/補充說明</span><p>" + escapeHtml(lead.message || "未填寫") + "</p></div>",
+            "<div class=\"tfse-visual-detail-grid is-wide\">",
+            visualLeadField("隱私同意", lead.consent_privacy ? "已同意" : "未同意"),
+            visualLeadField("Line 提醒", lead.consent_line ? "已同意" : "未同意"),
+            visualLeadField("標籤", tags || "-"),
+            visualLeadField("推薦分類", categories || "-"),
+            visualLeadField("推薦文章", articles || "-"),
+            visualLeadField("最近備註", notes || "-"),
+            "</div>",
+            visualLeadActionButtons(lead),
+            "</div>"
+        ].join("");
+    }
+
+    function visualRenderLeadDetail(lead) {
+        if (!lead) return "<div class=\"tfse-visual-side-card\"><h4>快速檢視</h4><p>目前沒有真實線索可操作。後台不再產生測試資料，請以前台表單或正式 API 建立資料。</p></div>";
+        return "<div class=\"tfse-visual-side-card tfse-visual-lead-card\"><h4>線索快速操作</h4><strong>" + escapeHtml(lead.display_name || "未命名線索") + "</strong><p>" + escapeHtml(lead.needs || "尚未填寫需求") + "</p><p>手機：" + escapeHtml(lead.phone || "-") + "<br>Line：" + escapeHtml(lead.line_id || "-") + "</p>" + visualLeadActionButtons(lead) + "</div>";
+    }
+
+    function visualRenderSidebar() {
+        var items = [
+            ["dashboard", "fa-tachometer-alt", "儀表板"],
+            ["leads", "fa-user-friends", "線索管理"],
+            ["freecheck", "fa-heart", "免費健檢"],
+            ["consult", "fa-clipboard-list", "諮詢案件"],
+            ["clients", "fa-users", "客戶管理"],
+            ["schedule", "fa-calendar-alt", "行事曆"],
+            ["tasks", "fa-tasks", "任務管理"],
+            ["compliance", "fa-shield-alt", "合規掃描"],
+            ["reports", "fa-chart-bar", "報表分析"],
+            ["settings", "fa-cog", "系統設定"]
+        ];
+        return "<aside class=\"tfse-visual-sidebar\"><a class=\"tfse-visual-brand\" href=\"index.html\" target=\"_blank\" rel=\"noopener\"><img src=\"assets/images/logo/tfse-logo.png\" alt=\"TFSE 金融便民中心\"></a><nav>" + items.map(function (item) {
+            var active = visualConsoleState.tab === item[0] ? " is-active" : "";
+            return "<button type=\"button\" class=\"" + active + "\" data-visual-tab=\"" + item[0] + "\"><i class=\"fa " + item[1] + "\"></i><span>" + item[2] + "</span></button>";
+        }).join("") + "</nav><button type=\"button\" class=\"tfse-visual-collapse\" data-visual-trigger=\"[data-admin-export]\"><i class=\"fa fa-download\"></i><span>匯出線索 JSON</span></button></aside>";
+    }
+
+    function visualPageTitles() {
+        return {
+            dashboard: "CRM 儀表板",
+            leads: "線索管理",
+            freecheck: "免費健檢",
+            consult: "諮詢案件",
+            clients: "客戶管理",
+            schedule: "行事曆",
+            tasks: "任務管理",
+            compliance: "合規掃描",
+            reports: "報表分析",
+            settings: "系統設定"
+        };
+    }
+
+    function visualRenderFilters() {
+        return "<div class=\"tfse-visual-filters\"><label><span>狀態</span><select data-visual-filter=\"status\"><option value=\"all\">全部狀態</option><option value=\"new\">待聯繫</option><option value=\"contacted\">已聯繫</option><option value=\"info_sent\">已發資料</option><option value=\"consulted\">諮詢中</option><option value=\"closed\">成交</option></select></label><label><span>來源</span><select data-visual-filter=\"source\"><option value=\"all\">全部來源</option><option value=\"direct\">官網</option><option value=\"seo\">Google 搜尋</option><option value=\"facebook\">FB/IG</option><option value=\"paid_social\">社群廣告</option><option value=\"line\">LINE OA</option><option value=\"referral\">合作轉介</option></select></label><label><span>負責人</span><select data-visual-filter=\"owner\"><option value=\"all\">全部負責人</option><option value=\"consultant\">顧問組</option><option value=\"data_manager\">資料管理</option><option value=\"compliance_reviewer\">合規審核</option></select></label><label class=\"tfse-visual-search\"><span>搜尋</span><input data-visual-filter=\"query\" type=\"search\" value=\"" + escapeHtml(visualConsoleState.query) + "\" placeholder=\"姓名 / 手機 / Email / 需求\"></label><a class=\"tfse-visual-real-entry\" href=\"free-check.html\" target=\"_blank\" rel=\"noopener\"><i class=\"fa fa-external-link-alt\"></i> 前台提交真實資料</a></div>";
+    }
+
+    function visualLeadStageCounts() {
+        var leads = getLeads();
+        return leads.reduce(function (counts, lead) {
+            var statusValue = lead.status || "new";
+            counts.total += 1;
+            counts[statusValue] = (counts[statusValue] || 0) + 1;
+            if (statusValue !== "closed" && statusValue !== "spam") counts.open += 1;
+            if (String(lead.follow_up_priority || "").toLowerCase() === "high") counts.high_priority += 1;
+            if ((lead.tags || []).indexOf("line_opt_in") !== -1 || lead.consent_line) counts.line_opt_in += 1;
+            return counts;
+        }, { total: 0, open: 0, high_priority: 0, line_opt_in: 0 });
+    }
+
+    function visualLeadWorkspaceMeta() {
+        var counts = visualLeadStageCounts();
+        var tab = visualConsoleState.tab === "dashboard" ? "leads" : visualConsoleState.tab;
+        var meta = {
+            leads: {
+                eyebrow: "完整管線",
+                empty: "目前沒有符合篩選的真實線索。請從前台免費健檢表單提交，或確認正式 API 已連線。",
+                cards: [
+                    ["全部真實線索", counts.total, "所有已提交或 API 寫入的名單"],
+                    ["待處理管線", counts.open, "未成交、未排除的跟進對象"],
+                    ["諮詢中", counts.consulted || 0, "已進入人工諮詢的案件"],
+                    ["成交客戶", counts.closed || 0, "已完成轉換的客戶"]
+                ]
+            },
+            freecheck: {
+                eyebrow: "前台收件",
+                empty: "目前沒有免費健檢提交資料。請點擊「前台提交真實資料」完成一筆表單，後台才會出現資料。",
+                cards: [
+                    ["待聯繫", counts.new || 0, "新提交且尚未回覆"],
+                    ["已聯繫", counts.contacted || 0, "已完成首次聯繫"],
+                    ["已發資料", counts.info_sent || 0, "已寄送公開資訊或說明"],
+                    ["Line 同意", counts.line_opt_in || 0, "可後續 Line 提醒"]
+                ]
+            },
+            consult: {
+                eyebrow: "人工諮詢",
+                empty: "目前沒有狀態為「諮詢中」的真實案件。請在線索快速操作把有效案件推進到諮詢階段。",
+                cards: [
+                    ["諮詢中案件", counts.consulted || 0, "目前正在人工跟進"],
+                    ["高優先", counts.high_priority || 0, "需要優先處理的跟進"],
+                    ["已發資料", counts.info_sent || 0, "可轉入諮詢的潛在案件"],
+                    ["待聯繫", counts.new || 0, "尚未完成首次聯繫"]
+                ]
+            },
+            clients: {
+                eyebrow: "成交服務",
+                empty: "目前沒有已成交客戶。只有狀態更新為「成交」的真實線索會進入此分欄。",
+                cards: [
+                    ["成交客戶", counts.closed || 0, "已完成轉換"],
+                    ["仍在管線", counts.open || 0, "未成交的跟進名單"],
+                    ["諮詢中", counts.consulted || 0, "可能轉成交案件"],
+                    ["Line 同意", counts.line_opt_in || 0, "可做後續服務提醒"]
+                ]
+            }
+        };
+        return meta[tab] || meta.leads;
+    }
+
+    function visualRenderLeadStageSummary(meta) {
+        return "<div class=\"tfse-visual-stage-summary\">" + meta.cards.map(function (card) {
+            return "<article><small>" + escapeHtml(card[0]) + "</small><strong>" + escapeHtml(card[1]) + "</strong><span>" + escapeHtml(card[2]) + "</span></article>";
+        }).join("") + "</div>";
+    }
+
+    function visualRenderLeadWorkspace(leads, title, description) {
+        var totalPages = Math.max(1, Math.ceil(leads.length / visualConsoleState.pageSize));
+        if (visualConsoleState.page > totalPages) visualConsoleState.page = totalPages;
+        var pageStart = leads.length ? ((visualConsoleState.page - 1) * visualConsoleState.pageSize) + 1 : 0;
+        var pageEnd = Math.min(leads.length, visualConsoleState.page * visualConsoleState.pageSize);
+        var meta = visualLeadWorkspaceMeta();
+        return [
+            "<div class=\"tfse-visual-table-card\">",
+            "<div class=\"tfse-visual-module-head\"><div><span class=\"tfse-visual-eyebrow\">" + escapeHtml(meta.eyebrow) + "</span><h3>" + escapeHtml(title) + "</h3><p>" + escapeHtml(description) + "</p></div><button type=\"button\" data-visual-refresh><i class=\"fa fa-sync-alt\"></i> 更新資料</button></div>",
+            "<div class=\"tfse-visual-tabs\"><button type=\"button\" class=\"" + (visualConsoleState.tab === "dashboard" || visualConsoleState.tab === "leads" ? "is-active" : "") + "\" data-visual-tab=\"leads\">線索總覽</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "freecheck" ? "is-active" : "") + "\" data-visual-tab=\"freecheck\">免費健檢</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "consult" ? "is-active" : "") + "\" data-visual-tab=\"consult\">諮詢中案件</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "clients" ? "is-active" : "") + "\" data-visual-tab=\"clients\">成交客戶</button></div>",
+            visualRenderLeadStageSummary(meta),
+            visualRenderFilters(),
+            "<div class=\"tfse-visual-table-wrap\"><table><thead><tr><th>建立時間</th><th>姓名</th><th>來源</th><th>狀態</th><th>負責人</th><th>下一次行動</th><th>動作</th></tr></thead><tbody>" + visualRenderLeadRows(leads, meta.empty) + "</tbody></table></div>",
+            visualConsoleState.selectedLeadId ? visualRenderLeadFullDetail(visualSelectedLead(leads)) : "",
+            "<div class=\"tfse-visual-pager\"><span>顯示 " + pageStart + " - " + pageEnd + " 筆，共 " + leads.length + " 筆</span>" + Array.from({ length: totalPages }).slice(0, 5).map(function (_, index) { var page = index + 1; return "<button type=\"button\" class=\"" + (visualConsoleState.page === page ? "is-active" : "") + "\" data-visual-page=\"" + page + "\">" + page + "</button>"; }).join("") + "</div>",
+            "</div>"
+        ].join("");
+    }
+
+    function visualLeadCard(lead, actionLabel) {
+        var statusValue = lead.status || "new";
+        return [
+            "<article class=\"tfse-visual-module-card\">",
+            "<small>" + escapeHtml(formatDate(lead.next_follow_up_at || lead.submitted_at || lead.updated_at)) + "</small>",
+            "<h4>" + escapeHtml(lead.display_name || "未命名線索") + "</h4>",
+            "<p>" + escapeHtml(lead.needs || "尚未填寫需求") + "</p>",
+            "<div class=\"tfse-visual-pill-row\"><span class=\"tfse-visual-status is-" + escapeHtml(statusValue) + "\">" + escapeHtml(visualStatusLabel(statusValue)) + "</span><span>" + escapeHtml(visualSourceLabel(visualSourceOfLead(lead))) + "</span></div>",
+            "<button type=\"button\" class=\"tfse-visual-mini-btn\" data-visual-lead-view=\"" + escapeHtml(lead.id) + "\">" + escapeHtml(actionLabel || "檢視") + "</button>",
+            "</article>"
+        ].join("");
+    }
+
+    function visualRenderCalendar(payload) {
+        var items = payload.leads.slice().sort(function (a, b) {
+            return String(a.next_follow_up_at || a.submitted_at || "").localeCompare(String(b.next_follow_up_at || b.submitted_at || ""));
+        }).slice(0, 12);
+        return [
+            "<div class=\"tfse-visual-table-card\">",
+            "<div class=\"tfse-visual-module-head\"><div><h3>行事曆</h3><p>只顯示真實線索的下一次行動與跟進安排，可直接檢視並更新狀態。</p></div><button type=\"button\" data-visual-trigger=\"[data-admin-follow-ups-export]\"><i class=\"fa fa-calendar-check\"></i> 匯出跟進隊列</button></div>",
+            items.length ? "<div class=\"tfse-visual-card-grid\">" + items.map(function (lead) { return visualLeadCard(lead, "查看行程"); }).join("") + "</div>" : "<div class=\"tfse-visual-empty-block\">目前沒有真實行程。請先由前台免費健檢表單提交資料，或確認正式 API 已連線。</div>",
+            "</div>"
+        ].join("");
+    }
+
+    function visualRenderTasks(payload) {
+        var leads = payload.leads.filter(function (lead) {
+            var statusValue = lead.status || "new";
+            return statusValue !== "closed" && statusValue !== "spam";
+        }).slice(0, 12);
+        var pendingFeedback = publicFeedbackItemsCache.filter(function (item) {
+            return (item.status || "queued") !== "closed" && (item.status || "queued") !== "resolved";
+        }).length;
+        return [
+            "<div class=\"tfse-visual-table-card\">",
+            "<div class=\"tfse-visual-module-head\"><div><h3>任務管理</h3><p>把未成交線索、資料回報、合規復核集中成可執行待辦。</p></div><button type=\"button\" data-visual-trigger=\"[data-admin-contact-log-export]\"><i class=\"fa fa-file-export\"></i> 匯出聯繫紀錄</button></div>",
+            "<div class=\"tfse-visual-card-grid is-compact\"><article class=\"tfse-visual-module-card\"><small>線索待辦</small><h4>" + leads.length + "</h4><p>尚未完成成交或排除的真實線索。</p><button type=\"button\" data-visual-tab=\"leads\">處理線索</button></article><article class=\"tfse-visual-module-card\"><small>資料回報</small><h4>" + pendingFeedback + "</h4><p>來自公開端的資料更正工單。</p><button type=\"button\" data-visual-trigger=\"[data-admin-public-feedback-export]\">匯出工單</button></article><article class=\"tfse-visual-module-card\"><small>合規復核</small><h4>" + ((payload.legal.status_counts.needs_review || 0) + (payload.legal.status_counts.external_pending || 0)) + "</h4><p>需要人工檢視的頁面與內容。</p><button type=\"button\" data-visual-tab=\"compliance\">前往掃描</button></article></div>",
+            leads.length ? "<div class=\"tfse-visual-data-list\">" + leads.slice(0, 6).map(function (lead) { return visualLeadCard(lead, "處理"); }).join("") + "</div>" : "<div class=\"tfse-visual-empty-block\">目前沒有真實待辦線索。</div>",
+            "</div>"
+        ].join("");
+    }
+
+    function visualRenderComplianceModule(payload) {
+        var legalCounts = payload.legal.status_counts || {};
+        var items = (payload.legal.items || []).slice(0, 8);
+        return [
+            "<div class=\"tfse-visual-table-card\">",
+            "<div class=\"tfse-visual-module-head\"><div><h3>合規掃描</h3><p>合規資料來自現有頁面、內容規則與人工留痕，不使用假資料填充。</p></div><button type=\"button\" data-visual-trigger=\"[data-admin-run-compliance]\"><i class=\"fa fa-shield-alt\"></i> 重新掃描</button></div>",
+            "<div class=\"tfse-visual-card-grid is-compact\"><article class=\"tfse-visual-module-card\"><small>合規通過</small><h4>" + (legalCounts.ready || 0) + "</h4><p>目前可直接保留上線的項目。</p></article><article class=\"tfse-visual-module-card\"><small>風險提示</small><h4>" + (legalCounts.needs_review || 0) + "</h4><p>需要人工確認文案或來源。</p></article><article class=\"tfse-visual-module-card\"><small>外部待設定</small><h4>" + (legalCounts.external_pending || 0) + "</h4><p>依賴正式平台或 API 設定。</p></article></div>",
+            items.length ? "<div class=\"tfse-visual-data-list\">" + items.map(function (item) { return "<article class=\"tfse-visual-module-card\"><small>" + escapeHtml(visualStatusLabel(item.status)) + "</small><h4>" + escapeHtml(item.label || item.title || item.key || "合規項目") + "</h4><p>" + escapeHtml(item.detail || item.note || "等待合規留痕。") + "</p></article>"; }).join("") + "</div>" : "<div class=\"tfse-visual-empty-block\">目前沒有合規掃描項目。</div>",
+            "<div class=\"tfse-visual-action-row\"><button type=\"button\" data-visual-trigger=\"[data-admin-legal-review-export]\">匯出送審包</button><button type=\"button\" data-visual-trigger=\"[data-admin-compliance-api-export]\">匯出 API 驗收包</button></div>",
+            "</div>"
+        ].join("");
+    }
+
+    function visualRenderReportsModule(payload) {
+        return [
+            "<div class=\"tfse-visual-table-card\">",
+            "<div class=\"tfse-visual-module-head\"><div><h3>報表分析</h3><p>報表只根據目前可讀到的真實線索、來源、回報與合規狀態生成。</p></div><button type=\"button\" data-visual-trigger=\"[data-admin-attribution-export]\"><i class=\"fa fa-chart-line\"></i> 匯出歸因報表</button></div>",
+            "<div class=\"tfse-visual-split\"><div class=\"tfse-visual-module-card\"><h4>來源分布</h4>" + visualCountRows(payload.sourceCounts, visualSourceLabel, payload.leads.length || 1) + "</div><div class=\"tfse-visual-module-card\"><h4>數據摘要</h4><ul class=\"tfse-visual-checklist\"><li><span>真實線索</span><b>" + payload.leads.length + "</b></li><li><span>公開回報工單</span><b>" + publicFeedbackItemsCache.length + "</b></li><li><span>合規掃描項</span><b>" + payload.legal.items.length + "</b></li><li><span>資料模式</span><b>" + escapeHtml(leadSourceMode) + "</b></li></ul></div></div>",
+            "<div class=\"tfse-visual-action-row\"><button type=\"button\" data-visual-trigger=\"[data-admin-export]\">匯出線索 JSON</button><button type=\"button\" data-visual-trigger=\"[data-admin-line-segments-export]\">匯出 Line 分群</button><button type=\"button\" data-visual-trigger=\"[data-admin-backup-export]\">匯出備份包</button></div>",
+            "</div>"
+        ].join("");
+    }
+
+    function visualRenderSettingsModule() {
+        var backend = (siteConfigData && siteConfigData.backend) || {};
+        var apiReady = backend.mode === "api" && !!backend.api_base_url;
+        return [
+            "<div class=\"tfse-visual-table-card\">",
+            "<div class=\"tfse-visual-module-head\"><div><h3>系統設定</h3><p>這裡直接顯示目前是不是正式 API 模式，避免把本機暫存誤認成後端。</p></div><button type=\"button\" data-visual-trigger=\"[data-admin-config-draft-template]\"><i class=\"fa fa-cog\"></i> 載入配置範本</button></div>",
+            "<div class=\"tfse-visual-card-grid is-compact\"><article class=\"tfse-visual-module-card\"><small>後端模式</small><h4>" + escapeHtml(backend.mode || "localStorage") + "</h4><p>" + (apiReady ? "已配置 API：" + escapeHtml(backend.api_base_url) : "尚未在 site-config.json 設定 backend.mode=api 與 api_base_url。") + "</p></article><article class=\"tfse-visual-module-card\"><small>線索來源</small><h4>" + escapeHtml(leadSourceMode) + "</h4><p>前台表單會優先走 API，未配置時才使用瀏覽器 localStorage。</p></article><article class=\"tfse-visual-module-card\"><small>內容來源</small><h4>" + escapeHtml(productSourceMode + " / " + articleSourceMode) + "</h4><p>產品與文章可走 API；未登入或未配置時回退靜態資料。</p></article></div>",
+            "<div class=\"tfse-visual-action-row\"><button type=\"button\" data-visual-trigger=\"[data-admin-config-readiness-export]\">匯出配置交接包</button><button type=\"button\" data-visual-trigger=\"[data-admin-backend-acceptance-export]\">匯出 API 驗收矩陣</button><button type=\"button\" data-visual-trigger=\"[data-admin-backend-roadmap-export]\">匯出後端路線圖</button></div>",
+            "</div>"
+        ].join("");
+    }
+
+    function visualRenderMainModule(payload, leads) {
+        if (visualConsoleState.tab === "schedule") return visualRenderCalendar(payload);
+        if (visualConsoleState.tab === "tasks") return visualRenderTasks(payload);
+        if (visualConsoleState.tab === "compliance") return visualRenderComplianceModule(payload);
+        if (visualConsoleState.tab === "reports") return visualRenderReportsModule(payload);
+        if (visualConsoleState.tab === "settings") return visualRenderSettingsModule();
+        if (visualConsoleState.tab === "freecheck") return visualRenderLeadWorkspace(leads, "免費健檢名單", "從前台免費健檢表單或正式 API 進來的真實資料，可檢視並更新跟進狀態。");
+        if (visualConsoleState.tab === "consult") return visualRenderLeadWorkspace(leads, "諮詢中案件", "只顯示狀態為諮詢中的真實線索，便於集中跟進。");
+        if (visualConsoleState.tab === "clients") return visualRenderLeadWorkspace(leads, "成交客戶", "只顯示已成交的真實客戶，方便後續服務與備份。");
+        return visualRenderLeadWorkspace(leads, "線索總覽", "集中管理前台提交與 API 寫入的真實線索，支援篩選、檢視與狀態更新。");
+    }
+
+    function visualRenderConnectionCard() {
+        var backend = (siteConfigData && siteConfigData.backend) || {};
+        var apiReady = backend.mode === "api" && !!backend.api_base_url;
+        return "<div class=\"tfse-visual-side-card\"><h4><i class=\"fa fa-plug\"></i> 資料連線狀態</h4><ul class=\"tfse-visual-checklist\"><li><span>後端模式</span><b>" + escapeHtml(backend.mode || "localStorage") + "</b></li><li><span>API URL</span><b>" + (apiReady ? "已配置" : "未配置") + "</b></li><li><span>線索來源</span><b>" + escapeHtml(leadSourceMode) + "</b></li></ul><p>" + (apiReady ? "目前會優先讀寫正式 API。" : "目前是本機暫存/靜態回退模式；若直接用 file:// 打開，不會連到後端。") + "</p></div>";
+    }
+
+    function renderVisualConsole() {
+        if (!visualConsolePanel) return;
+        var payload = visualMetricPayload();
+        var leads = visualFilteredLeads();
+        var selectedLead = visualSelectedLead(leads);
+        var legalCounts = payload.legal.status_counts || {};
+        var lineItems = (payload.lineItems || []).slice(0, 3);
+        var notificationCount = (payload.followUps.counts.overdue_or_unscheduled || 0) + publicFeedbackItemsCache.length;
+        var pageTitles = visualPageTitles();
+        visualConsolePanel.innerHTML = [
+            "<div class=\"tfse-visual-shell\">",
+            visualRenderSidebar(),
+            "<main class=\"tfse-visual-main\">",
+            "<header class=\"tfse-visual-topbar\"><div><button type=\"button\" class=\"tfse-visual-menu\" data-visual-tab=\"dashboard\"><i class=\"fa fa-bars\"></i></button><h2>" + escapeHtml(pageTitles[visualConsoleState.tab] || "CRM 儀表板") + "</h2></div><div class=\"tfse-visual-userbar\"><span class=\"tfse-visual-bell\"><i class=\"fa fa-bell\"></i><b>" + notificationCount + "</b></span><span>TFSE 金融便民中心</span><strong>" + escapeHtml(roleLabel(currentRole())) + "</strong><button type=\"button\" data-visual-refresh><i class=\"fa fa-sync-alt\"></i> 更新資料</button></div></header>",
+            "<section class=\"tfse-visual-metrics\">" + visualRenderMetricCards(payload.metrics) + "</section>",
+            "<section class=\"tfse-visual-workgrid\">",
+            visualRenderMainModule(payload, leads),
+            "<aside class=\"tfse-visual-rightcol\">",
+            visualRenderLeadDetail(selectedLead),
+            visualRenderConnectionCard(),
+            "<div class=\"tfse-visual-side-card\"><h4><i class=\"fa fa-chart-line\"></i> 來源追蹤分析</h4>" + visualCountRows(payload.sourceCounts, visualSourceLabel, payload.leads.length || 1) + "<button type=\"button\" data-visual-trigger=\"[data-admin-attribution-export]\">匯出完整報表</button></div>",
+            "<div class=\"tfse-visual-side-card\"><h4><i class=\"fa fa-shield-alt\"></i> 合規掃描摘要</h4><ul class=\"tfse-visual-checklist\"><li><span>合規通過</span><b>" + (legalCounts.ready || 0) + "</b></li><li><span>風險提示</span><b>" + (legalCounts.needs_review || 0) + "</b></li><li><span>待外部設定</span><b>" + (legalCounts.external_pending || 0) + "</b></li><li><span>待人工驗收</span><b>" + (legalCounts.manual_external || 0) + "</b></li></ul><button type=\"button\" data-visual-trigger=\"[data-admin-legal-review-export]\">匯出合規掃描</button></div>",
+            "<div class=\"tfse-visual-side-card\"><h4><i class=\"fa fa-comments\"></i> Line OA 即時待列</h4>" + (lineItems.length ? lineItems.map(function (item) { return "<div class=\"tfse-visual-line-item\"><span>" + escapeHtml(item.display_name || "未命名") + "</span><small>" + escapeHtml((item.tags || []).slice(0, 2).join("、") || "待分群") + "</small></div>"; }).join("") : "<p>目前沒有待分群的 Line 線索。</p>") + "<button type=\"button\" data-visual-trigger=\"[data-admin-line-segments-export]\">匯出 Line 分群</button></div>",
+            "</aside></section></main></div>"
+        ].join("");
+        var statusSelect = visualConsolePanel.querySelector("[data-visual-filter='status']");
+        var sourceSelect = visualConsolePanel.querySelector("[data-visual-filter='source']");
+        var ownerSelect = visualConsolePanel.querySelector("[data-visual-filter='owner']");
+        if (statusSelect) statusSelect.value = visualConsoleState.status;
+        if (sourceSelect) sourceSelect.value = visualConsoleState.source;
+        if (ownerSelect) ownerSelect.value = visualConsoleState.owner;
+    }
+
+    function updateVisualLeadStatus(leadId, statusValue) {
+        if (!can("update_lead")) {
+            addAudit("visual_lead_status_update_denied", leadId + ":" + statusValue);
+            renderAudit();
+            return;
+        }
+        var lead = getLeads().filter(function (item) { return item.id === leadId; })[0];
+        if (!lead) return;
+        var note = "可視化後台快速更新：" + visualStatusLabel(statusValue);
+        var meta = {
+            assigned_to: lead.assigned_to || "consultant",
+            follow_up_priority: lead.follow_up_priority || (statusValue === "closed" ? "normal" : "high"),
+            next_follow_up_at: lead.next_follow_up_at || "",
+            contact_log: {
+                at: new Date().toISOString(),
+                channel: "admin_visual_console",
+                status: statusValue,
+                note: note,
+                operator_role: currentRole()
+            }
+        };
+        var updater = window.TFSEApi && window.TFSEApi.updateLeadStatus
+            ? window.TFSEApi.updateLeadStatus(leadId, statusValue, note, meta)
+            : Promise.resolve().then(function () {
+                var leads = getLeads();
+                leads.forEach(function (item) {
+                    if (item.id !== leadId) return;
+                    item.status = statusValue;
+                    item.assigned_to = meta.assigned_to;
+                    item.follow_up_priority = meta.follow_up_priority;
+                    item.next_follow_up_at = meta.next_follow_up_at;
+                    item.contact_logs = (item.contact_logs || []).concat(meta.contact_log);
+                    item.notes = (item.notes || []).concat(new Date().toISOString() + " " + note);
+                    item.updated_at = new Date().toISOString();
+                });
+                saveLeads(leads);
+                return { mode: "localStorage" };
+            });
+        updater.then(function (result) {
+            leadSourceMode = result.mode || leadSourceMode;
+            addAudit("visual_lead_status_update", leadId + ":" + statusValue + ":" + leadSourceMode);
+            return syncLeadsFromApi();
+        }).then(function () {
+            renderVisualConsole();
+            renderAudit();
+        }).catch(function (error) {
+            addAudit("visual_lead_status_update_failed", leadId + ":" + statusValue + ":" + (error && error.message ? error.message : error));
+            renderAudit();
         });
     }
 
@@ -7847,7 +8682,7 @@
             return;
         }
 
-        productsTable.innerHTML = productData.map(function (item) {
+        productsTable.innerHTML = "<tr><td colspan=\"3\"><strong>資料來源：</strong>" + escapeHtml(productSourceMode) + "；編輯後會先保存本機覆蓋，API 模式下同步寫入後端 content_records。</td></tr>" + productData.map(function (item) {
             var product = productView(item);
             var status = productStatus(product);
             var editRow = editingProductId === product.id ? [
@@ -7952,7 +8787,8 @@
         if (!publicFeedbackPanel) return;
         var payload = publicFeedbackPayload();
         publicFeedbackPanel.innerHTML = [
-            "<p>資料回報入口：" + escapeHtml(payload.source_page) + "；收件類型：" + payload.summary.intake_types + "；本機低敏工單：" + payload.summary.local_feedback_tickets + "；來源待復核：" + payload.summary.source_review_items + "；來源留痕：" + payload.summary.source_evidence_records + "。</p>",
+            "<p>資料回報入口：" + escapeHtml(payload.source_page) + "；收件類型：" + payload.summary.intake_types + "；低敏工單：" + payload.summary.local_feedback_tickets + "；來源待復核：" + payload.summary.source_review_items + "；來源留痕：" + payload.summary.source_evidence_records + "。</p>",
+            "<p>目前收件來源：" + escapeHtml(payload.summary.feedback_source_mode || "localStorage") + "；後台會優先查詢正式 API，失敗時才顯示本機暫存。</p>",
             "<p>正式版需把 Email/API 收件轉成工單，只保存低敏摘要、官方來源 URL、處理角色與證據連結。</p>",
             (payload.local_feedback_tickets || []).length ? "<p><strong>最近本機工單：</strong>" + payload.local_feedback_tickets.slice(0, 3).map(function (item) { return escapeHtml((item.feedback_type || "content_error") + " / " + (item.page_url || "n/a")); }).join(" ｜ ") + "</p>" : "",
             payload.intake_types.map(function (item) {
@@ -8027,7 +8863,7 @@
             return;
         }
 
-        articlesTable.innerHTML = articleData.map(function (item) {
+        articlesTable.innerHTML = "<tr><td colspan=\"3\"><strong>資料來源：</strong>" + escapeHtml(articleSourceMode) + "；文章狀態與內容編輯會保存版本覆蓋，API 模式下同步寫入後端 content_records。</td></tr>" + articleData.map(function (item) {
             var article = articleView(item);
             var status = articleStatus(article);
             var editRow = editingArticleId === article.id ? [
@@ -8339,7 +9175,7 @@
     }
 
     function loadAdminData() {
-        Promise.all([
+        return Promise.all([
             loadJson("assets/data/products.json", []),
             loadJson("assets/data/articles.json", []),
             loadJson("assets/data/faq.json", []),
@@ -8349,8 +9185,7 @@
             loadJson("assets/data/line-flows.json", {}),
             loadJson("site-config.json", {}),
             loadJson("assets/data/browser-acceptance-evidence.json", {}),
-            loadJson("assets/data/source-verification-evidence.json", {}),
-            loadJson("assets/data/admin-record-seeds.json", {})
+            loadJson("assets/data/source-verification-evidence.json", {})
         ]).then(function (data) {
             productData = data[0] || [];
             articleData = data[1] || [];
@@ -8360,16 +9195,11 @@
             landingPageData = data[5] || [];
             lineFlowData = data[6] || {};
             siteConfigData = data[7] || {};
-            browserAcceptanceSeedRecords = ((data[8] || {}).records || []).map(function (record) {
-                return Object.assign({ source: "seed_browser_acceptance_evidence" }, record);
-            });
-            sourceEvidenceSeedRecords = ((data[9] || {}).records || []).map(function (record) {
-                return Object.assign({ source: "seed_source_verification_evidence" }, record);
-            });
-            adminRecordSeedData = data[10] || {};
+            browserAcceptanceSeedRecords = [];
+            sourceEvidenceSeedRecords = [];
+            adminRecordSeedData = {};
             if (configDraftInput && !configDraftInput.value) configDraftInput.value = localStorage.getItem("tfse_site_config_update_draft") || "";
-            renderProducts();
-            renderArticles();
+            syncAdminContentFromApi();
             renderFaq();
             renderContentVersions();
             renderCompliance();
@@ -8402,6 +9232,9 @@
             renderLegalReview();
             renderAdminSecurityMatrix();
             renderLeadDedupe();
+            renderRealMetrics();
+            renderVisualConsole();
+            renderCurrentDatePill();
         });
     }
 
@@ -8409,20 +9242,134 @@
     if (status) status.addEventListener("change", renderList);
     if (tagFilter) tagFilter.addEventListener("change", renderList);
     if (sourceFilter) sourceFilter.addEventListener("change", renderList);
+    if (visualConsolePanel) {
+        visualConsolePanel.addEventListener("click", function (event) {
+            var tabButton = event.target.closest("[data-visual-tab]");
+            if (tabButton) {
+                visualConsoleState.tab = tabButton.getAttribute("data-visual-tab") || "dashboard";
+                visualConsoleState.page = 1;
+                renderVisualConsole();
+                return;
+            }
+            var viewButton = event.target.closest("[data-visual-lead-view]");
+            if (viewButton) {
+                visualConsoleState.selectedLeadId = viewButton.getAttribute("data-visual-lead-view") || "";
+                renderVisualConsole();
+                var detailPanel = visualConsolePanel.querySelector("[data-visual-lead-detail-panel]");
+                if (detailPanel) {
+                    detailPanel.focus();
+                    detailPanel.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+                return;
+            }
+            var closeButton = event.target.closest("[data-visual-lead-close]");
+            if (closeButton) {
+                visualConsoleState.selectedLeadId = "";
+                renderVisualConsole();
+                return;
+            }
+            var statusButton = event.target.closest("[data-visual-status-set]");
+            if (statusButton) {
+                updateVisualLeadStatus(statusButton.getAttribute("data-visual-status-lead"), statusButton.getAttribute("data-visual-status-set"));
+                return;
+            }
+            var pageButton = event.target.closest("[data-visual-page]");
+            if (pageButton) {
+                visualConsoleState.page = Math.max(1, Number(pageButton.getAttribute("data-visual-page")) || 1);
+                renderVisualConsole();
+                return;
+            }
+            var triggerButton = event.target.closest("[data-visual-trigger]");
+            if (triggerButton) {
+                var target = document.querySelector(triggerButton.getAttribute("data-visual-trigger"));
+                if (target) target.click();
+                return;
+            }
+            var visualRefresh = event.target.closest("[data-visual-refresh]");
+            if (visualRefresh) {
+                if (refreshButton) refreshButton.click();
+                else {
+                    loadAdminData();
+                    renderAfterLogin();
+                }
+            }
+        });
+        visualConsolePanel.addEventListener("input", function (event) {
+            var target = event.target.closest("[data-visual-filter]");
+            if (!target) return;
+            visualConsoleState[target.getAttribute("data-visual-filter")] = target.value || "";
+            visualConsoleState.page = 1;
+            renderVisualConsole();
+        });
+        visualConsolePanel.addEventListener("change", function (event) {
+            var target = event.target.closest("[data-visual-filter]");
+            if (!target) return;
+            visualConsoleState[target.getAttribute("data-visual-filter")] = target.value || "";
+            visualConsoleState.page = 1;
+            renderVisualConsole();
+        });
+    }
     if (refreshButton) refreshButton.addEventListener("click", function () {
         refreshButton.disabled = true;
         refreshButton.innerHTML = '<i class="fa fa-sync-alt fa-spin"></i> 更新中';
-        loadAdminData();
-        renderAfterLogin();
-        addAudit("crm_dashboard_refresh", "local_mvp");
-        window.setTimeout(function () {
+        Promise.resolve(loadAdminData()).then(function () {
+            renderAfterLogin();
+            addAudit("crm_dashboard_refresh", "local_mvp");
+        }).finally(function () {
             refreshButton.disabled = false;
             refreshButton.innerHTML = '<i class="fa fa-sync-alt"></i> 更新資料';
-        }, 500);
+        });
+    });
+    if (productCreateForm) productCreateForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!can("manage_product")) {
+            addAudit("product_create_denied", "admin_product_form");
+            if (productCreateStatus) productCreateStatus.innerHTML = "<p>目前角色沒有新增資料權限。</p>";
+            return;
+        }
+        var formData = new FormData(productCreateForm);
+        var item = createAdminProduct({
+            title: String(formData.get("title") || "").trim(),
+            category: String(formData.get("category") || "").trim(),
+            summary: String(formData.get("summary") || "").trim(),
+            source_url: String(formData.get("source_url") || "").trim()
+        });
+        productCreateForm.reset();
+        addAudit("product_create", item.id + ":" + productSourceMode);
+        if (productCreateStatus) productCreateStatus.innerHTML = "<p>已新增資料：「" + escapeHtml(item.title) + "」。來源：" + escapeHtml(productSourceMode) + "。</p>";
+    });
+    if (articleCreateForm) articleCreateForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!can("manage_article")) {
+            addAudit("article_create_denied", "admin_article_form");
+            if (articleCreateStatus) articleCreateStatus.innerHTML = "<p>目前角色沒有新增文章權限。</p>";
+            return;
+        }
+        var formData = new FormData(articleCreateForm);
+        var item = createAdminArticle({
+            title: String(formData.get("title") || "").trim(),
+            category: String(formData.get("category") || "").trim(),
+            summary: String(formData.get("summary") || "").trim(),
+            seo_description: String(formData.get("seo_description") || "").trim()
+        });
+        articleCreateForm.reset();
+        addAudit("article_create", item.id + ":" + articleSourceMode);
+        if (articleCreateStatus) articleCreateStatus.innerHTML = "<p>已新增文章草稿：「" + escapeHtml(item.title) + "」。來源：" + escapeHtml(articleSourceMode) + "。</p>";
+    });
+    if (completionOverviewPanel) completionOverviewPanel.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-admin-completion-jump]");
+        if (!button) return;
+        var target = document.querySelector(button.getAttribute("data-admin-completion-jump"));
+        if (!target) return;
+        if (target.tagName === "BUTTON") {
+            target.click();
+            return;
+        }
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (target.focus) target.focus({ preventScroll: true });
     });
     if (seedButton) seedButton.addEventListener("click", function () {
-        seedLeads();
-        addAudit("seed_leads", "local_mvp");
+        addAudit("seed_leads_disabled", "後台已禁止產生測試資料。");
         renderList();
         renderFollowUps();
         renderLeadDedupe();
