@@ -49835,6 +49835,24 @@ textarea:focus {
   margin-bottom: 30px;
 }
 
+.footer-logo a {
+  display: inline-flex;
+  align-items: center;
+  max-width: 240px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+
+.footer-logo img {
+  display: block;
+  width: 204px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
 .footer-widget-title {
   font-size: 18px;
   color: #fff;
