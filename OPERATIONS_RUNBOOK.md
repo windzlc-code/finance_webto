@@ -90,6 +90,7 @@ python3 tools/launch_execution_plan.py --markdown
 python3 tools/launch_countdown_plan.py --markdown
 python3 tools/formal_config_input_packet.py --markdown
 python3 tools/plan_closure_report.py --markdown
+python3 tools/live_deployment_check.py --markdown
 python3 tools/project_plan_coverage_audit.py --markdown
 python3 tools/external_execution_packet.py --markdown
 python3 tools/owner_cutover_bundle.py --markdown --summary-only
@@ -221,6 +222,7 @@ python3 -m http.server 4173
 5. 確認主機套用 `_headers` 或等效安全標頭；GitHub Pages 需透過 Cloudflare、反向代理或平台規則補齊。
 6. 匯出 `tfse_security_headers_deployment_check`，用 `curl -I` 或平台 header 檢查保存 CSP、X-Frame-Options、nosniff、Referrer-Policy、Permissions-Policy、Cache-Control 與 security.txt 留痕。
 7. 部署後訪問 `/index.html`、`/database.html`、`/free-check.html`、`/admin.html`、`/404.html`、`/500.html`、`/robots.txt`、`/sitemap.xml`、`/feed.xml`、`/.well-known/security.txt`。
+8. 執行 `python3 tools/live_deployment_check.py --markdown`，保存公网主站、SEO 資產、security.txt、`/api/health` 與 HTTPS 阻擋項證據。
 
 ## 5. 正式後端切換
 
