@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: http://www.tfse-fcc.com/sitemap.xml
+Sitemap: https://www.tfse-fcc.com/sitemap.xml

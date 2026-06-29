@@ -1,6 +1,6 @@
 {
   "site_name": "TFSE金融便民中心",
-  "base_url": "http://www.tfse-fcc.com",
+  "base_url": "https://www.tfse-fcc.com",
   "og_image": "assets/images/logo/tfse-logo.png",
   "analytics": {
     "ga4_measurement_id": "",
