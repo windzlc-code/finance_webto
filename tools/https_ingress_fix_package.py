@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import socket
 import sys
+from urllib.parse import urlparse
 
 import live_deployment_check
 import site_config_tooling
@@ -12,11 +14,22 @@ FORMAT = "tfse_https_ingress_fix_package"
 STATUS = "pending_external_network_fix"
 
 
+def tcp_probe(host, port, timeout=6.0):
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return {"port": port, "ok": True, "error": ""}
+    except OSError as error:
+        return {"port": port, "ok": False, "error": f"{type(error).__name__}: {error}"}
+
+
 def build_report():
     site_config = site_config_tooling.load_site_config()
     configured_url = str(site_config.get("base_url") or live_deployment_check.DEFAULT_HTTPS_URL).rstrip("/") + "/"
     https_url = configured_url.replace("http://", "https://", 1)
     http_url = https_url.replace("https://", "http://", 1)
+    host = urlparse(https_url).netloc
+    tcp_checks = [tcp_probe(host, port) for port in (22, 80, 443)]
+    tcp_by_port = {item["port"]: item for item in tcp_checks}
     live_report = live_deployment_check.build_report(http_url, https_url, timeout=8.0)
     https_check = next((item for item in live_report["checks"] if item["name"] == "https_home"), {})
     blocker = next((item for item in live_report.get("external_blockers", []) if item["key"] == "https_public_ingress"), {})
@@ -26,9 +39,14 @@ def build_report():
         "generated_at": site_config_tooling.now_iso(),
         "http_url": http_url,
         "https_url": https_url,
+        "host": host,
+        "tcp_checks": tcp_checks,
         "current_evidence": {
             "http_required_ok": live_report["summary"]["required_ok"],
             "https_ok": live_report["summary"]["https_ok"],
+            "tcp_22_ok": tcp_by_port.get(22, {}).get("ok", False),
+            "tcp_80_ok": tcp_by_port.get(80, {}).get("ok", False),
+            "tcp_443_ok": tcp_by_port.get(443, {}).get("ok", False),
             "https_status": https_check.get("status", 0),
             "https_error": https_check.get("error", ""),
             "external_blocker": blocker.get("label", ""),
@@ -89,10 +107,22 @@ def markdown(report):
         f"- HTTP required checks OK: `{report['current_evidence']['http_required_ok']}`",
         f"- HTTPS OK: `{report['current_evidence']['https_ok']}`",
         f"- HTTPS error: `{report['current_evidence']['https_error'] or '-'}`",
+        f"- TCP 22 OK: `{report['current_evidence']['tcp_22_ok']}`",
+        f"- TCP 80 OK: `{report['current_evidence']['tcp_80_ok']}`",
+        f"- TCP 443 OK: `{report['current_evidence']['tcp_443_ok']}`",
+        "",
+        "## TCP Checks",
+        "",
+        "| Port | OK | Error |",
+        "| --- | --- | --- |",
+    ]
+    for item in report["tcp_checks"]:
+        lines.append(f"| {item['port']} | {item['ok']} | {item['error'] or '-'} |")
+    lines.extend([
         "",
         "## Diagnosis Order",
         "",
-    ]
+    ])
     lines.extend(f"{index}. {item}" for index, item in enumerate(report["diagnosis_order"], 1))
     lines.extend(["", "## Server Commands", ""])
     lines.extend(f"- `{item}`" for item in report["server_commands"])

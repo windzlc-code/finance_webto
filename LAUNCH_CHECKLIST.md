@@ -145,7 +145,7 @@
 - [x] `tools/domain_cutover_package.py --markdown` 可在命令列直接輸出 `tfse_domain_cutover_package`，彙整 base_url、canonical、SEO 資產、Search Console、切換步驟與阻擋項。
 - [x] `tools/host_fallback_deployment_check.py --markdown` 可在命令列直接輸出 `tfse_host_fallback_deployment_check`，覆蓋 404 / 500、未知路徑與 server error fallback 的正式主機驗證清單。
 - [x] `tools/live_deployment_check.py --markdown` 可在命令列直接檢查公网主站、`robots.txt`、`sitemap.xml`、`feed.xml`、`/.well-known/security.txt`、`/api/health` 與 HTTPS 443 狀態，並把 HTTPS timeout 標記為外部雲安全組 / 防火牆阻擋項。
-- [x] `tools/https_ingress_fix_package.py --markdown` 可在 HTTPS 443 timeout 時輸出 DNS、雲安全組、主機防火牆、反向代理、TLS 憑證與驗證命令的修復包，方便 owner 保存正式入站修復證據。
+- [x] `tools/https_ingress_fix_package.py --markdown` 可在 HTTPS 443 timeout 時輸出 TCP 22/80/443 可達性、DNS、雲安全組、主機防火牆、反向代理、TLS 憑證與驗證命令的修復包，方便 owner 保存正式入站修復證據。
 - [x] `tools/external_verification_evidence.py --markdown` 可在命令列直接輸出 `tfse_external_verification_evidence`，對賬 GA4、Meta Pixel、Server Event、Sentry、Search Console、Line OA、backend API 與法務複核的 configured / verified 狀態。
 - [x] `tools/release_readiness_package.py --markdown` 可在命令列直接輸出 `tfse_release_readiness_package`，彙整上線健康檢查、正式配置、驗收、網域切換、外部執行與 rollback 阻擋項。
 - [x] `tools/operations_task_queue.py --markdown` 可在命令列直接輸出 `tfse_operations_task_queue`，按 owner / status / priority 收斂上線配置、外部驗證、後端切換、來源復核、驗收與發布任務。
