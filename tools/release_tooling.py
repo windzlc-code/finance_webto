@@ -29,6 +29,7 @@ RELEASE_REQUIRED_COMMANDS = [
     "python3 tools/launch_health_check.py --markdown",
     "python3 tools/domain_cutover_package.py --markdown",
     "python3 tools/host_fallback_deployment_check.py --markdown",
+    "python3 tools/https_ingress_fix_package.py --markdown",
     "python3 tools/seo_submission_package.py --markdown",
     "python3 tools/search_console_verification_package.py --markdown",
     "python3 tools/tracking_consent_audit.py --markdown",

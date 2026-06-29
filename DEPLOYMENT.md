@@ -21,6 +21,7 @@ python3 tools/validate_site_config.py
 python3 tools/acceptance_audit.py
 python3 tools/plan_closure_report.py --markdown
 python3 tools/live_deployment_check.py --markdown
+python3 tools/https_ingress_fix_package.py --markdown
 python3 tools/formal_config_input_packet.py --markdown
 python3 tools/project_plan_coverage_audit.py --markdown
 python3 tools/external_execution_packet.py --markdown
@@ -42,6 +43,7 @@ python3 tools/verify_static_site.py
 8. 確認正式主機已套用 `_headers` 或等效安全標頭，並可訪問 `/.well-known/security.txt`。
 9. 再次執行驗收命令，確認產品、分類、落地頁與文章 slug 均存在。
 10. 部署後執行 `python3 tools/live_deployment_check.py --markdown`，確認正式主站、SEO 資產、`/.well-known/security.txt` 與 `/api/health` 可從公网訪問；若只剩 HTTPS timeout，將其作為雲安全組 / 防火牆外部阻擋項處理。
+11. 若 HTTPS 仍 timeout，執行 `python3 tools/https_ingress_fix_package.py --markdown`，按 DNS、雲安全組、主機防火牆、反向代理、TLS 憑證與 `/api/health` 的順序保存排查證據。
 
 ## GitHub Pages
 
