@@ -145,7 +145,7 @@
 
         var matchedProducts = products.filter(function (product) { return matchesProduct(page, product); });
         var matchedArticles = articles.filter(function (article) { return matchesArticle(page, article); });
-        var canonical = "https://windzlc-code.github.io/finance_webto/" + landingPath(page);
+        var canonical = "http://www.tfse-fcc.com/" + landingPath(page);
         var description = page.pain + " TFSE 僅整理公開資訊，不代辦、不代收證件、不保證核貸。";
 
         document.title = page.short_title + "｜TFSE金融便民中心";

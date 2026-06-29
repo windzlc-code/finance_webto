@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://windzlc-code.github.io/finance_webto/sitemap.xml
+Sitemap: http://www.tfse-fcc.com/sitemap.xml
