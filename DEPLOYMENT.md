@@ -205,6 +205,24 @@ NODE_PATH=/path/to/node_modules node tools/browser_acceptance_verify.mjs --backe
 
 這條 rehearsal 會讓 `free-check.html` 與 `admin.html` 經由 `assets/js/tfse-api.js` 真實呼叫本機 HTTP API，而不是只在瀏覽器內攔截 request。它不能替代正式資料庫、Auth、CSRF、RBAC、備份與審計，但能先驗證前端 API 適配層與跨埠 JSON/CORS 邊界。
 
+需要重啟後保留資料或做小流量 staging 時，可使用專案內建的 SQLite 持久化 API：
+
+```sh
+python3 backend/tfse_persistent_api.py --host 127.0.0.1 --port 8788 --db data/tfse.sqlite3
+python3 tools/persistent_api_smoke.py
+```
+
+目前 `43.130.233.113` 已以獨立 systemd 服務部署過渡 API：
+
+- service：`tfse-api.service`
+- app path：`/opt/tfse-api/current`
+- DB path：`/var/lib/tfse-api/tfse.sqlite3`
+- env file：`/etc/tfse-api.env`，權限為 root-only，不提交 secret
+- Nginx：僅在 `tfse-site` 中新增 `location ^~ /api/`，反代到 `127.0.0.1:8788`
+- public health：`http://www.tfse-fcc.com/api/health`
+
+該服務已提供 `POST /api/leads`、`POST /api/public-feedback`、內容查詢、Admin Auth、CRM 狀態更新、合規審核、個資請求與 `audit_logs`。但目前 `site-config.json > backend.mode` 仍保持 `localStorage`，前台不會自動切到 API；要正式切換時需先解決 HTTPS 443 公網入站、填入正式 Line OA / Turnstile / 後端配置，再把 `backend.mode` 改為 `api` 並將 `backend.api_base_url` 設為正式 HTTPS 網址。
+
 前端已提供 `assets/js/tfse-api.js` API 適配層。正式後端上線時，在 `site-config.json` 填入：
 
 ```json
@@ -225,7 +243,7 @@ NODE_PATH=/path/to/node_modules node tools/browser_acceptance_verify.mjs --backe
 - API 不可用時會記錄 `api_fallback` 錯誤摘要，並暫時 fallback 到本機 MVP，避免前台表單完全失效。
 - 正式後端必須驗證 `cf_turnstile_response`、蜜罐欄位、IP + `device_id` 限流與 24 小時重複提交，不能只信任前端。
 
-正式 Turnstile 啟用後，可從 Admin 匯出 `tfse_turnstile_backend_verification_package`，逐項測試空 token、無效 token、蜜罐、IP + device_id 限流、phone_hash + needs 去重與高敏 payload 拒收。`TFSE_TURNSTILE_SECRET_KEY` 只能放在 API server secrets，不得寫入 `site-config.json`、前端、審計明文或匯出包。
+正式 Turnstile 啟用後，可從 Admin 匯出 `tfse_turnstile_backend_verification_package`，逐項測試空 token、無效 token、蜜罐、IP + device_id 限流、phone_hash + needs 去重與高敏 payload 拒收。`TFSE_TURNSTILE_SECRET` 只能放在 API server secrets，不得寫入 `site-config.json`、前端、審計明文或匯出包。
 
 正式 Sentry 啟用後，可從 Admin 匯出 `tfse_sentry_error_verification_package`，逐項保存前台受控測試錯誤、API 受控 server error、敏感欄位遮罩、environment/release 標籤、source map 管理與 Sentry issue 截圖。Sentry event 不得包含 cookie、session、authorization、Turnstile token、完整手機、Line ID、備註或表單原文。
 
