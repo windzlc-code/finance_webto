@@ -162,6 +162,7 @@
 - [x] `tools/formal_backend_migration_package.py --markdown` 可在命令列直接輸出 `tfse_formal_backend_migration_package`，彙整正式匯入順序、seed 統計、敏感資料邊界與來源待辦。
 - [x] `tools/backup_restore_drill_plan.py --markdown` 可在命令列直接輸出 `tfse_backup_restore_drill_plan`，彙整每日備份、每週還原演練、RPO/RTO 與證據欄位。
 - [x] `tools/backup_receipt_verification_package.py --markdown` 可在命令列直接輸出 `tfse_backup_receipt_verification_package`，核對 backup_jobs、restore drill 收據欄位與驗收步驟。
+- [x] `tools/persistent_api_backup.py` 可對 SQLite 持久化 API 執行一致性備份、gzip、SHA256 manifest 與隔離 restore drill；`43.130.233.113` 已配置 `tfse-api-backup.timer` 每日備份並在備份後自動演練恢復。
 - [x] `tools/content_api_cutover_package.py --markdown` 可在命令列直接輸出 `tfse_content_api_cutover_package`，彙整公開內容 API 切換檢查、靜態 fallback 邊界與 blockers。
 - [x] `tools/turnstile_backend_verification_package.py --markdown` 可在命令列直接輸出 `tfse_turnstile_backend_verification_package`，覆蓋 server-side siteverify、限流、去重與負向測試案例。
 - [x] `tools/analytics_debug_verification_package.py --markdown` 可在命令列直接輸出 `tfse_analytics_debug_verification_package`，彙整 GA4 / Meta / server event 映射、debug 流程與證據欄位。
@@ -251,7 +252,7 @@
 - [ ] 接入正式伺服器端登入、角色權限與審計日誌。
 - [ ] 正式 Admin Auth 上線前，匯出 `tfse_admin_auth_cutover_check` 並保存 cookie flags、CSRF、RBAC、Viewer 遮罩、logout revoke 與 audit log 證據。
 - [ ] 接入正式資料庫和備份策略。
-- [ ] 正式資料庫需每日備份，並完成每週還原演練；本機 MVP 備份包不可取代正式備份。
+- [ ] 正式資料庫需每日備份，並完成每週還原演練；本機 MVP 備份包不可取代正式備份。當前 SQLite 過渡 API 已具備每日備份 timer 與 restore drill，但正式 PostgreSQL / 雲端備份仍需外部驗收。
 - [ ] 正式備份排程上線後，匯出 `tfse_backup_receipt_verification_package` 並保存 backup_job_id、checksum、storage_url、restore_drill_id、RPO/RTO 與 audit_log_id 證據。
 - [ ] 將 `institutions.json` 匯入正式 `institutions` 資料表，並建立來源核驗版本紀錄。
 - [ ] 匯入機構資料前，匯出 `tfse_institution_import_verification_package` 並保存 row_count、version_record_count、sample_ids、official_url_checked 與 audit_log_id 證據。

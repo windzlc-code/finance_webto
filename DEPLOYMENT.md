@@ -222,6 +222,9 @@ python3 tools/persistent_api_smoke.py
 - env file：`/etc/tfse-api.env`，權限為 root-only，不提交 secret
 - Nginx：僅在 `tfse-site` 中新增 `location ^~ /api/`，反代到 `127.0.0.1:8788`
 - public health：`http://www.tfse-fcc.com/api/health`
+- backup timer：`tfse-api-backup.timer` 每日 03:15 觸發 `tfse-api-backup.service`
+- backup path：`/var/lib/tfse-api/backups/tfse-api-*.sqlite3.gz` 與同名 `.manifest.json`
+- restore drill：每次 backup 後自動執行隔離恢復抽查，核對 `PRAGMA integrity_check` 與 critical table row counts
 
 該服務已提供 `POST /api/leads`、`POST /api/public-feedback`、內容查詢、Admin Auth、CRM 狀態更新、合規審核、個資請求與 `audit_logs`。但目前 `site-config.json > backend.mode` 仍保持 `localStorage`，前台不會自動切到 API；要正式切換時需先解決 HTTPS 443 公網入站、填入正式 Line OA / Turnstile / 後端配置，再把 `backend.mode` 改為 `api` 並將 `backend.api_base_url` 設為正式 HTTPS 網址。
 
@@ -271,6 +274,8 @@ python3 tools/persistent_api_smoke.py
 - 每週還原演練，確認備份可用。
 
 目前 Admin 已提供「本機備份包」作為 MVP 遷移前核對工具，可匯出潛客、事件、錯誤、審計、合規審核、產品覆蓋與文章覆蓋資料，也可在同一瀏覽器環境做還原演練。這只適合靜態 MVP 和正式後端導入前的資料搬遷檢查，不能取代伺服器資料庫備份。
+
+持久化 MVP API 可先用 `python3 tools/persistent_api_backup.py --db data/tfse.sqlite3 --backup-dir data/backups --markdown` 生成 gzip SQLite 備份、SHA256 checksum 與 manifest，再用 `python3 tools/persistent_api_backup.py --backup-dir data/backups --restore-drill --markdown` 做隔離還原抽查。正式 PostgreSQL / 雲端備份上線後，仍需用正式備份系統保存 storage URL、加密/KMS、RPO/RTO 與告警證據。
 
 正式備份排程啟用後，Admin 可匯出 `tfse_backup_receipt_verification_package`，逐項保存 backup_job_id、status、storage_url、checksum、加密/KMS、retention_until、restore_drill_id、row_count_checks、RPO/RTO 與 audit_log_id。此包只保存收據欄位與去識別抽查結果，不保存資料庫 URL、密鑰或備份檔內容。
 

@@ -43,6 +43,8 @@ python3 tools/line_oa_handoff_check.py --markdown
 python3 tools/formal_backend_migration_package.py --markdown
 python3 tools/backup_restore_drill_plan.py --markdown
 python3 tools/backup_receipt_verification_package.py --markdown
+python3 tools/persistent_api_backup.py --db data/tfse.sqlite3 --backup-dir data/backups --markdown
+python3 tools/persistent_api_backup.py --backup-dir data/backups --restore-drill --markdown
 python3 tools/content_api_cutover_package.py --markdown
 python3 tools/turnstile_backend_verification_package.py --markdown
 python3 tools/analytics_debug_verification_package.py --markdown
@@ -276,6 +278,14 @@ python3 -m http.server 4173
 - 每週 restore drill，至少抽查 `lead_forms`、`audit_logs`、`privacy_request_tasks`、`line_segment_tasks`、`articles`、`financial_products`。
 - 每次 restore drill 後在 `backup_jobs` 或正式運維系統記錄結果。
 - 每月匯出 `tfse_data_retention_purge_plan`，檢查 `lead_forms`、`privacy_request_tasks`、`lead_events`、`audit_logs`、來源證據與備份的保留/匿名化/刪除候選；未完成個資請求、投訴、事故或法務審核中的資料需先標記 legal hold。
+
+持久化 SQLite API 過渡層已提供 `tools/persistent_api_backup.py`，可用 SQLite backup API 做一致性備份、gzip 壓縮、SHA256 manifest 與隔離 restore drill。`43.130.233.113` 目前已部署：
+
+- `tfse-api-backup.timer`：每日 03:15 執行，`Persistent=true`。
+- `tfse-api-backup.service`：先備份 `/var/lib/tfse-api/tfse.sqlite3` 到 `/var/lib/tfse-api/backups`，再自動執行 restore drill。
+- 驗證重點：`integrity_check=ok`、critical tables present、source/backup row counts match。
+
+這個 SQLite 備份只覆蓋過渡 API，不取代未來正式 PostgreSQL / 雲端快照備份；正式環境仍需保存 backup job、storage URL、KMS/encryption、RPO/RTO、通知與審計證據。
 
 還原演練基本步驟：
 

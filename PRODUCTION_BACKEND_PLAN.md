@@ -117,6 +117,7 @@ CRM 接入前也需匯出 `tfse_lead_dedupe_queue`，用完整手機雜湊、需
 - 每週還原演練。
 - 匯出檔案保留審計紀錄與下載者。
 - seed JSON 保留在 repo，但不作正式資料來源。
+- 持久化 MVP API 已提供 `tools/persistent_api_backup.py`，可為 SQLite 過渡庫建立 gzip 備份、SHA256 manifest 與隔離 restore drill；伺服器上已可用 `tfse-api-backup.timer` 每日執行。正式 PostgreSQL 上線後，仍需遷移到正式備份 job / 雲快照 / KMS 流程。
 - 後台可匯出 `tfse_backup_restore_drill_plan`，作為正式備份排程、RPO/RTO、checksum、storage URL、隔離還原抽查與演練證據欄位的交接清單；此包不包含資料庫 URL 或任何密鑰。
 - 後台可匯出 `tfse_backup_receipt_verification_package`，正式備份任務啟用後核對 backup_jobs、backup_restore_drill_results、checksum、加密儲存、RPO/RTO、通知與 audit_logs；此包只保存收據欄位，不保存備份檔內容或資料庫密鑰。
 - 後台可匯出 `tfse_data_retention_purge_plan`，作為正式資料保留、匿名化、到期刪除、legal hold 與審計證據的月檢排程；正式環境需由資料庫 job 或後台工作流執行，localStorage MVP 只產生候選清單。
