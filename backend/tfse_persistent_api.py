@@ -776,6 +776,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self) -> None:
         self._set_headers(status=204, content_type="text/plain; charset=utf-8")
 
+    def do_HEAD(self) -> None:
+        path = urlparse(self.path).path
+        if path in {"/health", "/api/health"}:
+            self._set_headers(status=200)
+            return
+        self._set_headers(status=404)
+
     def do_GET(self) -> None:
         path = urlparse(self.path).path
         query = parse_qs(urlparse(self.path).query)

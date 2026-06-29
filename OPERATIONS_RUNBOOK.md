@@ -34,7 +34,7 @@ python3 tools/tracking_consent_audit.py --markdown
 python3 tools/monitoring_receipt_checklist.py --markdown
 python3 tools/sentry_error_verification_package.py --markdown
 python3 tools/admin_export_cli_coverage_audit.py --markdown
-python3 tools/security_headers_deployment_check.py --markdown
+python3 tools/security_headers_deployment_check.py --markdown --live
 python3 tools/admin_security_matrix.py --markdown
 python3 tools/admin_auth_cutover_check.py --markdown
 python3 tools/backend_acceptance_matrix.py --markdown
@@ -155,7 +155,7 @@ python3 tools/launch_handoff_manifest.py --markdown
 
 `tools/admin_export_cli_coverage_audit.py --markdown` 會對照 Admin 現有 `tfse_*` 導出與 `tools/*.py` 的 standalone CLI 覆蓋度，幫我們持續追蹤哪些能力仍只存在於前端面板。
 
-`tools/security_headers_deployment_check.py --markdown` 會把 `_headers`、security.txt、正式主機 header 驗證命令與 CSP allowlist 輸出成 CLI 包，方便正式主機切換時直接核對。
+`tools/security_headers_deployment_check.py --markdown --live` 會把 `_headers`、security.txt、正式主機 header 驗證命令、CSP allowlist 與当前公网 header/cache 證據輸出成 CLI 包，方便正式主機切換時直接核對。`43.130.233.113` 目前已在 Nginx 套用 `tfse-security-headers.conf` 與 assets / site-config / SEO 資產快取策略。
 
 `tools/admin_security_matrix.py --markdown` 會把角色權限矩陣、session / CSRF / MFA / audit / viewer masking 檢查輸出成 CLI 版本，對齊 Admin 的 `tfse_admin_security_matrix`。
 
@@ -222,7 +222,7 @@ python3 -m http.server 4173
 3. 重新執行第 2 節所有驗收命令。
 4. 推送到 GitHub Pages、Netlify、Vercel Static Hosting 或等效靜態主機。
 5. 確認主機套用 `_headers` 或等效安全標頭；GitHub Pages 需透過 Cloudflare、反向代理或平台規則補齊。
-6. 匯出 `tfse_security_headers_deployment_check`，用 `curl -I` 或平台 header 檢查保存 CSP、X-Frame-Options、nosniff、Referrer-Policy、Permissions-Policy、Cache-Control 與 security.txt 留痕。
+6. 匯出 `tfse_security_headers_deployment_check` 或執行 `python3 tools/security_headers_deployment_check.py --markdown --live`，用 `curl -I` 或平台 header 檢查保存 CSP、X-Frame-Options、nosniff、Referrer-Policy、Permissions-Policy、Cache-Control 與 security.txt 留痕。
 7. 部署後訪問 `/index.html`、`/database.html`、`/free-check.html`、`/admin.html`、`/404.html`、`/500.html`、`/robots.txt`、`/sitemap.xml`、`/feed.xml`、`/.well-known/security.txt`。
 8. 執行 `python3 tools/live_deployment_check.py --markdown`，保存公网主站、SEO 資產、security.txt、`/api/health` 與 HTTPS 阻擋項證據。
 

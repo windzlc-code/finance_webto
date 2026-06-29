@@ -153,7 +153,7 @@
 - [x] `tools/monitoring_receipt_checklist.py --markdown` 可在命令列直接輸出 `tfse_monitoring_receipt_checklist`，收斂 GA4、Meta、Server Event、Sentry 的收件驗收清單。
 - [x] `tools/sentry_error_verification_package.py --markdown` 可在命令列直接輸出 `tfse_sentry_error_verification_package`，彙整前台/API Sentry 驗收、遮罩規則與證據欄位。
 - [x] `tools/admin_export_cli_coverage_audit.py --markdown` 可對照 Admin 現有 `tfse_*` 導出與 `tools/*.py` 的 standalone CLI 覆蓋度，持續盤點還有哪些導出尚未 CLI 化。
-- [x] `tools/security_headers_deployment_check.py --markdown` 可在命令列直接輸出 `tfse_security_headers_deployment_check`，覆蓋正式主機 header、CSP allowlist、security.txt 與驗證命令。
+- [x] `tools/security_headers_deployment_check.py --markdown --live` 可在命令列直接輸出 `tfse_security_headers_deployment_check`，覆蓋正式主機 header、CSP allowlist、security.txt、驗證命令與当前公网 header/cache 證據。
 - [x] `tools/admin_security_matrix.py --markdown` 可在命令列直接輸出 `tfse_admin_security_matrix`，覆蓋角色權限矩陣、session / CSRF / MFA / audit / viewer masking 檢查。
 - [x] `tools/admin_auth_cutover_check.py --markdown` 可在命令列直接輸出 `tfse_admin_auth_cutover_check`，彙整正式 Auth API、cookie/CSRF/RBAC/MFA 與切換步驟。
 - [x] `tools/backend_acceptance_matrix.py --markdown` 可在命令列直接輸出 `tfse_backend_acceptance_matrix`，收斂正式 API 驗收矩陣與 blockers。
@@ -193,6 +193,7 @@
 - [x] 後台已建立資料保留/刪除月檢交接包，可匯出 `tfse_data_retention_purge_plan`，列出保留規則、匿名化/刪除候選、legal hold、證據欄位與正式後端阻擋項。
 - [x] `404.html` 與 `500.html` 已建立，並可導回資料庫、文章與免費健檢入口。
 - [x] `_headers` 已提供靜態主機安全標頭、CSP 與快取策略；`.well-known/security.txt` 已提供標準安全聯絡資訊。
+- [x] `43.130.233.113` Nginx 已套用 TFSE 安全標頭與快取策略，公网 live check 已驗證首頁、SEO 資產、site-config、logo asset 與 `/api/health` 的 headers。
 - [x] `TFSE_TEMPLATE_MAPPING.md` 已建立模板頁面、區塊、資料、腳本、驗收與不重設 UI 的套用邊界，對應專案計畫 Phase 0。
 - [x] `DEPLOYMENT.md` 已記錄靜態部署、GA4/Sentry/備份接入邊界。
 - [x] `OPERATIONS_RUNBOOK.md` 已建立正式部署、監控、備份、還原演練、回滾、事故與合規審核操作步驟。

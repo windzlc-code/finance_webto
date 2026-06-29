@@ -129,7 +129,7 @@ python3 tools/verify_static_site.py
 
 Search Console 驗證前，可從 Admin 匯出 `tfse_search_console_verification_package`，按包內步驟建立 URL prefix property、填入 HTML meta 驗證碼、重生 `sitemap.xml` / `robots.txt` / `feed.xml` / canonical / OG / JSON-LD，部署後提交 sitemap 並抽查首頁、資料庫、文章、產品詳情與落地頁的 URL Inspection 結果。
 
-正式主機切換前，也可從 Admin 匯出 `tfse_security_headers_deployment_check`，逐項核對 `_headers` 或平台等效安全標頭、CSP 白名單、`site-config.json` no-store、資產快取、`/.well-known/security.txt`、404/500 fallback 與 `curl -I` 留痕。GitHub Pages 不會自動套用 `_headers`，需保留 Cloudflare、反向代理或平台規則證據。
+正式主機切換前，也可從 Admin 匯出 `tfse_security_headers_deployment_check`，逐項核對 `_headers` 或平台等效安全標頭、CSP 白名單、`site-config.json` no-store、資產快取、`/.well-known/security.txt`、404/500 fallback 與 `curl -I` 留痕。命令列可執行 `python3 tools/security_headers_deployment_check.py --markdown --live` 直接附上当前公网 header 證據。GitHub Pages 不會自動套用 `_headers`，需保留 Cloudflare、反向代理或平台規則證據。
 
 生成器會同步：
 
@@ -222,6 +222,8 @@ python3 tools/persistent_api_smoke.py
 - env file：`/etc/tfse-api.env`，權限為 root-only，不提交 secret
 - Nginx：僅在 `tfse-site` 中新增 `location ^~ /api/`，反代到 `127.0.0.1:8788`
 - public health：`http://www.tfse-fcc.com/api/health`
+- security headers：`/etc/nginx/snippets/tfse-security-headers.conf` 已套用 CSP、X-Frame-Options、nosniff、Referrer-Policy 與 Permissions-Policy；HTTP 站點暫不加 `upgrade-insecure-requests`，避免 443 尚未放行時破壞可訪問性
+- cache headers：`/assets/` immutable、`site-config.json` no-store、`robots.txt` / `sitemap.xml` / `feed.xml` / `security.txt` 使用短期公開快取
 - backup timer：`tfse-api-backup.timer` 每日 03:15 觸發 `tfse-api-backup.service`
 - backup path：`/var/lib/tfse-api/backups/tfse-api-*.sqlite3.gz` 與同名 `.manifest.json`
 - restore drill：每次 backup 後自動執行隔離恢復抽查，核對 `PRAGMA integrity_check` 與 critical table row counts

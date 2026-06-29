@@ -25,14 +25,30 @@ def fetch(url: str, timeout: float) -> dict:
                 "ok": 200 <= response.status < 400,
                 "status": response.status,
                 "content_type": response.headers.get("Content-Type", ""),
+                "headers": {key.lower(): value for key, value in response.headers.items()},
                 "body": body,
                 "sample": body[:240],
                 "error": "",
             }
     except urllib.error.HTTPError as exc:
-        return {"ok": False, "status": exc.code, "content_type": exc.headers.get("Content-Type", ""), "body": "", "sample": "", "error": str(exc)}
+        return {"ok": False, "status": exc.code, "content_type": exc.headers.get("Content-Type", ""), "headers": {key.lower(): value for key, value in exc.headers.items()}, "body": "", "sample": "", "error": str(exc)}
     except Exception as exc:  # noqa: BLE001
-        return {"ok": False, "status": 0, "content_type": "", "body": "", "sample": "", "error": f"{type(exc).__name__}: {exc}"}
+        return {"ok": False, "status": 0, "content_type": "", "headers": {}, "body": "", "sample": "", "error": f"{type(exc).__name__}: {exc}"}
+
+
+def security_header_status(headers: dict) -> dict:
+    expected = {
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "permissions-policy": "camera=()",
+        "content-security-policy": "frame-ancestors 'none'",
+    }
+    details = {}
+    for key, needle in expected.items():
+        value = headers.get(key, "")
+        details[key] = bool(value and needle.lower() in value.lower())
+    return {"ok": all(details.values()), "details": details}
 
 
 def normalize_base(url: str) -> str:
@@ -55,23 +71,33 @@ def check_json_api(base_url: str, timeout: float) -> dict:
         "ok": bool(result["ok"] and payload.get("ok") and payload.get("service") == "tfse_persistent_api"),
         "status": result["status"],
         "service": payload.get("service", ""),
+        "security_headers": security_header_status(result.get("headers", {})),
         "counts": {key: payload.get(key) for key in ("leads", "audit_logs", "events", "public_feedback", "compliance_reviews", "privacy_requests")},
         "error": result["error"],
     }
 
 
-def check_static_url(base_url: str, path: str, timeout: float, expected: str = "") -> dict:
+def check_static_url(base_url: str, path: str, timeout: float, expected: str = "", cache_contains: str = "") -> dict:
     url = urljoin(normalize_base(base_url), path.lstrip("/"))
     result = fetch(url, timeout)
     ok = bool(result["ok"])
     if expected:
         ok = ok and expected in result["sample"]
+    headers = result.get("headers", {})
+    security = security_header_status(headers)
+    cache_ok = True
+    if cache_contains:
+        cache_ok = cache_contains.lower() in headers.get("cache-control", "").lower()
+    ok = ok and security["ok"] and cache_ok
     return {
         "name": path.strip("/") or "home",
         "url": url,
         "ok": ok,
         "status": result["status"],
         "content_type": result["content_type"],
+        "security_headers": security,
+        "cache_control": headers.get("cache-control", ""),
+        "cache_ok": cache_ok,
         "error": result["error"],
     }
 
@@ -79,10 +105,12 @@ def check_static_url(base_url: str, path: str, timeout: float, expected: str = "
 def build_report(base_url: str, https_url: str, timeout: float) -> dict:
     checks = [
         check_static_url(base_url, "/", timeout, "TFSE"),
-        check_static_url(base_url, "/robots.txt", timeout, "Sitemap:"),
-        check_static_url(base_url, "/sitemap.xml", timeout, "<urlset"),
-        check_static_url(base_url, "/feed.xml", timeout, "<rss"),
-        check_static_url(base_url, "/.well-known/security.txt", timeout, "Contact:"),
+        check_static_url(base_url, "/robots.txt", timeout, "Sitemap:", "max-age=3600"),
+        check_static_url(base_url, "/sitemap.xml", timeout, "<urlset", "max-age=3600"),
+        check_static_url(base_url, "/feed.xml", timeout, "<rss", "max-age=3600"),
+        check_static_url(base_url, "/.well-known/security.txt", timeout, "Contact:", "max-age=86400"),
+        check_static_url(base_url, "/site-config.json", timeout, '"base_url"', "no-store"),
+        check_static_url(base_url, "/assets/images/logo/tfse-logo.png", timeout, "", "immutable"),
         check_json_api(base_url, timeout),
     ]
     https_check = check_static_url(https_url, "/", timeout, "TFSE")
@@ -129,7 +157,13 @@ def render_markdown(report: dict) -> str:
         "| --- | --- | --- | --- | --- |",
     ]
     for item in report["checks"]:
+        security = item.get("security_headers", {})
+        security_label = "headers=ok" if security.get("ok") else "headers=missing"
+        cache = item.get("cache_control", "")
+        cache_label = f"; cache={cache}" if cache else ""
         detail = item.get("error") or item.get("service") or item.get("content_type") or ""
+        if item.get("status"):
+            detail = f"{detail}; {security_label}{cache_label}".strip("; ")
         lines.append(f"| {item['name']} | {item['url']} | {item['ok']} | {item['status']} | {detail} |")
     if report["external_blockers"]:
         lines.extend(["", "## External Blockers"])
