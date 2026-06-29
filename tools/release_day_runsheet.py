@@ -59,6 +59,19 @@ CLOSEOUT_ITEMS = {
             "commands": [],
         },
     ],
+    "infra_owner": [
+        {
+            "phase": "closeout",
+            "key": "https_ingress",
+            "title": "HTTPS 443 公網入站修復",
+            "status": "pending_external",
+            "steps": ["開放雲安全組與主機防火牆 443，確認反代與 TLS 憑證後重跑 strict HTTPS 驗收。"],
+            "commands": [
+                "python3 tools/https_ingress_fix_package.py --markdown",
+                "python3 tools/live_deployment_check.py --markdown --strict-https",
+            ],
+        },
+    ],
 }
 
 

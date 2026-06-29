@@ -40,7 +40,7 @@ OWNER_SPECS = OrderedDict([
     }),
     ("infra_owner", {
         "label": "Infra Owner",
-        "focus": "完成正式主機 fallback、每日備份、每週 restore drill 與基礎設施證據留痕。",
+        "focus": "完成 HTTPS 443 入站、正式主機 fallback、每日備份、每週 restore drill 與基礎設施證據留痕。",
     }),
     ("legal_reviewer", {
         "label": "Legal Reviewer",
@@ -124,6 +124,7 @@ TIMELINE_KEY_MAP = {
     "search_console_verification": "d_minus_3",
     "backend_api_base_url": "d_minus_3",
     "sentry_dsn": "d_minus_3",
+    "https_ingress": "d_minus_3",
     "config_input_tracking": "d_minus_3",
     "line_oa_setup": "d_minus_2",
     "admin_auth_server_cutover": "d_minus_2",
