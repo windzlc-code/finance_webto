@@ -123,7 +123,7 @@ def base_structured_data(config, path):
             "@id": org_id,
             "name": site_name,
             "url": site_url(),
-            "logo": site_url(config.get("og_image", "assets/images/logo/tfse-logo.svg")),
+            "logo": site_url(config.get("og_image", "assets/images/logo/tfse-logo.png")),
             "description": "TFSE 僅彙整公開合法金融商品與法令資訊，非銀行、放款機構或貸款代辦單位。",
         },
         {
@@ -213,7 +213,7 @@ def update_structured_data(text, config, path):
 
 def update_html_meta():
     config = load_json(CONFIG_PATH)
-    og_image = site_url(config.get("og_image", "assets/images/logo/tfse-logo.svg"))
+    og_image = site_url(config.get("og_image", "assets/images/logo/tfse-logo.png"))
     google_site_verification = config.get("search_console", {}).get("google_site_verification", "")
     for path in html_paths():
         text = path.read_text(encoding="utf-8")

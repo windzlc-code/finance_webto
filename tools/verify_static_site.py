@@ -797,7 +797,7 @@ def verify_web_manifest():
         failures.append("site.webmanifest: display should be standalone")
     icons = manifest.get("icons", [])
     icon_srcs = {item.get("src") for item in icons if isinstance(item, dict)}
-    for src in ("assets/images/favicon.png", "assets/images/logo/tfse-logo.svg"):
+    for src in ("assets/images/favicon.png", "assets/images/logo/tfse-logo.png"):
         if src not in icon_srcs:
             failures.append(f"site.webmanifest: missing icon {src}")
         elif not (ROOT / src).exists():

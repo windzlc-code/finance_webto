@@ -6,6 +6,8 @@
     var cards = Array.prototype.slice.call(document.querySelectorAll("[data-tfse-db-card]"));
     var count = document.querySelector("[data-tfse-db-count]");
     var empty = document.querySelector("[data-tfse-db-empty]");
+    var searchButton = document.querySelector("[data-tfse-db-search-submit]");
+    var tabButtons = Array.prototype.slice.call(document.querySelectorAll("[data-tfse-db-tab]"));
 
     if (!cards.length) return;
 
@@ -22,6 +24,14 @@
         var defaultType = type.getAttribute("data-default-type") || defaultTypeFromPath();
         if (!defaultType) return;
         type.value = defaultType;
+        syncTabs(defaultType);
+    }
+
+    function syncTabs(value) {
+        var current = value || "all";
+        tabButtons.forEach(function (button) {
+            button.classList.toggle("is-active", button.getAttribute("data-tfse-db-tab") === current);
+        });
     }
 
     function applyFilters() {
@@ -29,6 +39,7 @@
         var typeValue = type ? type.value : "all";
         var visible = 0;
 
+        syncTabs(typeValue);
         cards = Array.prototype.slice.call(document.querySelectorAll("[data-tfse-db-card]"));
         cards.forEach(function (card) {
             var text = card.textContent.toLowerCase();
@@ -46,6 +57,19 @@
 
     if (keyword) keyword.addEventListener("input", applyFilters);
     if (type) type.addEventListener("change", applyFilters);
+    if (searchButton) searchButton.addEventListener("click", function () {
+        applyFilters();
+        var target = document.querySelector(".tfse-db-content-grid") || document.querySelector("[data-tfse-db-card]");
+        if (target && target.scrollIntoView) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    tabButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            var nextType = button.getAttribute("data-tfse-db-tab") || "all";
+            if (type) type.value = nextType;
+            syncTabs(nextType);
+            applyFilters();
+        });
+    });
     document.addEventListener("tfse:products-rendered", applyFilters);
     applyDefaultType();
     applyFilters();

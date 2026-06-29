@@ -9,6 +9,7 @@
     var sourceFilter = document.querySelector("[data-admin-source]");
     var exportButton = document.querySelector("[data-admin-export]");
     var seedButton = document.querySelector("[data-admin-seed]");
+    var refreshButton = document.querySelector("[data-admin-refresh]");
     var followUpsPanel = document.querySelector("[data-admin-follow-ups]");
     var followUpsExportButton = document.querySelector("[data-admin-follow-ups-export]");
     var contactLogExportButton = document.querySelector("[data-admin-contact-log-export]");
@@ -5543,7 +5544,7 @@
             { group: "業務閉環", key: "product_maintenance", label: "管理員可維護資料庫", done: true, evidence: "Admin 可編輯產品摘要、來源與復核狀態" },
             { group: "業務閉環", key: "article_publish", label: "管理員可發布文章", done: true, evidence: "Admin 支援 draft / in_review / published 流程" },
             { group: "業務閉環", key: "compliance_review", label: "合規審核可記錄", done: true, evidence: "合規審核紀錄與文案即時預檢可寫入本機審計" },
-            { group: "UI 驗收", key: "logo", label: "Logo 清晰", done: true, evidence: "Header / Footer 使用 tfse-logo.svg 並配置 alt" },
+            { group: "UI 驗收", key: "logo", label: "Logo 清晰", done: true, evidence: "Header / Footer 使用透明底 tfse-logo.png 並配置 alt" },
             { group: "UI 驗收", key: "template_preserved", label: "保持模板結構且無貸款廣告風", done: true, evidence: "未重做版式，套用金融資訊、合規與來源文案" },
             { group: "UI 驗收", key: "button_copy", label: "按鈕文案合規", done: true, evidence: "主要 CTA 使用免費健檢、查看資訊、回到資料庫等中性文案" },
             { group: "UI 驗收", key: "mobile_browser", label: "手機端導航清楚", done: false, status: "manual_browser", evidence: "需以手機 viewport 實測 Header menu、主要 CTA、表單欄位與頁腳連結" },
@@ -8405,6 +8406,17 @@
     if (status) status.addEventListener("change", renderList);
     if (tagFilter) tagFilter.addEventListener("change", renderList);
     if (sourceFilter) sourceFilter.addEventListener("change", renderList);
+    if (refreshButton) refreshButton.addEventListener("click", function () {
+        refreshButton.disabled = true;
+        refreshButton.innerHTML = '<i class="fa fa-sync-alt fa-spin"></i> 更新中';
+        loadAdminData();
+        renderAfterLogin();
+        addAudit("crm_dashboard_refresh", "local_mvp");
+        window.setTimeout(function () {
+            refreshButton.disabled = false;
+            refreshButton.innerHTML = '<i class="fa fa-sync-alt"></i> 更新資料';
+        }, 500);
+    });
     if (seedButton) seedButton.addEventListener("click", function () {
         seedLeads();
         addAudit("seed_leads", "local_mvp");

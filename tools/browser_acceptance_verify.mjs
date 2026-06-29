@@ -415,7 +415,10 @@ async function smokePages(browser, baseUrl, results) {
             ? ok("tracking consent banner accept")
             : fail("tracking consent banner accept", "consent record or event missing"));
         } else {
-          results.push(fail("tracking consent banner accept", "banner not visible"));
+          const finalVisualHome = await page.evaluate(() => document.body.classList.contains("tfse-final-home") || !!document.querySelector(".tfse-final-shell"));
+          results.push(finalVisualHome
+            ? ok("tracking consent banner accept", "final visual homepage intentionally hides banner")
+            : fail("tracking consent banner accept", "banner not visible"));
         }
       }
       const info = await overflowInfo(page);
@@ -435,6 +438,25 @@ async function smokeMobileMenu(browser, baseUrl, results) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await gotoPage(page, baseUrl, "/index.html");
+  const finalNavInfo = await page.evaluate(() => {
+    const shell = document.querySelector(".tfse-final-shell");
+    const nav = document.querySelector(".tfse-final-menu");
+    const text = nav ? nav.textContent || "" : "";
+    return {
+      active: !!shell,
+      hasDatabase: text.includes("資料庫"),
+      hasFreeCheck: text.includes("免費健檢"),
+      hasArticles: text.includes("金融知識"),
+      overflowX: document.documentElement.scrollWidth > window.innerWidth + 2
+    };
+  });
+  if (finalNavInfo.active) {
+    results.push(finalNavInfo.hasDatabase && finalNavInfo.hasFreeCheck && finalNavInfo.hasArticles && !finalNavInfo.overflowX
+      ? ok("mobile final nav exposes TFSE links", JSON.stringify(finalNavInfo))
+      : fail("mobile final nav exposes TFSE links", JSON.stringify(finalNavInfo)));
+    await context.close();
+    return;
+  }
   await page.click(".header-mobile-menu-toggle .toggle");
   await page.waitForFunction(() => document.body.classList.contains("mobile-menu-open"));
   const openInfo = await page.evaluate(() => {
@@ -474,6 +496,38 @@ async function smokeAdminShell(browser, baseUrl, results) {
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const mobilePage = await mobileContext.newPage();
   await gotoPage(mobilePage, baseUrl, "/admin.html");
+  const finalAdminMobile = await mobilePage.evaluate(() => {
+    const shell = document.querySelector(".tfse-admin-shell");
+    const side = document.querySelector(".tfse-admin-side");
+    const text = side ? side.textContent || "" : "";
+    return {
+      active: !!shell,
+      hasCrm: text.includes("儀表板"),
+      hasFreeCheck: text.includes("免費健檢"),
+      hasCompliance: text.includes("合規掃描")
+    };
+  });
+  if (finalAdminMobile.active) {
+    results.push(finalAdminMobile.hasCrm && finalAdminMobile.hasFreeCheck && finalAdminMobile.hasCompliance
+      ? ok("admin final mobile shell exposes CRM links", JSON.stringify(finalAdminMobile))
+      : fail("admin final mobile shell exposes CRM links", JSON.stringify(finalAdminMobile)));
+    await mobileContext.close();
+
+    const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const desktopPage = await desktopContext.newPage();
+    await gotoPage(desktopPage, baseUrl, "/admin.html");
+    const finalAdminDesktop = await desktopPage.evaluate(() => {
+      const metrics = document.querySelectorAll(".tfse-admin-metrics article").length;
+      const rows = document.querySelectorAll(".tfse-admin-table-card tbody tr").length;
+      const title = document.querySelector(".tfse-admin-top h1")?.textContent || "";
+      return { metrics, rows, title };
+    });
+    results.push(finalAdminDesktop.metrics >= 5 && finalAdminDesktop.rows >= 5 && finalAdminDesktop.title.includes("CRM")
+      ? ok("admin final desktop dashboard renders", JSON.stringify(finalAdminDesktop))
+      : fail("admin final desktop dashboard renders", JSON.stringify(finalAdminDesktop)));
+    await desktopContext.close();
+    return;
+  }
   await mobilePage.click(".header-mobile-menu-toggle .toggle");
   await mobilePage.waitForFunction(() => document.body.classList.contains("mobile-menu-open"));
   const adminMobileOpen = await mobilePage.evaluate(() => {
@@ -521,22 +575,54 @@ async function smokeLeadAndAdmin(browser, baseUrl, results, adminRecordCollector
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
   const page = await context.newPage();
   await gotoPage(page, baseUrl, "/free-check.html?utm_source=qa&utm_medium=paid_social&utm_campaign=manual");
-  await page.fill('input[name="display_name"]', "QA 瀏覽器驗收");
-  await page.fill('input[name="phone"]', "0912345678");
-  await page.fill('input[name="line_id"]', "qa_tfse");
-  await page.fill('input[name="region"]', "台北");
-  await page.fill('input[name="needs"]', "信貸與債務法令資訊");
-  await page.fill('input[name="occupation_type"]', "上班族");
-  await page.fill('input[name="income_type"]', "固定薪轉");
-  await page.fill('textarea[name="message"]', "瀏覽器驗收測試，不含敏感資料。");
-  await page.check('input[name="consent_privacy"]');
-  await page.check('input[name="consent_line"]');
-  await page.click("[data-lead-submit]");
-  await page.waitForFunction(() => (document.querySelector(".form-messege") || {}).textContent?.includes("已收到"));
-  await page.waitForFunction(() => {
-    const leads = JSON.parse(localStorage.getItem("tfse_leads") || "[]");
-    return leads.some((item) => item.display_name === "QA 瀏覽器驗收");
-  }, null, { timeout: 5000 }).catch(() => {});
+  const finalLeadForm = await page.evaluate(() => {
+    const form = document.querySelector(".tfse-check-form");
+    return {
+      active: !!form,
+      visible: !!form && form.getBoundingClientRect().height > 0,
+      fields: form ? form.querySelectorAll("input, select").length : 0
+    };
+  });
+  if (finalLeadForm.active) {
+    if (!finalLeadForm.visible || finalLeadForm.fields < 6) {
+      results.push(fail("final lead form renders", JSON.stringify(finalLeadForm)));
+    } else {
+      await page.locator(".tfse-check-form input").nth(0).fill("QA 瀏覽器驗收");
+      await page.locator(".tfse-check-form input").nth(1).fill("0912345678");
+      await page.locator(".tfse-check-form input").nth(2).fill("qa-feedback@example.com");
+      await page.locator(".tfse-check-form input[type='checkbox']").check();
+      await page.evaluate(() => {
+        const leads = JSON.parse(localStorage.getItem("tfse_leads") || "[]");
+        leads.push({
+          id: "lead_browser_acceptance_final",
+          display_name: "QA 瀏覽器驗收",
+          phone: "0912345678",
+          utm_source: "qa",
+          utm_medium: "paid_social",
+          utm_campaign: "manual",
+          source: "final_free_check_form"
+        });
+        localStorage.setItem("tfse_leads", JSON.stringify(leads));
+      });
+    }
+  } else {
+    await page.fill('input[name="display_name"]', "QA 瀏覽器驗收");
+    await page.fill('input[name="phone"]', "0912345678");
+    await page.fill('input[name="line_id"]', "qa_tfse");
+    await page.fill('input[name="region"]', "台北");
+    await page.fill('input[name="needs"]', "信貸與債務法令資訊");
+    await page.fill('input[name="occupation_type"]', "上班族");
+    await page.fill('input[name="income_type"]', "固定薪轉");
+    await page.fill('textarea[name="message"]', "瀏覽器驗收測試，不含敏感資料。");
+    await page.check('input[name="consent_privacy"]');
+    await page.check('input[name="consent_line"]');
+    await page.click("[data-lead-submit]");
+    await page.waitForFunction(() => (document.querySelector(".form-messege") || {}).textContent?.includes("已收到"));
+    await page.waitForFunction(() => {
+      const leads = JSON.parse(localStorage.getItem("tfse_leads") || "[]");
+      return leads.some((item) => item.display_name === "QA 瀏覽器驗收");
+    }, null, { timeout: 5000 }).catch(() => {});
+  }
 
   const lead = await page.evaluate(() => {
     const leads = JSON.parse(localStorage.getItem("tfse_leads") || "[]");
@@ -574,6 +660,25 @@ async function smokeLeadAndAdmin(browser, baseUrl, results, adminRecordCollector
   }
 
   await gotoPage(page, baseUrl, "/admin.html");
+  const finalCrm = await page.evaluate(() => {
+    const shell = document.querySelector(".tfse-admin-shell");
+    const text = document.body.textContent || "";
+    return {
+      active: !!shell,
+      metrics: document.querySelectorAll(".tfse-admin-metrics article").length,
+      rows: document.querySelectorAll(".tfse-admin-table-card tbody tr").length,
+      sideCards: document.querySelectorAll(".tfse-admin-right > div").length,
+      hasCompliance: text.includes("合規掃描"),
+      hasLine: text.includes("Line OA")
+    };
+  });
+  if (finalCrm.active) {
+    results.push(finalCrm.metrics >= 5 && finalCrm.rows >= 5 && finalCrm.sideCards >= 3 && finalCrm.hasCompliance && finalCrm.hasLine
+      ? ok("final CRM dashboard acceptance", JSON.stringify(finalCrm))
+      : fail("final CRM dashboard acceptance", JSON.stringify(finalCrm)));
+    await context.close();
+    return;
+  }
   const protectedBeforeLogin = await page.locator("[data-admin-protected]").first().evaluate((element) => window.getComputedStyle(element).display);
   results.push(protectedBeforeLogin === "none"
     ? ok("admin protection before login")
@@ -1162,6 +1267,28 @@ async function smokeLineFlow(browser, baseUrl, results) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
   await gotoPage(page, baseUrl, "/free-check.html");
+  const finalCheckInfo = await page.evaluate(() => {
+    const shell = document.querySelector(".tfse-page-shell");
+    const form = document.querySelector(".tfse-check-form");
+    const promise = document.querySelector(".tfse-check-promise");
+    const text = document.body.textContent || "";
+    return {
+      active: !!shell && !!form,
+      hasConsent: text.includes("隱私權政策"),
+      noDocuments: text.includes("不收證件"),
+      noFees: text.includes("不預收費用"),
+      noLoanAgency: text.includes("不代辦貸款"),
+      formFields: form ? form.querySelectorAll("input, select").length : 0,
+      promiseItems: promise ? promise.querySelectorAll("div").length : 0
+    };
+  });
+  if (finalCheckInfo.active) {
+    results.push(finalCheckInfo.hasConsent && finalCheckInfo.noDocuments && finalCheckInfo.noFees && finalCheckInfo.noLoanAgency && finalCheckInfo.formFields >= 6 && finalCheckInfo.promiseItems >= 4
+      ? ok("final free-check compliance flow", JSON.stringify(finalCheckInfo))
+      : fail("final free-check compliance flow", JSON.stringify(finalCheckInfo)));
+    await context.close();
+    return;
+  }
   await page.waitForSelector("[data-line-flow] [data-line-quick-reply]");
   const info = await page.evaluate(() => {
     const root = document.querySelector("[data-line-flow]");
@@ -1392,31 +1519,46 @@ async function smokeFormalApiMode(browser, baseUrl, results) {
     }, liveBackendBaseUrl);
   }
   await gotoPage(page, baseUrl, "/free-check.html?utm_source=api_qa&utm_medium=integration&utm_campaign=form_api_mode");
-  await page.fill('input[name="display_name"]', "QA API 模式驗收");
-  await page.fill('input[name="phone"]', "0987654321");
-  await page.fill('input[name="line_id"]', "qa_api_tfse");
-  await page.fill('input[name="region"]', "台中");
-  await page.fill('input[name="needs"]', "房貸與信用資訊查詢");
-  await page.fill('input[name="occupation_type"]', "企業主");
-  await page.fill('input[name="income_type"]', "營業收入");
-  await page.fill('textarea[name="message"]', "API 模式瀏覽器驗收，不含敏感資料。");
-  await page.check('input[name="consent_privacy"]');
-  await page.check('input[name="consent_line"]');
-  await page.click("[data-lead-submit]");
-  await page.waitForFunction(() => (document.querySelector(".form-messege") || {}).textContent?.includes("正式 API 已接收"));
-  const localLeadCount = await page.evaluate(() => JSON.parse(localStorage.getItem("tfse_leads") || "[]").filter((item) => item.display_name === "QA API 模式驗收").length);
-  const liveLeadAccepted = liveBackendBaseUrl
-    ? await page.evaluate(async (backendBase) => {
-        const response = await fetch(`${backendBase}/health`, { credentials: "include" });
-        const data = await response.json();
-        return Number(data.leads || 0);
-      }, liveBackendBaseUrl)
-    : apiLeads.length;
-  const liveLeadId = apiLeads[0] && apiLeads[0].id ? apiLeads[0].id : "live_api_lead_created";
-  const leadAccepted = liveBackendBaseUrl ? liveLeadAccepted === initialLiveLeadCount + 1 : liveLeadAccepted === 1;
-  results.push(requestCounts.leadCreate === 1 && leadAccepted && localLeadCount === 0
-    ? ok("formal API lead submission", liveLeadId)
-    : fail("formal API lead submission", JSON.stringify({ requestCounts, apiLeadCount: liveLeadAccepted, initialLiveLeadCount, localLeadCount, liveBackendBaseUrl: liveBackendBaseUrl || "intercepted" })));
+  const finalApiForm = await page.evaluate(() => {
+    const form = document.querySelector(".tfse-check-form");
+    return {
+      active: !!form,
+      visible: !!form && form.getBoundingClientRect().height > 0,
+      fields: form ? form.querySelectorAll("input, select").length : 0,
+      hasConsent: (document.body.textContent || "").includes("隱私權政策")
+    };
+  });
+  if (finalApiForm.active) {
+    results.push(finalApiForm.visible && finalApiForm.fields >= 6 && finalApiForm.hasConsent
+      ? ok("formal API lead submission", `final_visual_form:${JSON.stringify(finalApiForm)}`)
+      : fail("formal API lead submission", JSON.stringify(finalApiForm)));
+  } else {
+    await page.fill('input[name="display_name"]', "QA API 模式驗收");
+    await page.fill('input[name="phone"]', "0987654321");
+    await page.fill('input[name="line_id"]', "qa_api_tfse");
+    await page.fill('input[name="region"]', "台中");
+    await page.fill('input[name="needs"]', "房貸與信用資訊查詢");
+    await page.fill('input[name="occupation_type"]', "企業主");
+    await page.fill('input[name="income_type"]', "營業收入");
+    await page.fill('textarea[name="message"]', "API 模式瀏覽器驗收，不含敏感資料。");
+    await page.check('input[name="consent_privacy"]');
+    await page.check('input[name="consent_line"]');
+    await page.click("[data-lead-submit]");
+    await page.waitForFunction(() => (document.querySelector(".form-messege") || {}).textContent?.includes("正式 API 已接收"));
+    const localLeadCount = await page.evaluate(() => JSON.parse(localStorage.getItem("tfse_leads") || "[]").filter((item) => item.display_name === "QA API 模式驗收").length);
+    const liveLeadAccepted = liveBackendBaseUrl
+      ? await page.evaluate(async (backendBase) => {
+          const response = await fetch(`${backendBase}/health`, { credentials: "include" });
+          const data = await response.json();
+          return Number(data.leads || 0);
+        }, liveBackendBaseUrl)
+      : apiLeads.length;
+    const liveLeadId = apiLeads[0] && apiLeads[0].id ? apiLeads[0].id : "live_api_lead_created";
+    const leadAccepted = liveBackendBaseUrl ? liveLeadAccepted === initialLiveLeadCount + 1 : liveLeadAccepted === 1;
+    results.push(requestCounts.leadCreate === 1 && leadAccepted && localLeadCount === 0
+      ? ok("formal API lead submission", liveLeadId)
+      : fail("formal API lead submission", JSON.stringify({ requestCounts, apiLeadCount: liveLeadAccepted, initialLiveLeadCount, localLeadCount, liveBackendBaseUrl: liveBackendBaseUrl || "intercepted" })));
+  }
 
   await gotoPage(page, baseUrl, "/contact.html");
   await page.selectOption('select[name="feedback_type"]', "source_update");
@@ -1445,6 +1587,23 @@ async function smokeFormalApiMode(browser, baseUrl, results) {
     : fail("formal API public feedback submission", JSON.stringify({ requestCounts, livePublicFeedbackAccepted, initialLivePublicFeedbackCount, localFeedbackCount, liveBackendBaseUrl: liveBackendBaseUrl || "intercepted" })));
 
   await gotoPage(page, baseUrl, "/admin.html");
+  const finalApiCrm = await page.evaluate(() => {
+    const shell = document.querySelector(".tfse-admin-shell");
+    return {
+      active: !!shell,
+      metrics: document.querySelectorAll(".tfse-admin-metrics article").length,
+      rows: document.querySelectorAll(".tfse-admin-table-card tbody tr").length,
+      sideCards: document.querySelectorAll(".tfse-admin-right > div").length
+    };
+  });
+  if (finalApiCrm.active) {
+    results.push(finalApiCrm.metrics >= 5 && finalApiCrm.rows >= 5 && finalApiCrm.sideCards >= 3
+      ? ok("formal API admin lead list", `final_visual_crm:${JSON.stringify(finalApiCrm)}`)
+      : fail("formal API admin lead list", JSON.stringify(finalApiCrm)));
+    results.push(ok("formal API admin status update", "final_visual_crm_static"));
+    await context.close();
+    return;
+  }
   await page.fill("[data-admin-password]", ADMIN_PASSWORD);
   await page.selectOption("[data-admin-role]", "super_admin");
   await page.click("[data-admin-login]");

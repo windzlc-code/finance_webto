@@ -265,7 +265,7 @@ def build_items():
         ("業務閉環", "product_maintenance", "管理員可維護資料庫", contains("assets/js/tfse-admin.js", "data-product-edit", "saveProductOverride"), "Admin 可編輯資料庫條目摘要、來源與狀態", "資料庫維護功能缺失"),
         ("業務閉環", "article_publish", "管理員可發布文章", contains("assets/js/tfse-admin.js", "article_review_approve", "published"), "Admin 文章支援送審、核准發布與退回", "文章發布流程缺失"),
         ("業務閉環", "compliance_review", "合規審核可記錄", contains("assets/js/tfse-admin.js", "compliance_review_save", "tfse_compliance_reviews"), "合規審核記錄可寫入 localStorage 與審計", "合規審核記錄缺失"),
-        ("UI 驗收", "logo", "Logo 清晰", exists("assets/images/logo/tfse-logo.svg") and contains_any("index.html", ("tfse-logo.svg", "TFSE金融便民中心")), "Logo SVG 已在模板 Header/Footer 使用", "Logo 檔案或引用缺失"),
+        ("UI 驗收", "logo", "Logo 清晰", exists("assets/images/logo/tfse-logo.png") and contains_any("index.html", ("tfse-logo.png", "TFSE金融便民中心")), "透明底 Logo PNG 已在模板 Header/Footer 使用", "Logo 檔案或引用缺失"),
         ("UI 驗收", "template_preserved", "保持模板結構且無貸款廣告風", contains("tools/verify_static_site.py", "TEMPLATE_RESIDUALS") and not contains_any("index.html", ("Buy Now", "Exomac")), "靜態驗收掃描模板殘留詞並移除購買/代辦式文案", "模板殘留或廣告風文案未受控"),
         ("UI 驗收", "button_copy", "按鈕文案合規", not forbidden_hits, "主要 CTA 與全站文案未出現禁用詞越界", "CTA 存在高風險導向詞"),
         ("UI 驗收", "mobile_navigation", "手機端導航清楚", contains("admin.html", "site-main-mobile-menu") and contains("assets/css/style.css", ".site-main-mobile-menu"), "模板 mobile menu 結構與樣式保留", "手機導航結構或樣式缺失"),

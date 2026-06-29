@@ -19,9 +19,9 @@
       "purpose": "any"
     },
     {
-      "src": "assets/images/logo/tfse-logo.svg",
+      "src": "assets/images/logo/tfse-logo.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

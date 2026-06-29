@@ -1,7 +1,7 @@
 {
   "site_name": "TFSE金融便民中心",
   "base_url": "https://windzlc-code.github.io/finance_webto",
-  "og_image": "assets/images/logo/tfse-logo.svg",
+  "og_image": "assets/images/logo/tfse-logo.png",
   "analytics": {
     "ga4_measurement_id": "",
     "server_event_endpoint": "",
