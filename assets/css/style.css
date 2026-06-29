@@ -49847,7 +49847,7 @@ textarea:focus {
 
 .footer-logo img {
   display: block;
-  width: 204px;
+  width: 224px;
   max-width: 100%;
   height: auto;
   object-fit: contain;
@@ -51842,6 +51842,43 @@ textarea:focus {
     linear-gradient(90deg, rgba(255,255,255,0.94) 0 35%, rgba(255,255,255,0.78) 58%, rgba(255,255,255,0.36) 100%),
     url("../images/tfse/tfse-database-hero.png") !important;
 }
+.tfse-final-home .header-logo,
+.tfse-original-page-skin .header-logo {
+  flex: 0 0 224px !important;
+}
+.tfse-final-home .header-logo a,
+.tfse-original-page-skin .header-logo a {
+  display: inline-flex !important;
+  align-items: center !important;
+  max-width: 198px !important;
+}
+.tfse-final-home .header-logo img.dark-logo,
+.tfse-original-page-skin .header-logo img.dark-logo,
+.tfse-final-home .header-logo img,
+.tfse-original-page-skin .header-logo img {
+  width: 198px !important;
+  max-width: 198px !important;
+  height: auto !important;
+  padding: 0 !important;
+  object-fit: contain !important;
+}
+@media only screen and (max-width: 767px) {
+  .tfse-final-home .header-logo,
+  .tfse-original-page-skin .header-logo {
+    flex: 0 0 168px !important;
+  }
+  .tfse-final-home .header-logo a,
+  .tfse-original-page-skin .header-logo a {
+    max-width: 154px !important;
+  }
+  .tfse-final-home .header-logo img.dark-logo,
+  .tfse-original-page-skin .header-logo img.dark-logo,
+  .tfse-final-home .header-logo img,
+  .tfse-original-page-skin .header-logo img {
+    width: 154px !important;
+    max-width: 154px !important;
+  }
+}
 .tfse-dropdown-entry-page.tfse-knowledge-page .page-title-section {
   background-image:
     linear-gradient(90deg, rgba(255,255,255,0.94) 0 35%, rgba(255,255,255,0.78) 58%, rgba(255,255,255,0.36) 100%),
@@ -51914,6 +51951,78 @@ textarea:focus {
 .tfse-dropdown-entry-page.tfse-category-page .site-main-menu > ul > li:nth-child(4) > a,
 .tfse-dropdown-entry-page.tfse-knowledge-page .site-main-menu > ul > li:nth-child(5) > a {
   color: #b48728;
+}
+
+.tfse-final-home .header-section.header-transparent,
+.tfse-original-page-skin .header-section.header-transparent {
+  height: 104px !important;
+}
+.tfse-final-home .header-section .header-inner,
+.tfse-original-page-skin .header-section .header-inner {
+  min-height: 104px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.tfse-final-home .header-section .row,
+.tfse-original-page-skin .header-section .row {
+  min-height: 104px !important;
+  align-items: center !important;
+}
+.tfse-final-home .header-logo,
+.tfse-original-page-skin .header-logo {
+  display: flex !important;
+  align-items: center !important;
+  margin-left: 22px !important;
+}
+.tfse-final-home .header-logo a,
+.tfse-original-page-skin .header-logo a {
+  height: 104px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  max-width: 220px !important;
+}
+.tfse-final-home .header-logo img.dark-logo,
+.tfse-original-page-skin .header-logo img.dark-logo,
+.tfse-final-home .header-logo img,
+.tfse-original-page-skin .header-logo img {
+  width: 220px !important;
+  max-width: 220px !important;
+  height: auto !important;
+  padding: 0 !important;
+  object-fit: contain !important;
+}
+.tfse-final-home .site-main-menu > ul,
+.tfse-original-page-skin .site-main-menu > ul {
+  gap: clamp(22px, 2vw, 40px) !important;
+}
+.tfse-final-home .site-main-menu > ul > li > a,
+.tfse-original-page-skin .site-main-menu > ul > li > a {
+  min-height: 104px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+@media only screen and (min-width: 1200px) {
+  .tfse-final-home .header-section .container,
+  .tfse-original-page-skin .header-section .container {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: 68px !important;
+    padding-right: 50px !important;
+  }
+}
+@media only screen and (max-width: 767px) {
+  .tfse-final-home .header-logo a,
+  .tfse-original-page-skin .header-logo a {
+    height: 86px !important;
+    max-width: 164px !important;
+  }
+  .tfse-final-home .header-logo img.dark-logo,
+  .tfse-original-page-skin .header-logo img.dark-logo,
+  .tfse-final-home .header-logo img,
+  .tfse-original-page-skin .header-logo img {
+    width: 164px !important;
+    max-width: 164px !important;
+  }
 }
 .tfse-crm-dashboard .section-title {
   text-align: left !important;
