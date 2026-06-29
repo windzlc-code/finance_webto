@@ -252,6 +252,51 @@
         "選填": "选填",
         "必填": "必填",
         "確定": "确定",
+        "切換語言": "切换语言",
+        "繁體中文": "繁体中文",
+        "簡體中文": "简体中文",
+        "搜尋房貸、信貸、車融、債務法令": "搜索房贷、信贷、车融、债务法规",
+        "輸入關鍵字搜尋，按 ESC 關閉": "输入关键词搜索，按 ESC 关闭",
+        "搜尋目前頁面": "搜索当前页面",
+        "輸入關鍵字": "输入关键词",
+        "目前頁面沒有找到": "当前页面没有找到",
+        "找到": "找到",
+        "筆相關內容": "条相关内容",
+        "查看位置": "查看位置",
+        "清除搜尋": "清除搜索",
+        "直接在本頁搜尋內容": "直接在本页搜索内容",
+        "送出免費健檢需求": "提交免费健检需求",
+        "提交免費健檢需求": "提交免费健检需求",
+        "我已閱讀並同意隱私權政策，了解 TFSE 僅作資訊整理與法規導引。": "我已阅读并同意隐私权政策，了解 TFSE 仅作信息整理与法规引导。",
+        "我同意透過 Line 接收公開金融資訊與健檢結果提醒。": "我同意通过 Line 接收公开金融信息与健检结果提醒。",
+        "請勿填寫身分證字號、帳戶、卡號、密碼或證件資料。": "请勿填写身份证字号、账户、卡号、密码或证件资料。",
+        "所在地區": "所在地区",
+        "其他地區，自行填寫": "其他地区，自行填写",
+        "需求類型：房貸 / 信貸 / 車融 / 債務法令": "需求类型：房贷 / 信贷 / 车融 / 债务法规",
+        "房貸資訊查詢": "房贷信息查询",
+        "銀行信貸資訊查詢": "银行信贷信息查询",
+        "汽機車融資資訊查詢": "汽机车融资信息查询",
+        "債務協商與法令資訊": "债务协商与法规信息",
+        "儲蓄互助社資訊查詢": "储蓄互助社信息查询",
+        "融資公司分期資訊": "融资公司分期信息",
+        "防詐與合約風險提醒": "防诈与合约风险提醒",
+        "其他需求，自行填寫": "其他需求，自行填写",
+        "身份類型：上班族 / 企業主 / 其他": "身份类型：上班族 / 企业主 / 其他",
+        "企業主 / 自營商": "企业主 / 自营商",
+        "接案工作者": "接案工作者",
+        "軍公教 / 公務人員": "军公教 / 公务人员",
+        "退休族": "退休族",
+        "學生 / 家庭照顧者": "学生 / 家庭照顾者",
+        "其他身份，自行填寫": "其他身份，自行填写",
+        "收入型態：固定薪轉 / 接案 / 營業收入": "收入形态：固定薪转 / 接案 / 营业收入",
+        "固定薪轉": "固定薪转",
+        "現金收入": "现金收入",
+        "接案收入": "接案收入",
+        "營業收入": "营业收入",
+        "租金 / 投資收入": "租金 / 投资收入",
+        "退休金 / 補助": "退休金 / 补助",
+        "暫無固定收入": "暂无固定收入",
+        "其他收入型態，自行填寫": "其他收入形态，自行填写",
         "請": "请"
     };
     var tradToSimpChars = {
@@ -356,50 +401,224 @@
 
     function syncLanguageButtons(mode) {
         Array.prototype.forEach.call(document.querySelectorAll("[data-tfse-lang-toggle]"), function (button) {
-            button.setAttribute("aria-label", mode === "zh-CN" ? "切換為繁體中文" : "切换为简体中文");
-            button.setAttribute("title", mode === "zh-CN" ? "切換為繁體中文" : "切换为简体中文");
+            button.setAttribute("aria-label", mode === "zh-CN" ? "切换语言，当前为简体中文" : "切換語言，目前為繁體中文");
+            button.setAttribute("title", mode === "zh-CN" ? "切换语言" : "切換語言");
             var text = button.querySelector(".tfse-lang-label");
-            if (text) text.textContent = mode === "zh-CN" ? "繁" : "简";
+            if (text) text.textContent = mode === "zh-CN" ? "简" : "繁";
+        });
+        Array.prototype.forEach.call(document.querySelectorAll("[data-tfse-language-choice]"), function (choice) {
+            var selected = choice.getAttribute("data-tfse-language-choice") === mode;
+            var targetMode = choice.getAttribute("data-tfse-language-choice");
+            if (targetMode === "zh-TW") choice.textContent = mode === "zh-CN" ? "繁体中文" : "繁體中文";
+            if (targetMode === "zh-CN") choice.textContent = mode === "zh-CN" ? "简体中文" : "簡體中文";
+            choice.classList.toggle("is-active", selected);
+            choice.setAttribute("aria-checked", selected ? "true" : "false");
         });
     }
 
-    function createLanguageButton() {
-        var button = document.createElement("button");
-        button.type = "button";
-        button.className = "tfse-language-toggle";
-        button.setAttribute("data-tfse-lang-toggle", "");
-        button.setAttribute("data-tfse-i18n-skip", "");
-        button.innerHTML = '<i class="fa fa-globe" aria-hidden="true"></i><span class="tfse-lang-label">简</span>';
+    function closeLanguageMenus(except) {
+        Array.prototype.forEach.call(document.querySelectorAll(".tfse-language-switcher.is-open"), function (switcher) {
+            if (except && switcher === except) return;
+            switcher.classList.remove("is-open");
+            var button = switcher.querySelector("[data-tfse-lang-toggle]");
+            var menu = switcher.querySelector(".tfse-language-menu");
+            if (button) button.setAttribute("aria-expanded", "false");
+            if (menu) menu.hidden = true;
+        });
+    }
+
+    function createLanguageSwitcher() {
+        var switcher = document.createElement("div");
+        var menuId = "tfse-language-menu-" + Math.random().toString(36).slice(2, 9);
+        switcher.className = "tfse-language-switcher";
+        switcher.setAttribute("data-tfse-i18n-skip", "");
+        switcher.innerHTML = [
+            '<button type="button" class="tfse-language-toggle" data-tfse-lang-toggle aria-haspopup="true" aria-expanded="false" aria-controls="' + menuId + '">',
+            '<i class="fa fa-globe" aria-hidden="true"></i><span class="tfse-lang-label">繁</span>',
+            '</button>',
+            '<div class="tfse-language-menu" id="' + menuId + '" role="menu" hidden>',
+            '<button type="button" role="menuitemradio" data-tfse-language-choice="zh-TW">繁體中文</button>',
+            '<button type="button" role="menuitemradio" data-tfse-language-choice="zh-CN">简体中文</button>',
+            '</div>'
+        ].join("");
+        var button = switcher.querySelector("[data-tfse-lang-toggle]");
         button.addEventListener("click", function (event) {
             event.preventDefault();
             event.stopPropagation();
-            setLanguageMode(currentLanguageMode() === "zh-CN" ? "zh-TW" : "zh-CN");
+            var open = !switcher.classList.contains("is-open");
+            closeLanguageMenus(switcher);
+            switcher.classList.toggle("is-open", open);
+            button.setAttribute("aria-expanded", open ? "true" : "false");
+            switcher.querySelector(".tfse-language-menu").hidden = !open;
         });
-        return button;
+        Array.prototype.forEach.call(switcher.querySelectorAll("[data-tfse-language-choice]"), function (choice) {
+            choice.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                setLanguageMode(choice.getAttribute("data-tfse-language-choice"));
+                closeLanguageMenus();
+            });
+        });
+        return switcher;
     }
 
     function installLanguageToggle() {
         Array.prototype.forEach.call(document.querySelectorAll(".header-section"), function (header) {
             var right = header.querySelector(".col-xl-2.col.d-none.d-sm-flex");
-            if (right && !right.querySelector("[data-tfse-lang-toggle]")) {
-                var desktopButton = createLanguageButton();
-                desktopButton.classList.add("tfse-language-toggle-desktop");
-                right.insertBefore(desktopButton, right.firstChild);
+            if (right && !right.querySelector(".tfse-language-switcher")) {
+                var desktopSwitcher = createLanguageSwitcher();
+                desktopSwitcher.classList.add("tfse-language-toggle-desktop");
+                right.insertBefore(desktopSwitcher, right.firstChild);
             }
             var mobileToggle = header.querySelector(".header-mobile-menu-toggle");
             if (mobileToggle && mobileToggle.parentNode && !mobileToggle.parentNode.querySelector(".tfse-language-toggle-mobile")) {
-                var mobileButton = createLanguageButton();
-                mobileButton.classList.add("tfse-language-toggle-mobile", "d-xl-none");
-                mobileToggle.parentNode.insertBefore(mobileButton, mobileToggle);
+                var mobileSwitcher = createLanguageSwitcher();
+                mobileSwitcher.classList.add("tfse-language-toggle-mobile", "d-xl-none");
+                mobileToggle.parentNode.insertBefore(mobileSwitcher, mobileToggle);
             }
         });
         Array.prototype.forEach.call(document.querySelectorAll(".tfse-admin-standalone-actions"), function (actions) {
-            if (actions.querySelector("[data-tfse-lang-toggle]")) return;
-            var adminButton = createLanguageButton();
-            adminButton.classList.add("tfse-language-toggle-admin");
-            actions.insertBefore(adminButton, actions.firstChild);
+            if (actions.querySelector(".tfse-language-switcher")) return;
+            var adminSwitcher = createLanguageSwitcher();
+            adminSwitcher.classList.add("tfse-language-toggle-admin");
+            actions.insertBefore(adminSwitcher, actions.firstChild);
         });
         syncLanguageButtons(currentLanguageMode());
+    }
+
+    function installLanguageMenuDismissal() {
+        if (document.documentElement.hasAttribute("data-tfse-language-dismissal")) return;
+        document.documentElement.setAttribute("data-tfse-language-dismissal", "true");
+        document.addEventListener("click", function (event) {
+            if (event.target.closest && event.target.closest(".tfse-language-switcher")) return;
+            closeLanguageMenus();
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") closeLanguageMenus();
+        });
+    }
+
+    function searchableText(element) {
+        return String(element && element.textContent || "").replace(/\s+/g, " ").trim();
+    }
+
+    function searchResultTarget(element) {
+        return element.closest(".tfse-service-card, .tfse-final-service, .tfse-article-card, article, section, .row, .container") || element;
+    }
+
+    function clearInlineSearch(form) {
+        Array.prototype.forEach.call(document.querySelectorAll(".tfse-search-hit"), function (node) {
+            node.classList.remove("tfse-search-hit");
+        });
+        var panel = form && form.querySelector(".tfse-inline-search-results");
+        if (panel) {
+            panel.hidden = true;
+            panel.innerHTML = "";
+        }
+    }
+
+    function buildInlineSearchResults(form, query) {
+        clearInlineSearch(form);
+        var panel = form.querySelector(".tfse-inline-search-results");
+        if (!panel) return;
+        var keyword = String(query || "").trim().toLowerCase();
+        if (!keyword) {
+            panel.hidden = true;
+            return;
+        }
+        var candidates = Array.prototype.slice.call(document.querySelectorAll("main h1, main h2, main h3, main h4, main p, main li, main a, .page-title-section h1, .page-title-section h2, .tfse-final-hero h1, .tfse-final-hero p, .tfse-check-workbench h2, .tfse-check-workbench p"));
+        var seen = [];
+        var results = [];
+        candidates.some(function (element) {
+            if (element.closest("[data-tfse-i18n-skip], .tfse-inline-search-results, script, style")) return false;
+            var text = searchableText(element);
+            if (!text || text.toLowerCase().indexOf(keyword) === -1) return false;
+            var target = searchResultTarget(element);
+            if (seen.indexOf(target) !== -1) return false;
+            seen.push(target);
+            results.push({ element: element, target: target, text: text.slice(0, 96) });
+            return results.length >= 6;
+        });
+        panel.hidden = false;
+        if (!results.length) {
+            panel.innerHTML = '<div class="tfse-inline-search-empty">目前頁面沒有找到「' + keyword.replace(/[<>&"]/g, "") + '」</div>';
+            walkI18n(panel, currentLanguageMode());
+            return;
+        }
+        panel.innerHTML = '<div class="tfse-inline-search-summary">找到 ' + results.length + ' 筆相關內容</div>' + results.map(function (result, index) {
+            return '<button type="button" data-tfse-search-index="' + index + '"><span>' + result.text.replace(/[<>&"]/g, "") + '</span><strong>查看位置</strong></button>';
+        }).join("");
+        Array.prototype.forEach.call(panel.querySelectorAll("[data-tfse-search-index]"), function (button) {
+            button.addEventListener("click", function () {
+                var result = results[Number(button.getAttribute("data-tfse-search-index"))];
+                if (!result) return;
+                result.target.classList.add("tfse-search-hit");
+                result.target.scrollIntoView({ behavior: "smooth", block: "center" });
+            });
+        });
+        results[0].target.classList.add("tfse-search-hit");
+        results[0].target.scrollIntoView({ behavior: "smooth", block: "center" });
+        walkI18n(panel, currentLanguageMode());
+    }
+
+    function installInlineHeaderSearch() {
+        Array.prototype.forEach.call(document.querySelectorAll(".header-search"), function (container, index) {
+            if (container.querySelector(".tfse-header-search-form")) return;
+            container.innerHTML = [
+                '<form class="tfse-header-search-form" role="search" data-tfse-inline-search>',
+                '<button type="button" class="tfse-header-search-toggle" aria-label="搜尋目前頁面" aria-expanded="false"><i class="pe-7s-search pe-2x pe-va" aria-hidden="true"></i></button>',
+                '<input type="search" class="tfse-header-search-input" name="q" placeholder="輸入關鍵字" aria-label="搜尋目前頁面" autocomplete="off">',
+                '<button type="submit" class="tfse-header-search-submit">搜尋</button>',
+                '<button type="button" class="tfse-header-search-clear" aria-label="清除搜尋"><i class="pe-7s-close" aria-hidden="true"></i></button>',
+                '<div class="tfse-inline-search-results" id="tfse-inline-search-results-' + index + '" hidden></div>',
+                '</form>'
+            ].join("");
+            var form = container.querySelector("form");
+            var toggle = form.querySelector(".tfse-header-search-toggle");
+            var input = form.querySelector(".tfse-header-search-input");
+            var clear = form.querySelector(".tfse-header-search-clear");
+            function openSearch() {
+                form.classList.add("is-open");
+                toggle.setAttribute("aria-expanded", "true");
+                input.focus();
+                Array.prototype.forEach.call(document.querySelectorAll(".main-search-active.inside"), function (layer) {
+                    layer.classList.remove("inside");
+                });
+            }
+            function closeSearch() {
+                form.classList.remove("is-open");
+                toggle.setAttribute("aria-expanded", "false");
+                input.value = "";
+                clearInlineSearch(form);
+            }
+            toggle.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (form.classList.contains("is-open")) {
+                    if (input.value.trim()) buildInlineSearchResults(form, input.value);
+                    else closeSearch();
+                } else {
+                    openSearch();
+                }
+            });
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                openSearch();
+                buildInlineSearchResults(form, input.value);
+            });
+            input.addEventListener("input", function () {
+                if (input.value.trim().length >= 2) buildInlineSearchResults(form, input.value);
+                if (!input.value.trim()) clearInlineSearch(form);
+            });
+            clear.addEventListener("click", function (event) {
+                event.preventDefault();
+                closeSearch();
+            });
+            input.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") closeSearch();
+            });
+        });
     }
 
     function installI18nObserver() {
@@ -417,7 +636,9 @@
 
     function setupHeaderUi() {
         syncHeaderActiveState();
+        installInlineHeaderSearch();
         installLanguageToggle();
+        installLanguageMenuDismissal();
         installI18nObserver();
         setLanguageMode(currentLanguageMode());
     }

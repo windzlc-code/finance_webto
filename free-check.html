@@ -254,16 +254,70 @@
                                         <input type="text" placeholder="Line ID（選填）" name="line_id">
                                     </div>
                                     <div class="col-md-6 col-12 mb-4">
-                                        <input type="text" placeholder="所在地區" name="region">
+                                        <input type="text" placeholder="所在地區" name="region" list="tfse-region-options" autocomplete="address-level1">
+                                        <datalist id="tfse-region-options">
+                                            <option value="台北市">
+                                            <option value="新北市">
+                                            <option value="桃園市">
+                                            <option value="台中市">
+                                            <option value="台南市">
+                                            <option value="高雄市">
+                                            <option value="基隆市">
+                                            <option value="新竹市">
+                                            <option value="新竹縣">
+                                            <option value="苗栗縣">
+                                            <option value="彰化縣">
+                                            <option value="南投縣">
+                                            <option value="雲林縣">
+                                            <option value="嘉義市">
+                                            <option value="嘉義縣">
+                                            <option value="屏東縣">
+                                            <option value="宜蘭縣">
+                                            <option value="花蓮縣">
+                                            <option value="台東縣">
+                                            <option value="澎湖縣">
+                                            <option value="金門縣">
+                                            <option value="連江縣">
+                                            <option value="其他地區，自行填寫">
+                                        </datalist>
                                     </div>
                                     <div class="col-md-6 col-12 mb-4">
-                                        <input type="text" placeholder="需求類型：房貸 / 信貸 / 車融 / 債務法令" name="needs">
+                                        <input type="text" placeholder="需求類型：房貸 / 信貸 / 車融 / 債務法令" name="needs" list="tfse-need-options">
+                                        <datalist id="tfse-need-options">
+                                            <option value="房貸資訊查詢">
+                                            <option value="銀行信貸資訊查詢">
+                                            <option value="汽機車融資資訊查詢">
+                                            <option value="債務協商與法令資訊">
+                                            <option value="儲蓄互助社資訊查詢">
+                                            <option value="融資公司分期資訊">
+                                            <option value="防詐與合約風險提醒">
+                                            <option value="其他需求，自行填寫">
+                                        </datalist>
                                     </div>
                                     <div class="col-md-6 col-12 mb-4">
-                                        <input type="text" placeholder="身份類型：上班族 / 企業主 / 其他" name="occupation_type">
+                                        <input type="text" placeholder="身份類型：上班族 / 企業主 / 其他" name="occupation_type" list="tfse-occupation-options">
+                                        <datalist id="tfse-occupation-options">
+                                            <option value="上班族">
+                                            <option value="企業主 / 自營商">
+                                            <option value="接案工作者">
+                                            <option value="軍公教 / 公務人員">
+                                            <option value="退休族">
+                                            <option value="學生 / 家庭照顧者">
+                                            <option value="其他身份，自行填寫">
+                                        </datalist>
                                     </div>
                                     <div class="col-md-6 col-12 mb-4">
-                                        <input type="text" placeholder="收入型態：固定薪轉 / 接案 / 營業收入" name="income_type">
+                                        <input type="text" placeholder="收入型態：固定薪轉 / 接案 / 營業收入" name="income_type" list="tfse-income-options">
+                                        <datalist id="tfse-income-options">
+                                            <option value="固定薪轉">
+                                            <option value="現金收入">
+                                            <option value="接案收入">
+                                            <option value="營業收入">
+                                            <option value="租金 / 投資收入">
+                                            <option value="退休金 / 補助">
+                                            <option value="暫無固定收入">
+                                            <option value="其他收入型態，自行填寫">
+                                        </datalist>
                                     </div>
                                     <div class="col-12 mb-4">
                                         <textarea name="message" placeholder="目前困擾（選填）"></textarea>

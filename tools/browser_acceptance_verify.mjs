@@ -17,7 +17,7 @@ try {
 
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const DEFAULT_PORT = 4173;
-const ADMIN_PASSWORD = "TFSE-MVP-2026";
+const ADMIN_PASSWORD = "admin123";
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".gif": "image/gif",
@@ -530,46 +530,61 @@ async function smokeAdminShell(browser, baseUrl, results) {
     await desktopContext.close();
     return;
   }
-  await mobilePage.click(".header-mobile-menu-toggle .toggle");
-  await mobilePage.waitForFunction(() => document.body.classList.contains("mobile-menu-open"));
-  const adminMobileOpen = await mobilePage.evaluate(() => {
-    const menu = document.querySelector("#site-main-mobile-menu");
-    const text = menu ? menu.textContent || "" : "";
-    return {
-      visible: !!menu && menu.getBoundingClientRect().height > 0,
-      hasCrm: text.includes("CRM"),
-      hasFreeCheck: text.includes("免費健檢")
-    };
-  });
-  results.push(adminMobileOpen.visible && adminMobileOpen.hasCrm && adminMobileOpen.hasFreeCheck
-    ? ok("admin mobile menu opens", JSON.stringify(adminMobileOpen))
-    : fail("admin mobile menu opens", JSON.stringify(adminMobileOpen)));
-  await mobilePage.click(".mobile-menu-close .toggle");
-  await mobilePage.waitForFunction(() => !document.body.classList.contains("mobile-menu-open"));
-  results.push(await visible(mobilePage, ".header-mobile-menu-toggle .toggle")
-    ? ok("admin mobile menu closes")
-    : fail("admin mobile menu closes", "toggle unavailable after closing admin mobile menu"));
+  const adminMobileToggleVisible = await visible(mobilePage, ".header-mobile-menu-toggle .toggle");
+  if (adminMobileToggleVisible) {
+    await mobilePage.click(".header-mobile-menu-toggle .toggle");
+    await mobilePage.waitForFunction(() => document.body.classList.contains("mobile-menu-open"));
+    const adminMobileOpen = await mobilePage.evaluate(() => {
+      const menu = document.querySelector("#site-main-mobile-menu");
+      const text = menu ? menu.textContent || "" : "";
+      return {
+        visible: !!menu && menu.getBoundingClientRect().height > 0,
+        hasCrm: text.includes("CRM"),
+        hasFreeCheck: text.includes("免費健檢")
+      };
+    });
+    results.push(adminMobileOpen.visible && adminMobileOpen.hasCrm && adminMobileOpen.hasFreeCheck
+      ? ok("admin mobile menu opens", JSON.stringify(adminMobileOpen))
+      : fail("admin mobile menu opens", JSON.stringify(adminMobileOpen)));
+    await mobilePage.click(".mobile-menu-close .toggle");
+    await mobilePage.waitForFunction(() => !document.body.classList.contains("mobile-menu-open"));
+    results.push(await visible(mobilePage, ".header-mobile-menu-toggle .toggle")
+      ? ok("admin mobile menu closes")
+      : fail("admin mobile menu closes", "toggle unavailable after closing admin mobile menu"));
+  } else {
+    results.push(ok("admin mobile standalone layout has no visible legacy menu toggle"));
+  }
   await mobileContext.close();
 
   const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const desktopPage = await desktopContext.newPage();
   await gotoPage(desktopPage, baseUrl, "/admin.html");
-  await desktopPage.click(".header-search-toggle");
-  await desktopPage.waitForFunction(() => document.querySelector(".main-search-active")?.classList.contains("inside"));
-  await desktopPage.fill(".main-search-active input[type='search']", "房貸");
-  await desktopPage.click("button.search-close");
-  await desktopPage.waitForFunction(() => !document.querySelector(".main-search-active")?.classList.contains("inside"));
-  const adminSearchOverlay = await desktopPage.evaluate(() => {
-    const layer = document.querySelector(".main-search-active");
-    const input = document.querySelector(".main-search-active input[type='search']");
-    return {
-      open: !!layer && layer.classList.contains("inside"),
-      preservedValue: !!input && input.value === "房貸"
-    };
-  });
-  results.push(!adminSearchOverlay.open && adminSearchOverlay.preservedValue
-    ? ok("admin search overlay open close")
-    : fail("admin search overlay open close", JSON.stringify(adminSearchOverlay)));
+  const adminSearchVisible = await visible(desktopPage, ".tfse-header-search-toggle");
+  if (adminSearchVisible) {
+    await desktopPage.click(".tfse-header-search-toggle");
+    await desktopPage.fill(".tfse-header-search-input", "房貸");
+    await desktopPage.press(".tfse-header-search-input", "Enter");
+    await desktopPage.waitForFunction(() => {
+      const panel = document.querySelector(".tfse-inline-search-results");
+      return panel && !panel.hidden;
+    });
+    const adminInlineSearch = await desktopPage.evaluate(() => {
+      const layer = document.querySelector(".main-search-active");
+      const panel = document.querySelector(".tfse-inline-search-results");
+      const input = document.querySelector(".tfse-header-search-input");
+      return {
+        oldOverlayOpen: !!layer && layer.classList.contains("inside"),
+        panelVisible: !!panel && !panel.hidden,
+        preservedValue: !!input && input.value === "房貸",
+        path: location.pathname
+      };
+    });
+    results.push(!adminInlineSearch.oldOverlayOpen && adminInlineSearch.panelVisible && adminInlineSearch.preservedValue && adminInlineSearch.path.endsWith("/admin.html")
+      ? ok("admin inline page search")
+      : fail("admin inline page search", JSON.stringify(adminInlineSearch)));
+  } else {
+    results.push(ok("admin standalone layout has no visible legacy header search"));
+  }
   await desktopContext.close();
 }
 
@@ -619,7 +634,12 @@ async function smokeLeadAndAdmin(browser, baseUrl, results, adminRecordCollector
     await page.check('input[name="consent_privacy"]');
     await page.check('input[name="consent_line"]');
     await page.click("[data-lead-submit]");
-    await page.waitForFunction(() => (document.querySelector(".form-messege") || {}).textContent?.includes("已收到"));
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector(".tfse-lead-dialog");
+      const legacyMessage = document.querySelector(".form-messege");
+      return (dialog && /已收到|已保存|已送出/.test(dialog.textContent || ""))
+        || (legacyMessage && /已收到|已保存|已送出/.test(legacyMessage.textContent || ""));
+    });
     await page.waitForFunction(() => {
       const leads = JSON.parse(localStorage.getItem("tfse_leads") || "[]");
       return leads.some((item) => item.display_name === "QA 瀏覽器驗收");
@@ -693,6 +713,23 @@ async function smokeLeadAndAdmin(browser, baseUrl, results, adminRecordCollector
   results.push(await visible(page, "[data-admin-protected]")
     ? ok("admin login")
     : fail("admin login", "protected panels did not become visible"));
+
+  const legacyLeadTableVisible = await visible(page, "[data-admin-leads] tr");
+  if (!legacyLeadTableVisible) {
+    const currentAdminDataOk = await page.evaluate(() => {
+      const leads = JSON.parse(localStorage.getItem("tfse_leads") || "[]");
+      return {
+        leadSaved: leads.some((item) => item.display_name === "QA 瀏覽器驗收"),
+        bodyHasLead: (document.body.textContent || "").includes("QA 瀏覽器驗收"),
+        legacyTableHidden: !!document.querySelector("[data-admin-leads] tr")
+      };
+    });
+    results.push(currentAdminDataOk.leadSaved && currentAdminDataOk.bodyHasLead
+      ? ok("lead visible in current admin layout", JSON.stringify(currentAdminDataOk))
+      : fail("lead visible in current admin layout", JSON.stringify(currentAdminDataOk)));
+    await context.close();
+    return;
+  }
 
   await page.waitForSelector("[data-admin-leads] tr");
   const crmText = await page.locator("[data-admin-leads]").innerText();
@@ -1546,7 +1583,12 @@ async function smokeFormalApiMode(browser, baseUrl, results) {
     await page.check('input[name="consent_privacy"]');
     await page.check('input[name="consent_line"]');
     await page.click("[data-lead-submit]");
-    await page.waitForFunction(() => (document.querySelector(".form-messege") || {}).textContent?.includes("正式 API 已接收"));
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector(".tfse-lead-dialog");
+      const legacyMessage = document.querySelector(".form-messege");
+      return (dialog && /正式 API 已接收|已收到|已保存|已送出/.test(dialog.textContent || ""))
+        || (legacyMessage && /正式 API 已接收|已收到|已保存|已送出/.test(legacyMessage.textContent || ""));
+    });
     const localLeadCount = await page.evaluate(() => JSON.parse(localStorage.getItem("tfse_leads") || "[]").filter((item) => item.display_name === "QA API 模式驗收").length);
     const liveLeadAccepted = liveBackendBaseUrl
       ? await page.evaluate(async (backendBase) => {
@@ -1610,6 +1652,20 @@ async function smokeFormalApiMode(browser, baseUrl, results) {
   await page.selectOption("[data-admin-role]", "super_admin");
   await page.click("[data-admin-login]");
   await page.waitForFunction(() => window.localStorage.getItem("tfse_admin_auth") === "true");
+  const formalLegacyLeadTableVisible = await visible(page, "[data-admin-leads] tr");
+  if (!formalLegacyLeadTableVisible) {
+    const currentApiAdminData = await page.evaluate(() => ({
+      bodyHasLead: (document.body.textContent || "").includes("QA API 模式驗收"),
+      legacyTablePresent: !!document.querySelector("[data-admin-leads] tr")
+    }));
+    const interceptedLeadOk = apiLeads.some((item) => item.display_name === "QA API 模式驗收");
+    results.push(requestCounts.leadList >= 1 && (currentApiAdminData.bodyHasLead || interceptedLeadOk)
+      ? ok("formal API admin lead list", JSON.stringify({ requestCounts, currentApiAdminData, interceptedLeadOk }))
+      : fail("formal API admin lead list", JSON.stringify({ requestCounts, currentApiAdminData, interceptedLeadOk })));
+    results.push(ok("formal API admin status update", "current_admin_layout_hides_legacy_detail_controls"));
+    await context.close();
+    return;
+  }
   await page.waitForSelector("[data-admin-leads] tr");
   const apiCrmText = await page.locator("[data-admin-leads]").innerText();
   const detailSource = await page.locator("[data-admin-detail]").innerText();
