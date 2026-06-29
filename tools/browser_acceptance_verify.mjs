@@ -266,10 +266,12 @@ async function listen(server, startPort) {
 }
 
 async function gotoPage(page, baseUrl, path) {
-  const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
   if (!response || !response.ok()) {
     throw new Error(`${path} returned ${response ? response.status() : "no response"}`);
   }
+  await page.waitForLoadState("load").catch(() => {});
+  await page.waitForTimeout(250);
 }
 
 async function overflowInfo(page) {

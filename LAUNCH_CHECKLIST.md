@@ -137,6 +137,7 @@
 - [x] 後台已建立上線日 run sheet，可匯出 `tfse_release_day_runsheet`，把 D-3 / D-2 / D-1 / Go-live / D+1 的 owner 任務壓成正式切站日作戰表，並附帶 owner 對應的 patch template 與 `.env` 片段。
 - [x] `tools/browser_acceptance_report.py` 可由 `manual_browser` 項產生瀏覽器驗收 JSON 或 Markdown 留痕模板。
 - [x] `tools/accessibility_audit.py` 可檢查 HTML 語系、圖片 alt、免費健檢表單欄位、蜜罐隱藏與表單提示 `aria-live`，避免套版內容破壞基礎可用性。
+- [x] `tools/navigation_consistency_audit.py` 可檢查 Header / 下拉選單文案一致性，以及子目錄頁面依 `<base href="../">` 解析後的站內連結與靜態資源是否存在。
 - [x] `tools/data_quality_audit.py` 可檢查分類、產品、文章、落地頁、來源、Line flows 與合規規則的 slug、數量、來源、日期、狀態與必要欄位。
 - [x] `tools/checklist_artifact_coverage_audit.py --markdown` 可核對 `LAUNCH_CHECKLIST.md` 中提到的 `tfse_*` 交接包，是否都已真正接入 Admin 導出與瀏覽器煙測覆蓋，避免文檔與工具鏈漂移。
 - [x] `tools/launch_health_check.py --markdown` 可在命令列直接輸出 `tfse_launch_health_check`，對齊正式網址、追蹤、Search Console、Line OA、備份與合規掃描總表。
@@ -279,6 +280,7 @@ python3 tools/crm_capability_audit.py --markdown
 python3 tools/api_contract_audit.py
 python3 tools/backend_schema_audit.py
 python3 tools/performance_budget_audit.py
+python3 tools/navigation_consistency_audit.py
 python3 tools/accessibility_audit.py
 python3 tools/validate_site_config.py
 python3 tools/acceptance_audit.py

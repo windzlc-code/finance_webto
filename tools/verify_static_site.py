@@ -92,6 +92,7 @@ REQUIRED_FILES = (
     "tools/plan_closure_report.py",
     "tools/performance_budget_audit.py",
     "tools/monitoring_receipt_checklist.py",
+    "tools/navigation_consistency_audit.py",
     "tools/production_env_template.py",
     "tools/production_config_readiness.py",
     "tools/project_phase_audit.py",
@@ -150,6 +151,7 @@ class LinkParser(HTMLParser):
         self.meta = {}
         self.title = ""
         self._in_title = False
+        self.base_href = ""
 
     def handle_starttag(self, tag, attrs):
         data = dict(attrs)
@@ -161,6 +163,8 @@ class LinkParser(HTMLParser):
                 self.meta[name] = data.get("content", "")
         if tag == "link" and data.get("rel") == "canonical":
             self.meta["canonical"] = data.get("href", "")
+        if tag == "base" and data.get("href"):
+            self.base_href = data.get("href", "")
         if tag == "img":
             self.images.append(data)
         for key in ("href", "src"):
@@ -227,7 +231,10 @@ def verify_html():
                     failures.append(f"{label}: placeholder href on <{tag}>")
             if not is_local_asset(value):
                 continue
-            target = ROOT / value.split("#", 1)[0].split("?", 1)[0]
+            base_dir = path.parent
+            if parser.base_href:
+                base_dir = (path.parent / parser.base_href).resolve()
+            target = base_dir / value.split("#", 1)[0].split("?", 1)[0]
             if not target.exists():
                 failures.append(f"{label}: missing asset {value}")
     return failures
@@ -457,6 +464,7 @@ def verify_operations_runbook():
         "python3 tools/api_contract_audit.py",
         "python3 tools/backend_schema_audit.py",
         "python3 tools/performance_budget_audit.py",
+        "python3 tools/navigation_consistency_audit.py",
         "python3 tools/accessibility_audit.py",
         "python3 tools/validate_site_config.py",
         "python3 tools/acceptance_audit.py",
@@ -509,6 +517,7 @@ def verify_ci_workflow():
         "python3 tools/api_contract_audit.py",
         "python3 tools/backend_schema_audit.py",
         "python3 tools/performance_budget_audit.py",
+        "python3 tools/navigation_consistency_audit.py",
         "python3 tools/accessibility_audit.py",
         "python3 tools/validate_site_config.py",
         "python3 tools/acceptance_audit.py",

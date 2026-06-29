@@ -14,6 +14,7 @@ python3 tools/api_contract_audit.py
 python3 tools/backend_schema_audit.py
 python3 tools/performance_budget_audit.py
 python3 tools/seo_assets_audit.py
+python3 tools/navigation_consistency_audit.py
 python3 tools/accessibility_audit.py
 python3 tools/validate_site_config.py
 python3 tools/acceptance_audit.py
@@ -99,6 +100,7 @@ python3 tools/api_contract_audit.py
 python3 tools/backend_schema_audit.py
 python3 tools/performance_budget_audit.py
 python3 tools/seo_assets_audit.py
+python3 tools/navigation_consistency_audit.py
 python3 tools/production_config_audit.py
 python3 tools/accessibility_audit.py
 python3 tools/operations_runbook_audit.py
