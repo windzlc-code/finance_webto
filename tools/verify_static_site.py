@@ -1206,7 +1206,7 @@ def verify_monitoring():
         if marker not in release_readiness_tool:
             failures.append(f"release_readiness_package.py: missing marker {marker}")
     operations_task_tool = (ROOT / "tools/operations_task_queue.py").read_text(errors="ignore")
-    for marker in ("tfse_operations_task_queue", "pending_external", "next_review_cycle", "OPERATIONS_RUNBOOK.md", "tfse_release_readiness_package"):
+    for marker in ("tfse_operations_task_queue", "pending_external", "next_review_cycle", "OPERATIONS_RUNBOOK.md", "tfse_release_readiness_package", "tfse_https_ingress_fix_package", "https_ingress"):
         if marker not in operations_task_tool:
             failures.append(f"operations_task_queue.py: missing marker {marker}")
     incident_response_tool = (ROOT / "tools/incident_response_package.py").read_text(errors="ignore")

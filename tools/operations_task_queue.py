@@ -11,6 +11,7 @@ import domain_cutover_package
 import external_execution_packet
 import external_verification_evidence
 import formal_config_input_packet
+import https_ingress_fix_package
 import launch_health_check
 import production_config_readiness
 import release_readiness_package
@@ -44,6 +45,7 @@ def build_report(owner=None, statuses=None, priorities=None):
     acceptance = acceptance_audit.build_report()
     browser = browser_acceptance_report.build_report()
     domain = domain_cutover_package.build_report()
+    https_ingress = https_ingress_fix_package.build_report()
     external = external_execution_packet.build_report()
     verification = external_verification_evidence.build_report()
     release = release_readiness_package.build_report()
@@ -70,6 +72,7 @@ def build_report(owner=None, statuses=None, priorities=None):
     add("上線配置", "config_input_tracking", "正式配置收件留痕", "data_manager", "pending_external" if config_packet["summary"]["pending_required_inputs"] else "ready", "high" if config_packet["summary"]["pending_required_inputs"] else "normal", f"待填 {config_packet['summary']['pending_required_inputs']} 項；已留痕 {config_tracked_records} 項", "逐項保存 received / validated / blocked 與 owner 備註。", "tfse_formal_config_input_packet")
     add("上線配置", "launch_health", "上線健康檢查", "data_manager", "pending_external" if launch["pending_count"] else "ready", "high" if launch["pending_count"] else "normal", f"健康檢查待辦 {launch['pending_count']} 項", "外部服務完成後驗證收件與導向。", "tfse_launch_health_check")
     add("SEO", "domain_cutover", "正式網域切換交接", "data_manager", "pending_external" if domain["blockers"] else "ready", "high" if domain["blockers"] else "normal", f"網域切換阻擋 {len(domain['blockers'])} 項", "更新 base_url、重生 SEO 資產、驗證 Search Console 與 sitemap。", "tfse_domain_cutover_package")
+    add("基礎設施", "https_ingress", "HTTPS 443 公網入站修復", "infra_owner", "pending_external" if not https_ingress["current_evidence"]["tcp_443_ok"] else "ready", "high" if not https_ingress["current_evidence"]["tcp_443_ok"] else "normal", f"TCP 22={https_ingress['current_evidence']['tcp_22_ok']} / 80={https_ingress['current_evidence']['tcp_80_ok']} / 443={https_ingress['current_evidence']['tcp_443_ok']}", "開放雲安全組與主機防火牆 443，確認反代與 TLS 憑證後重跑 strict HTTPS 驗收。", "tfse_https_ingress_fix_package")
     add("監控", "external_verification", "外部配置驗證留痕", "data_manager", "pending_external" if verification["summary"]["verified_items"] < verification["summary"]["required_items"] else "ready", "high" if verification["summary"]["verified_items"] < verification["summary"]["required_items"] else "normal", f"已驗證 {verification['summary']['verified_items']} / {verification['summary']['required_items']} 項", "正式服務配置後逐項保存 passed / blocked 證據。", "tfse_external_verification_evidence")
     add("後端", "backend_cutover", "正式後端接入路線圖", "backend_engineer", "pending_external" if backend["summary"]["ready_steps"] < backend["summary"]["total_steps"] else "ready", "high", f"後端已具備 {backend['summary']['ready_steps']} / {backend['summary']['total_steps']} 步", "依 roadmap 順序完成 leads API、Admin Auth、CRM、事件、內容 API 與備份還原。", "tfse_backend_cutover_roadmap")
     add("切換", "external_execution", "外部執行交接留痕", "data_manager", "pending_external" if external["summary"]["ready_for_external_execution"] else "ready", "high" if external["summary"]["ready_for_external_execution"] else "normal", f"可執行 {external['summary']['ready_for_external_execution']} 項；已留痕 {external_tracked_records} 項", "按 owner 保存 in_progress / completed / blocked 與去識別執行摘要。", "tfse_external_execution_packet")
@@ -115,6 +118,7 @@ def build_report(owner=None, statuses=None, priorities=None):
         "runbook": "OPERATIONS_RUNBOOK.md",
         "related_exports": [
             "tfse_release_readiness_package",
+            "tfse_https_ingress_fix_package",
             "tfse_external_verification_evidence",
             "tfse_incident_response_package",
             "tfse_owner_cutover_bundle",
