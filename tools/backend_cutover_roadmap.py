@@ -194,6 +194,8 @@ def build_report():
         "rehearsal_commands": [
             "python3 tools/backend_cutover_roadmap.py --markdown",
             "python3 tools/mock_formal_api.py --port 8788",
+            "python3 backend/tfse_persistent_api.py --port 8788 --db data/tfse.sqlite3",
+            "python3 tools/persistent_api_smoke.py",
             "NODE_PATH=/path/to/node_modules node tools/browser_acceptance_verify.mjs --backend-base-url http://127.0.0.1:8788",
             "python3 tools/validate_site_config.py",
             "python3 tools/backend_schema_audit.py",

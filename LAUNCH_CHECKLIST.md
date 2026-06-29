@@ -181,6 +181,9 @@
 - [x] `tools/browser_acceptance_verify.mjs` 可啟動本機靜態伺服器與 Playwright，煙測關鍵頁、手機橫向溢出、桌面/手機文字裁切、移動選單開合、免費健檢提交、聯絡頁低敏資料回報提交、UTM、Admin 登入、CRM 可見與狀態更新審計。
 - [x] `tools/browser_acceptance_verify.mjs` 已加入正式 API 模式煙測，會臨時模擬 `backend.api_base_url`、`POST /api/leads`、`POST /api/public-feedback`、`GET /api/products`、`GET /api/articles`、`GET /api/institutions`、`GET /api/search`、`GET /api/admin/leads` 與 `PATCH /api/admin/leads/:id/status`，確認前台內容、免費健檢、聯絡頁資料回報與 Admin CRM 可從 localStorage/靜態 JSON 切到 API。
 - [x] 已建立 `tools/mock_formal_api.py` 本機 mock formal API，可提供 `POST /api/leads`、`POST /api/events`、`POST /api/public-feedback`、`GET /api/products`、`GET /api/articles`、`GET /api/institutions`、`GET /api/search`、`GET /api/admin/leads`、`PATCH /api/admin/leads/:id/status`、`GET /api/admin/audit-logs` 與 Admin Auth session rehearsal，供前端在不改模板的前提下做真實 HTTP API rehearsal。
+- [x] 已建立 `backend/tfse_persistent_api.py` SQLite 持久化 MVP API，沿用正式 API 合約提供 `POST /api/leads`、`POST /api/events`、`POST /api/public-feedback`、內容查詢、Admin session、CRM 列表/狀態更新、`POST /api/admin/compliance/review`、`GET/PATCH /api/admin/privacy-requests` 與 `audit_logs`，可把免費健檢、後台 CRM、合規審核與個資履約從 localStorage 推進到可重啟保留的資料庫閉環。
+- [x] 持久化 MVP API 已補齊表單安全基線：`TFSE_TURNSTILE_ENABLED=true` 時呼叫 Cloudflare siteverify、保留蜜罐拒收、10 分鐘 IP/device 限流、24 小時同手機雜湊 + 同需求重複提交復用、高敏 payload 拒收、隱私同意必填與 `lead_duplicate_reuse` 審計。
+- [x] 已建立 `tools/persistent_api_smoke.py`，可自動啟動持久化 API 並驗證健康檢查、隱私未同意拒收、蜜罐拒收、高敏 payload 拒收、免費健檢落庫、重複提交復用、Admin 登入、CRM 可見、狀態更新、資料回報、合規審核、個資刪除履約與審計紀錄。
 - [x] 後台「本機備份與遷移包」已提供正式遷移包匯出，可打包 seed JSON、內容覆蓋、潛客、合規審核、審計、來源復核、個資請求、Line 分群與匯入順序，供正式後端導入前核對。
 - [x] 後台已建立正式資料導入驗收包，可匯出 `tfse_import_validation_package`，核對 seed 數量、sample_lead 排除、來源復核、個資請求、Line 分群、加密欄位與導入後抽查。
 - [x] 後台已建立正式備份與還原演練交接包，可匯出 `tfse_backup_restore_drill_plan`，列出每日備份、每週還原、RPO/RTO、證據欄位、抽查步驟與外部阻擋項；實際備份仍需正式環境完成。
@@ -243,9 +246,10 @@
 - [ ] 將 Google Search Console 驗證碼填入 `site-config.json > search_console.google_site_verification`，重生 SEO 資產並通過驗收。
 - [ ] Search Console 驗證網域後提交 sitemap。
 - [ ] Search Console 驗證完成後，匯出 `tfse_search_console_verification_package` 並保存 property、sitemap、URL Inspection 與 coverage 證據。
-- [ ] 接入伺服器端登入、角色權限與審計日誌。
+- [ ] 將 `backend/tfse_persistent_api.py` 或正式 PostgreSQL API 部署到受保護 API 主機，設定反代、HTTPS、環境密碼、備份與 `site-config.json > backend.api_base_url`。
+- [ ] 接入正式伺服器端登入、角色權限與審計日誌。
 - [ ] 正式 Admin Auth 上線前，匯出 `tfse_admin_auth_cutover_check` 並保存 cookie flags、CSRF、RBAC、Viewer 遮罩、logout revoke 與 audit log 證據。
-- [ ] 接入資料庫和備份策略。
+- [ ] 接入正式資料庫和備份策略。
 - [ ] 正式資料庫需每日備份，並完成每週還原演練；本機 MVP 備份包不可取代正式備份。
 - [ ] 正式備份排程上線後，匯出 `tfse_backup_receipt_verification_package` 並保存 backup_job_id、checksum、storage_url、restore_drill_id、RPO/RTO 與 audit_log_id 證據。
 - [ ] 將 `institutions.json` 匯入正式 `institutions` 資料表，並建立來源核驗版本紀錄。
@@ -253,10 +257,10 @@
 - [ ] 從 Admin 匯出 `tfse_formal_backend_migration_package`，將本機產品/文章/FAQ 覆蓋、潛客、合規審核、來源復核、個資請求與 Line 分群遷移到正式後端版本紀錄，避免只存在瀏覽器 localStorage。
 - [ ] 正式後端上線後，填入 `site-config.json > backend.api_base_url` 並重新驗收前台提交與 Admin CRM。
 - [ ] 正式內容 API 上線後，匯出 `tfse_content_api_cutover_package` 並保存 endpoint、status_code、row_count、sample_slug、published_only、source_url_checked 與 evidence_note。
-- [ ] 將 `POST /api/leads` 接入正式後端，取代本機 localStorage。
-- [ ] 正式 `POST /api/leads` 需驗證 Turnstile token，並落實 IP/裝置限流、蜜罐與重複提交檢查。
+- [ ] 將 `POST /api/leads` 接入正式後端或持久化 API 反代，取代本機 localStorage。
+- [ ] 正式 `POST /api/leads` 需在生產 API / 反代環境啟用 Turnstile secret、IP/裝置限流、蜜罐與重複提交檢查；本地持久化 MVP API 已通過同等邏輯 smoke，正式環境仍需帶真實 secret 與反代 IP 再驗證。
 - [ ] 正式 Turnstile 上線後，匯出 `tfse_turnstile_backend_verification_package` 並保存 missing/invalid token、蜜罐、限流、重複與高敏 payload 負向測試證據。
-- [ ] 將 Admin CRM 接入 `/api/admin/leads`、`/api/admin/compliance/review`、`/api/admin/audit-logs`。
+- [ ] 將 Admin CRM 接入正式 `/api/admin/leads`、`/api/admin/compliance/review`、`/api/admin/privacy-requests`、`/api/admin/audit-logs`；目前持久化 MVP 已覆蓋 leads/status/compliance/privacy/audit，正式生產仍需反代、HTTPS、CSRF/RBAC 強化與外部驗收證據。
 - [ ] 填入正式 Sentry DSN，確認前台錯誤摘要可在 Sentry 收到。
 - [ ] 正式 Sentry DSN 與 API Sentry 上線後，匯出 `tfse_sentry_error_verification_package` 並保存測試錯誤、遮罩欄位、environment/release、source map 與 issue 截圖證據。
 - [ ] 在正式主機設定 404 fallback 與 500/server error fallback；靜態主機不支援時需於正式後端接入後配置。

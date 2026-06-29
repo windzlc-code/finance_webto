@@ -12,6 +12,26 @@
 6. `GET /api/products`、`GET /api/articles`：前台資料由 API 提供，靜態 JSON 作為 seed。
 
 資料庫 schema 初稿見 `backend-schema.sql`，需先建立 enum、資料表、索引與審計/備份表，再匯入 `assets/data/*.json` seed。
+在正式 PostgreSQL / 雲端 API 完成前，專案已提供可持久化 MVP API：`backend/tfse_persistent_api.py`。它沿用 `SCLAW_fz` 的 SQLite WAL、健康檢查、Admin session、審計紀錄思路，但只保留 TFSE 需要的低敏資料閉環，可作為正式後端前的 staging / 小流量過渡層。
+啟動方式：
+
+```bash
+TFSE_ADMIN_PASSWORD='替換為伺服器環境密碼' python3 backend/tfse_persistent_api.py --host 127.0.0.1 --port 8788 --db data/tfse.sqlite3
+```
+
+前端切 API 時將 `site-config.json > backend.mode` 設為 `api`，並將 `backend.api_base_url` 指向 API 反代域名或本機 `http://127.0.0.1:8788`；未填時仍保持目前 localStorage fallback，不影響靜態站。
+可執行 `python3 tools/persistent_api_smoke.py` 驗證健康檢查、免費健檢落庫、Admin 登入、CRM 列表、狀態更新、資料回報、合規審核、個資履約、隱私同意拒收、蜜罐拒收、高敏 payload 拒收、24 小時重複提交復用與 `audit_logs`。
+建議 staging / 小流量過渡層設定：
+
+```bash
+export TFSE_ADMIN_PASSWORD='替換為伺服器環境密碼'
+export TFSE_PHONE_HASH_SALT='替換為長隨機值'
+export TFSE_IP_HASH_SALT='替換為長隨機值'
+export TFSE_TURNSTILE_ENABLED='true'
+export TFSE_TURNSTILE_SECRET='Cloudflare Turnstile secret'
+export TFSE_LINE_OA_URL='正式 Line OA 加友網址'
+python3 backend/tfse_persistent_api.py --host 127.0.0.1 --port 8788 --db data/tfse.sqlite3
+```
 正式導入前，先由 Admin 匯出 `tfse_formal_backend_migration_package`，核對 seed JSON、本機內容覆蓋、潛客、合規審核、來源復核、個資請求、Line 分群與匯入順序；測試資料不得匯入正式營運庫。
 同時匯出 `tfse_import_validation_package`，逐項核對 sample_lead 排除、來源復核、個資請求、Line 分群、加密欄位與導入後抽查，避免只把資料搬入庫而未完成驗收。
 來源資料正式導入前，另需匯出 `tfse_source_verification_evidence`，將官方來源 URL、復核結果、角色與證據摘要保存到 `source_verification_evidence`，避免只保留待辦隊列而缺少實際查核留痕。
@@ -25,10 +45,10 @@ CRM 接入前也需匯出 `tfse_lead_dedupe_queue`，用完整手機雜湊、需
 ## 表單安全
 
 - 使用 Cloudflare Turnstile。
-- 前端會送出 `cf_turnstile_response`，後端需呼叫 Cloudflare siteverify 驗證成功後才入庫。
-- IP + 裝置指紋限流。
+- 前端會送出 `cf_turnstile_response`，後端需呼叫 Cloudflare siteverify 驗證成功後才入庫；持久化 MVP API 已支援 `TFSE_TURNSTILE_ENABLED=true` 時強制驗證，未配置時維持本機 rehearsal 可用。
+- IP + 裝置指紋限流；持久化 MVP API 已用 `lead_rate_limits` 保存 10 分鐘窗口計數，預設同 IP 或同 `device_id` 5 次後拒收。
 - 保留 `website` 蜜罐欄位，非空即拒收。
-- 同手機與同需求 24 小時內重複提交需回傳既有紀錄提示，不新增第二筆。
+- 同手機與同需求 24 小時內重複提交需回傳既有紀錄提示，不新增第二筆；持久化 MVP API 已以手機雜湊 + 需求建立 24 小時復用判斷，並寫入 `lead_duplicate_reuse` audit log。
 - 後台需提供重複線索審核/合併隊列，避免顧問重複聯繫同一需求。
 - 後端驗證欄位，不接受身分證字號、帳戶、卡號、密碼、證件影像。
 - `consent_privacy` 必須為 true。
@@ -36,7 +56,7 @@ CRM 接入前也需匯出 `tfse_lead_dedupe_queue`，用完整手機雜湊、需
 - 儲存 `consent_version`、`source_url`、完整 UTM。
 - 手機、Line ID、補充說明加密或至少欄位級保護。
 - 前端已提供 `tfse-api.js` 適配層；正式版需設定 `site-config.json > backend.api_base_url`，讓表單提交、CRM 列表與狀態更新優先走 API。
-- 正式後端未就緒前，可先使用 `python3 tools/mock_formal_api.py --port 8788` 搭配 `node tools/browser_acceptance_verify.mjs --backend-base-url http://127.0.0.1:8788` 做本機 rehearsal，驗證 `POST /api/leads`、`POST /api/events`、`POST /api/public-feedback`、`GET /api/products`、`GET /api/articles`、`GET /api/institutions`、`GET /api/search`、`GET /api/admin/leads`、`PATCH /api/admin/leads/:id/status`、Admin login/session/logout、CORS 與前端切換邏輯。
+- 正式後端未就緒前，可先使用 `python3 tools/mock_formal_api.py --port 8788` 搭配 `node tools/browser_acceptance_verify.mjs --backend-base-url http://127.0.0.1:8788` 做本機 rehearsal；需要跨瀏覽器/重啟後保留資料時，改用 `python3 backend/tfse_persistent_api.py --port 8788 --db data/tfse.sqlite3`，再跑 `python3 tools/persistent_api_smoke.py` 驗證 `POST /api/leads`、`POST /api/events`、`POST /api/public-feedback`、`GET /api/products`、`GET /api/articles`、`GET /api/institutions`、`GET /api/search`、`GET /api/admin/leads`、`PATCH /api/admin/leads/:id/status`、Admin login/session/logout、CORS、Turnstile 開關、蜜罐、IP/device 限流資料表、重複提交復用、SQLite 落庫與審計紀錄。
 - 填入正式 `backend.api_base_url`、GA4、Meta Pixel、Sentry、Server Event、Line OA、Turnstile 與 Search Console 後，需先執行 `python3 tools/validate_site_config.py`，再重跑靜態與合規驗收。
 - 後台可匯出 `tfse_site_config_approval_package`，在正式配置合併前保存審批角色、待配置服務、合併後命令與外部留痕要求；此包只保存摘要與預檢結果，不保存 secret 真值。
 - 後台可匯出 `tfse_production_env_template`，用來核對 `site-config.json`、`.env.production`、GitHub Actions secrets、API server environment 與備份任務所需變數；Turnstile secret、資料庫 URL 與 Admin session secret 僅能放在正式密鑰管理或伺服器環境，不得提交到 Git。
