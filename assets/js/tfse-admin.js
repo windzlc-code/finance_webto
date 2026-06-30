@@ -240,6 +240,68 @@
         page: 1,
         pageSize: 8
     };
+    var adminWorkbenchGroups = [
+        {
+            key: "content",
+            label: "內容資料",
+            description: "資料庫、文章、FAQ 與內容版本。",
+            icon: "fa-database",
+            selectors: ["[data-admin-product-create-form]", "[data-admin-article-create-form]", "[data-admin-products]", "[data-admin-articles]", "[data-admin-article-review]", "[data-admin-content-versions]", "[data-admin-faq]"]
+        },
+        {
+            key: "acquisition",
+            label: "投流數據",
+            description: "UTM、事件、復盤與廣告轉換。",
+            icon: "fa-chart-line",
+            selectors: ["[data-admin-attribution]", "[data-admin-event-replay]", "[data-admin-analytics]", "[data-admin-events]", "[data-admin-ad-campaigns]", "[data-admin-conversion-backlog]"]
+        },
+        {
+            key: "governance",
+            label: "合規來源",
+            description: "來源復核、表單風險、法務與審計。",
+            icon: "fa-shield-check",
+            selectors: ["[data-admin-source-review]", "[data-admin-source-evidence]", "[data-admin-public-feedback]", "[data-admin-compliance]", "[data-admin-form-risk]", "[data-review-type]", "[data-compliance-copy-input]", "[data-admin-legal-review]", "[data-admin-audit]"]
+        },
+        {
+            key: "launch",
+            label: "上線交接",
+            description: "健康檢查、發布、交接與運維任務。",
+            icon: "fa-rocket",
+            selectors: ["[data-admin-launch-health]", "[data-admin-release-readiness]", "[data-admin-local-audit-matrix]", "[data-admin-plan-coverage]", "[data-admin-plan-requirements]", "[data-admin-phase-audit]", "[data-admin-plan-closure]", "[data-admin-external-execution]", "[data-admin-launch-handoff]", "[data-admin-owner-cutover-bundle]", "[data-admin-release-day-runsheet]", "[data-admin-operations-tasks]", "[data-admin-incident-response]"]
+        },
+        {
+            key: "config",
+            label: "配置後端",
+            description: "正式配置、網域、後端路線與 API 留痕。",
+            icon: "fa-server",
+            selectors: ["[data-admin-config-readiness]", "[data-admin-config-draft]", "[data-admin-env-template]", "[data-admin-config-input-packet]", "[data-admin-launch-cutover-audit]", "[data-admin-launch-execution-plan]", "[data-admin-launch-countdown-plan]", "[data-admin-domain-cutover]", "[data-admin-backend-roadmap]", "[data-admin-backend-acceptance]"]
+        },
+        {
+            key: "seo_acceptance",
+            label: "SEO 驗收",
+            description: "Search Console、收錄、上線驗收與外部驗證。",
+            icon: "fa-check-circle",
+            selectors: ["[data-admin-seo-submission]", "[data-admin-search-console-records]", "[data-admin-seo-indexing]", "[data-admin-acceptance-checklist]", "[data-admin-external-verification]", "[data-admin-browser-acceptance]"]
+        },
+        {
+            key: "privacy_line",
+            label: "隱私 Line",
+            description: "個資請求、資料保留、Line 分群與退訂。",
+            icon: "fa-user-lock",
+            selectors: ["[data-admin-privacy-requests]", "[data-admin-data-retention]", "[data-admin-line-segments]", "[data-admin-line-oa-records]", "[data-admin-line-optout]"]
+        },
+        {
+            key: "backup",
+            label: "備份遷移",
+            description: "備份、遷移包與復原演練。",
+            icon: "fa-archive",
+            selectors: ["[data-admin-backup-status]", "[data-admin-backup-file]"]
+        }
+    ];
+    var adminWorkbenchState = {
+        activeGroup: localStorage.getItem("tfse_admin_workbench_group") || "content",
+        activeModules: safeReadWorkbenchModules()
+    };
     var adminPassword = "admin123";
     var leadSourceMode = "localStorage";
     var publicFeedbackSourceMode = "localStorage";
@@ -258,6 +320,186 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    function adminWorkbenchContainer() {
+        return productsTable ? productsTable.closest(".container") : null;
+    }
+
+    function safeReadWorkbenchModules() {
+        try {
+            return JSON.parse(localStorage.getItem("tfse_admin_workbench_modules") || "{}");
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function saveWorkbenchModules() {
+        localStorage.setItem("tfse_admin_workbench_modules", JSON.stringify(adminWorkbenchState.activeModules || {}));
+    }
+
+    function groupByKey(key) {
+        return adminWorkbenchGroups.filter(function (group) { return group.key === key; })[0] || adminWorkbenchGroups[0];
+    }
+
+    function classifyWorkbenchRow(row) {
+        var matched = adminWorkbenchGroups.filter(function (group) {
+            return group.selectors.some(function (selector) { return !!row.querySelector(selector); });
+        })[0];
+        return matched ? matched.key : "content";
+    }
+
+    function workbenchRows() {
+        var container = adminWorkbenchContainer();
+        if (!container) return [];
+        return Array.prototype.slice.call(container.children).filter(function (child) {
+            return child.classList && child.classList.contains("row");
+        });
+    }
+
+    function ensureAdminWorkbenchShell() {
+        var container = adminWorkbenchContainer();
+        if (!container || container.querySelector("[data-admin-workbench-nav]")) return;
+        var title = container.querySelector(".section-title");
+        var shell = document.createElement("div");
+        shell.className = "tfse-admin-workbench-shell";
+        shell.setAttribute("data-admin-workbench-nav", "");
+        shell.innerHTML = [
+            "<div class=\"tfse-admin-workbench-head\">",
+                "<div>",
+                    "<span>工作台收納</span>",
+                    "<strong>先按職責分區，再查看細節資料</strong>",
+                "</div>",
+                "<button type=\"button\" data-admin-workbench-expand>展開全部</button>",
+            "</div>",
+            "<div class=\"tfse-admin-workbench-tabs\" data-admin-workbench-tabs></div>",
+            "<div class=\"tfse-admin-workbench-modules\" data-admin-workbench-modules></div>"
+        ].join("");
+        if (title && title.nextSibling) {
+            container.insertBefore(shell, title.nextSibling);
+        } else {
+            container.insertBefore(shell, container.firstChild);
+        }
+    }
+
+    function activateAdminWorkbenchGroup(key) {
+        var rows = workbenchRows();
+        if (!rows.length) return;
+        var group = groupByKey(key);
+        adminWorkbenchState.activeGroup = group.key;
+        localStorage.setItem("tfse_admin_workbench_group", group.key);
+        var groupRows = rows.filter(function (row) {
+            return row.getAttribute("data-admin-workbench-group") === group.key;
+        });
+        var activeModule = adminWorkbenchState.activeModules[group.key] || (groupRows[0] && groupRows[0].getAttribute("data-admin-workbench-module-key")) || "";
+        if (!groupRows.some(function (row) { return row.getAttribute("data-admin-workbench-module-key") === activeModule; })) {
+            activeModule = groupRows[0] ? groupRows[0].getAttribute("data-admin-workbench-module-key") : "";
+        }
+        if (activeModule) {
+            adminWorkbenchState.activeModules[group.key] = activeModule;
+            saveWorkbenchModules();
+        }
+        rows.forEach(function (row) {
+            var active = row.getAttribute("data-admin-workbench-group") === group.key
+                && row.getAttribute("data-admin-workbench-module-key") === activeModule;
+            row.hidden = !active;
+            row.classList.toggle("is-admin-workbench-active", active);
+        });
+        Array.prototype.forEach.call(document.querySelectorAll("[data-admin-workbench-tab]"), function (button) {
+            button.classList.toggle("is-active", button.getAttribute("data-admin-workbench-tab") === group.key);
+        });
+        renderAdminWorkbenchModules(group.key, activeModule);
+        resetAdminWorkbenchExpandButton();
+    }
+
+    function activateAdminWorkbenchModule(groupKey, moduleKey) {
+        adminWorkbenchState.activeModules[groupKey] = moduleKey;
+        saveWorkbenchModules();
+        activateAdminWorkbenchGroup(groupKey);
+    }
+
+    function resetAdminWorkbenchExpandButton() {
+        var expandButton = document.querySelector("[data-admin-workbench-expand]");
+        if (!expandButton) return;
+        expandButton.setAttribute("aria-expanded", "false");
+        expandButton.textContent = "展開全部";
+    }
+
+    function showAllAdminWorkbenchGroups() {
+        workbenchRows().forEach(function (row) {
+            row.hidden = false;
+            row.classList.remove("is-admin-workbench-active");
+        });
+        Array.prototype.forEach.call(document.querySelectorAll("[data-admin-workbench-tab]"), function (button) {
+            button.classList.remove("is-active");
+        });
+        var moduleNav = document.querySelector("[data-admin-workbench-modules]");
+        if (moduleNav) {
+            moduleNav.innerHTML = "<span>已展開全部分區內容</span>";
+        }
+    }
+
+    function activateWorkbenchGroupForTarget(target) {
+        var row = target && target.closest ? target.closest("[data-admin-workbench-group]") : null;
+        if (!row) return;
+        activateAdminWorkbenchGroup(row.getAttribute("data-admin-workbench-group"));
+    }
+
+    function organizeAdminWorkbench() {
+        var container = adminWorkbenchContainer();
+        if (!container) return;
+        ensureAdminWorkbenchShell();
+        var rows = workbenchRows();
+        var counts = {};
+        rows.forEach(function (row, index) {
+            var groupKey = row.getAttribute("data-admin-workbench-group") || classifyWorkbenchRow(row);
+            row.setAttribute("data-admin-workbench-group", groupKey);
+            if (!row.getAttribute("data-admin-workbench-module-key")) {
+                row.setAttribute("data-admin-workbench-module-key", "module-" + index);
+            }
+            row.setAttribute("data-admin-workbench-module-label", workbenchModuleLabel(row, counts[groupKey] || 0));
+            counts[groupKey] = (counts[groupKey] || 0) + 1;
+        });
+        var tabs = container.querySelector("[data-admin-workbench-tabs]");
+        if (tabs) {
+            tabs.innerHTML = adminWorkbenchGroups.map(function (group) {
+                return [
+                    "<button type=\"button\" data-admin-workbench-tab=\"" + escapeHtml(group.key) + "\">",
+                        "<i class=\"fa " + escapeHtml(group.icon) + "\" aria-hidden=\"true\"></i>",
+                        "<span><strong>" + escapeHtml(group.label) + "</strong><small>" + escapeHtml(group.description) + "</small></span>",
+                        "<b>" + (counts[group.key] || 0) + "</b>",
+                    "</button>"
+                ].join("");
+            }).join("");
+        }
+        activateAdminWorkbenchGroup(counts[adminWorkbenchState.activeGroup] ? adminWorkbenchState.activeGroup : "content");
+    }
+
+    function workbenchModuleLabel(row, index) {
+        var titles = Array.prototype.slice.call(row.querySelectorAll("h5.title")).map(function (item) {
+            return item.textContent.trim();
+        }).filter(Boolean);
+        if (titles.length) return titles.slice(0, 2).join(" / ");
+        var headers = Array.prototype.slice.call(row.querySelectorAll("th")).map(function (item) {
+            return item.textContent.trim();
+        }).filter(Boolean);
+        if (headers.indexOf("資料分類") !== -1) return "資料庫表格";
+        if (headers.indexOf("文章") !== -1) return "文章表格";
+        return "工作台頁面 " + (index + 1);
+    }
+
+    function renderAdminWorkbenchModules(groupKey, activeModule) {
+        var moduleNav = document.querySelector("[data-admin-workbench-modules]");
+        if (!moduleNav) return;
+        var rows = workbenchRows().filter(function (row) {
+            return row.getAttribute("data-admin-workbench-group") === groupKey;
+        });
+        moduleNav.innerHTML = rows.map(function (row) {
+            var moduleKey = row.getAttribute("data-admin-workbench-module-key") || "";
+            var active = moduleKey === activeModule ? " is-active" : "";
+            var label = row.getAttribute("data-admin-workbench-module-label") || moduleKey;
+            return "<button type=\"button\" class=\"" + active + "\" data-admin-workbench-module=\"" + escapeHtml(moduleKey) + "\" data-admin-workbench-module-group=\"" + escapeHtml(groupKey) + "\">" + escapeHtml(label) + "</button>";
+        }).join("");
     }
 
     function normalizeFreeCheckCopy(value) {
@@ -762,6 +1004,7 @@
         renderConversionBacklog();
         renderAudit();
         renderVisualConsole();
+        organizeAdminWorkbench();
     }
 
     function syncAuthFromApi() {
@@ -9391,8 +9634,35 @@
             target.click();
             return;
         }
+        activateWorkbenchGroupForTarget(target);
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         if (target.focus) target.focus({ preventScroll: true });
+    });
+    document.addEventListener("click", function (event) {
+        var tab = event.target.closest("[data-admin-workbench-tab]");
+        if (tab) {
+            activateAdminWorkbenchGroup(tab.getAttribute("data-admin-workbench-tab"));
+            return;
+        }
+        var moduleButton = event.target.closest("[data-admin-workbench-module]");
+        if (moduleButton) {
+            activateAdminWorkbenchModule(
+                moduleButton.getAttribute("data-admin-workbench-module-group"),
+                moduleButton.getAttribute("data-admin-workbench-module")
+            );
+            return;
+        }
+        var expandButton = event.target.closest("[data-admin-workbench-expand]");
+        if (expandButton) {
+            var expanded = expandButton.getAttribute("aria-expanded") === "true";
+            expandButton.setAttribute("aria-expanded", expanded ? "false" : "true");
+            expandButton.textContent = expanded ? "展開全部" : "收起分區";
+            if (expanded) {
+                activateAdminWorkbenchGroup(adminWorkbenchState.activeGroup);
+            } else {
+                showAllAdminWorkbenchGroups();
+            }
+        }
     });
     if (seedButton) seedButton.addEventListener("click", function () {
         addAudit("seed_leads_disabled", "後台已禁止產生測試資料。");

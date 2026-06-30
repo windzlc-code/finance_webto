@@ -384,11 +384,11 @@
         <!-- Admin CRM Section End -->
 
         <!-- Admin Data Section Start -->
-        <div class="section section-padding fix" data-admin-protected>
+        <div class="section section-padding fix tfse-admin-workbench-section" data-admin-protected>
             <div class="container">
                 <div class="section-title text-center" data-aos="fade-up">
-                    <h2 class="title fz-32">資料庫、文章與合規審核</h2>
-                    <p class="sub-title">提供本機 MVP 管理檢視；正式版需接入伺服器登入、資料庫、版本紀錄與審計日誌。</p>
+                    <h2 class="title fz-32">後台工作台資料分區</h2>
+                    <p class="sub-title">把內容、合規、投流、上線、配置、驗收、隱私與備份資料按職責收納；先看分區摘要，再進入對應資料。</p>
                 </div>
 
                 <div class="row">
@@ -506,7 +506,7 @@
                     </div>
                 </div>
 
-                <div class="row">
+                <div class="row" data-admin-workbench-group="governance">
                     <div class="col-lg-6 col-12 mb-8">
                         <div class="sidebar-widget">
                             <h5 class="title">來源復核隊列</h5>
@@ -554,6 +554,9 @@
                             <button class="btn btn-light btn-hover-primary mt-4" data-admin-turnstile-export>匯出 Turnstile 後端驗收包</button>
                         </div>
                     </div>
+                </div>
+
+                <div class="row" data-admin-workbench-group="content">
                     <div class="col-lg-5 col-12 mb-8">
                         <div class="sidebar-widget">
                             <h5 class="title">FAQ 內容池</h5>

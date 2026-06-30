@@ -323,6 +323,27 @@ async function visible(page, selector) {
   });
 }
 
+async function fillCurrentLeadForm(page, values) {
+  await page.fill('#contact-form input[name="display_name"]', values.display_name);
+  await page.selectOption('#contact-form [data-phone-country]', values.phone_country || "台灣");
+  await page.fill('#contact-form [data-phone-local]', values.phone_local);
+  await page.fill('#contact-form input[name="line_id"]', values.line_id || "");
+
+  await page.waitForFunction(() => !!document.querySelector('#contact-form [data-region-country] option[value="台灣"]'));
+  await page.selectOption('#contact-form [data-region-country]', values.region_country || "台灣");
+  await page.waitForFunction(() => !!document.querySelector('#contact-form [data-region-state] option[value="北部"]'));
+  await page.selectOption('#contact-form [data-region-state]', values.region_state || "北部");
+  await page.waitForFunction((city) => !!document.querySelector(`#contact-form [data-region-city] option[value="${city}"]`), values.region_city || "台北市");
+  await page.selectOption('#contact-form [data-region-city]', values.region_city || "台北市");
+
+  await page.selectOption('#contact-form select[name="needs"]', values.needs || "銀行信貸資訊查詢");
+  await page.selectOption('#contact-form select[name="occupation_type"]', values.occupation_type || "上班族");
+  await page.selectOption('#contact-form select[name="income_type"]', values.income_type || "固定薪轉");
+  await page.selectOption('#contact-form select[name="message"]', values.message_option || "想確認合法金融資訊來源");
+  await page.check('#contact-form input[name="consent_privacy"]');
+  await page.check('#contact-form input[name="consent_line"]');
+}
+
 async function expectJsonDownload(page, selector, expectedFormat, results, label) {
   const [download] = await Promise.all([
     page.waitForEvent("download"),
@@ -623,22 +644,21 @@ async function smokeLeadAndAdmin(browser, baseUrl, results, adminRecordCollector
       });
     }
   } else {
-    await page.fill('#contact-form input[name="display_name"]', "QA 瀏覽器驗收");
-    await page.fill('#contact-form input[name="phone"]', "0912345678");
-    await page.fill('#contact-form input[name="line_id"]', "qa_tfse");
-    await page.fill('#contact-form input[name="region"]', "台北");
-    await page.fill('#contact-form input[name="needs"]', "信貸與債務法令資訊");
-    await page.fill('#contact-form input[name="occupation_type"]', "上班族");
-    await page.fill('#contact-form input[name="income_type"]', "固定薪轉");
-    await page.fill('#contact-form textarea[name="message"]', "瀏覽器驗收測試，不含敏感資料。");
-    await page.check('#contact-form input[name="consent_privacy"]');
-    await page.check('#contact-form input[name="consent_line"]');
+    await fillCurrentLeadForm(page, {
+      display_name: "QA 瀏覽器驗收",
+      phone_local: "0912345678",
+      line_id: "qa_tfse",
+      needs: "銀行信貸資訊查詢",
+      occupation_type: "上班族",
+      income_type: "固定薪轉",
+      message: "瀏覽器驗收測試，不含敏感資料。"
+    });
     await page.click("[data-lead-submit]");
     await page.waitForFunction(() => {
       const dialog = document.querySelector(".tfse-lead-dialog");
       const legacyMessage = document.querySelector(".form-messege");
-      return (dialog && /已收到|已保存|已送出/.test(dialog.textContent || ""))
-        || (legacyMessage && /已收到|已保存|已送出/.test(legacyMessage.textContent || ""));
+      return (dialog && /已提交成功|已收到|已保存|已送出/.test(dialog.textContent || ""))
+        || (legacyMessage && /已提交成功|已收到|已保存|已送出/.test(legacyMessage.textContent || ""));
     });
     await page.waitForFunction(() => {
       const leads = JSON.parse(localStorage.getItem("tfse_leads") || "[]");
@@ -1585,22 +1605,23 @@ async function smokeFormalApiMode(browser, baseUrl, results) {
       ? ok("formal API lead submission", `final_visual_form:${JSON.stringify(finalApiForm)}`)
       : fail("formal API lead submission", JSON.stringify(finalApiForm)));
   } else {
-    await page.fill('input[name="display_name"]', "QA API 模式驗收");
-    await page.fill('input[name="phone"]', "0987654321");
-    await page.fill('input[name="line_id"]', "qa_api_tfse");
-    await page.fill('input[name="region"]', "台中");
-    await page.fill('input[name="needs"]', "房貸與信用資訊查詢");
-    await page.fill('input[name="occupation_type"]', "企業主");
-    await page.fill('input[name="income_type"]', "營業收入");
-    await page.fill('textarea[name="message"]', "API 模式瀏覽器驗收，不含敏感資料。");
-    await page.check('input[name="consent_privacy"]');
-    await page.check('input[name="consent_line"]');
+    await fillCurrentLeadForm(page, {
+      display_name: "QA API 模式驗收",
+      phone_local: "0987654321",
+      line_id: "qa_api_tfse",
+      region_state: "中部",
+      region_city: "台中市",
+      needs: "房貸資訊查詢",
+      occupation_type: "企業主 / 自營商",
+      income_type: "營業收入",
+      message: "API 模式瀏覽器驗收，不含敏感資料。"
+    });
     await page.click("[data-lead-submit]");
     await page.waitForFunction(() => {
       const dialog = document.querySelector(".tfse-lead-dialog");
       const legacyMessage = document.querySelector(".form-messege");
-      return (dialog && /正式 API 已接收|已收到|已保存|已送出/.test(dialog.textContent || ""))
-        || (legacyMessage && /正式 API 已接收|已收到|已保存|已送出/.test(legacyMessage.textContent || ""));
+      return (dialog && /正式 API 已接收|已提交成功|已收到|已保存|已送出/.test(dialog.textContent || ""))
+        || (legacyMessage && /正式 API 已接收|已提交成功|已收到|已保存|已送出/.test(legacyMessage.textContent || ""));
     });
     const localLeadCount = await page.evaluate(() => JSON.parse(localStorage.getItem("tfse_leads") || "[]").filter((item) => item.display_name === "QA API 模式驗收").length);
     const liveLeadAccepted = liveBackendBaseUrl

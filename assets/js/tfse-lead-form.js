@@ -712,7 +712,7 @@
         }
         var initialRemaining = SUBMIT_COOLDOWN_MS - (Date.now() - getLastSubmittedAt());
         if (initialRemaining > 0) {
-            startCooldown(form, document.querySelector(".form-messege"), "剛剛已送出一筆需求，後台會保存可查詢的紀錄。", "success", getLastSubmittedAt());
+            startCooldown(form, document.querySelector(".form-messege"), "剛剛已送出一筆需求，請稍後再試。", "success", getLastSubmittedAt());
         }
 
         form.addEventListener("submit", function (event) {
@@ -771,8 +771,8 @@
             setMessage(message, "", "");
             showLeadDialog({
                 title: "已收到相同需求",
-                body: "<p>系統已偵測到 24 小時內相同手機與需求的紀錄，後台已保留既有案件，避免重複聯繫。</p>",
-                actions: "<a href=\"admin.html\" class=\"tfse-dialog-primary\">前往 CRM 查看紀錄</a><a href=\"free-check.html#line-cta\" class=\"tfse-dialog-link\">Line 官方帳號承接說明</a>"
+                body: "<p>系統已收到 24 小時內相同手機與需求的提交內容，將以既有需求為準，避免重複聯繫。</p>",
+                actions: "<a href=\"free-check.html#line-cta\" class=\"tfse-dialog-primary\">Line 官方帳號承接說明</a>"
             });
             return;
         }
@@ -816,14 +816,13 @@
 
         submitPromise.then(function (result) {
             setLastSubmittedAt(now);
-            var modeLabel = result && result.mode === "api" ? "正式 API 已接收" : "本機 MVP 已保存";
             loadConfig().then(function (config) {
                 var line = lineConfig(config);
-                var successHtml = "<p><strong>您的免費財務健檢查詢需求已提交成功。</strong></p><p>狀態：" + modeLabel + "。TFSE 僅提供公開金融資訊整理與法令諮詢導引，不代辦貸款、不代收證件、不保證核貸。</p><p>推薦分類：" + renderLinks(recommendations.categories) + "</p><p>推薦文章：" + renderLinks(recommendations.articles) + "</p>";
+                var successHtml = "<p><strong>您的免費財務健檢查詢需求已提交成功。</strong></p><p>TFSE 僅提供公開金融資訊整理與法令諮詢導引，不代辦貸款、不代收證件、不保證核貸。</p><p>推薦分類：" + renderLinks(recommendations.categories) + "</p><p>推薦文章：" + renderLinks(recommendations.articles) + "</p>";
                 showLeadDialog({
                     title: "已提交成功",
                     body: successHtml,
-                    actions: "<a href=\"admin.html\" class=\"tfse-dialog-primary\">前往 CRM 查看紀錄</a>" + renderLineCta(line).replace("btn btn-primary btn-hover-secondary mt-3", "tfse-dialog-link")
+                    actions: renderLineCta(line).replace("btn btn-primary btn-hover-secondary mt-3", "tfse-dialog-primary")
                 });
                 startCooldown(form, message, successHtml, "success", now, { silentInline: true });
 
