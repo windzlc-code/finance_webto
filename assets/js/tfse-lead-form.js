@@ -761,6 +761,8 @@
         var needs = choiceValue(form, "needs") || choiceValue(form, "message");
         var occupationType = choiceValue(form, "occupation_type");
         var incomeType = choiceValue(form, "income_type");
+        var currentJob = choiceValue(form, "current_job");
+        var monthlyIncome = choiceValue(form, "monthly_income");
         var messageValue = choiceValue(form, "message");
         var tags = inferTags(needs, occupationType, form);
         var recommendations = recommendFromTags(tags);
@@ -784,8 +786,19 @@
             line_id: form.elements.line_id ? form.elements.line_id.value : (form.elements.email ? form.elements.email.value : ""),
             region: form.elements.region ? form.elements.region.value : "",
             needs: needs,
+            birth_date: form.elements.birth_date ? form.elements.birth_date.value : "",
             occupation_type: occupationType,
+            current_job: currentJob,
+            current_job_years: form.elements.current_job_years ? form.elements.current_job_years.value : "",
+            current_job_months: form.elements.current_job_months ? form.elements.current_job_months.value : "",
             income_type: incomeType,
+            monthly_income: monthlyIncome,
+            salary_method: form.elements.salary_method ? form.elements.salary_method.value : "",
+            labor_insurance: form.elements.labor_insurance ? form.elements.labor_insurance.value : "",
+            has_house: form.elements.has_house ? form.elements.has_house.value : "",
+            has_car: form.elements.has_car ? form.elements.has_car.value : "",
+            has_land: form.elements.has_land ? form.elements.has_land.value : "",
+            recent_credit_report: form.elements.recent_credit_report ? form.elements.recent_credit_report.value : "",
             message: messageValue,
             consent_privacy: !!(form.elements.consent_privacy && form.elements.consent_privacy.checked),
             consent_line: !!(form.elements.consent_line && form.elements.consent_line.checked),
