@@ -112,6 +112,7 @@
     var configReadinessPanel = document.querySelector("[data-admin-config-readiness]");
     var configReadinessExportButton = document.querySelector("[data-admin-config-readiness-export]");
     var configDraftPanel = document.querySelector("[data-admin-config-draft]");
+    var configVisualForm = document.querySelector("[data-admin-config-visual-form]");
     var configDraftInput = document.querySelector("[data-admin-config-draft-input]");
     var configDraftTemplateButton = document.querySelector("[data-admin-config-draft-template]");
     var configDraftExportButton = document.querySelector("[data-admin-config-draft-export]");
@@ -655,28 +656,49 @@
         return base || (fallbackPrefix + "-" + Date.now().toString(36));
     }
 
-    function formatAdminSnippet(content) {
-        if (!String(content || "").trim()) {
-            return "";
+    function flattenAdminObject(value, prefix, output) {
+        output = output || [];
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            output.push({ key: prefix || "value", value: Array.isArray(value) ? value.join(", ") : String(value || "") });
+            return output;
         }
-        return "<pre style=\"margin-top:12px; padding:12px; border:1px solid rgba(3,15,39,0.12); border-radius:6px; background:#f7f9fc; color:#030f27; white-space:pre-wrap; word-break:break-word; font-size:12px; line-height:1.6;\">" + escapeHtml(content) + "</pre>";
+        Object.keys(value).forEach(function (key) {
+            var childKey = prefix ? prefix + "." + key : key;
+            var child = value[key];
+            if (child && typeof child === "object" && !Array.isArray(child)) {
+                flattenAdminObject(child, childKey, output);
+            } else {
+                output.push({ key: childKey, value: Array.isArray(child) ? child.join(", ") : String(child || "") });
+            }
+        });
+        return output;
+    }
+
+    function formatAdminVisualPairs(items) {
+        if (!items || !items.length) return "";
+        return "<div class=\"tfse-admin-kv-grid\">" + items.map(function (item) {
+            return "<span><small>" + escapeHtml(item.key) + "</small><strong>" + escapeHtml(item.value || "待填") + "</strong></span>";
+        }).join("") + "</div>";
     }
 
     function renderPatchEnvDetails(patchTemplate, envSnippet) {
         var patchContent = patchTemplate && Object.keys(patchTemplate).length
-            ? formatAdminSnippet(JSON.stringify(patchTemplate, null, 2))
+            ? formatAdminVisualPairs(flattenAdminObject(patchTemplate))
             : "";
         var envContent = String(envSnippet || "").trim()
-            ? formatAdminSnippet(String(envSnippet || "").trim())
+            ? formatAdminVisualPairs(String(envSnippet || "").trim().split(/\n+/).map(function (line) {
+                var parts = line.split("=");
+                return { key: parts[0] || "ENV", value: parts.slice(1).join("=") || "待填" };
+            }))
             : "";
         if (!patchContent && !envContent) {
             return "";
         }
         return [
             "<details style=\"margin-top:12px;\">",
-            "<summary style=\"cursor:pointer; color:#1292ee;\">查看 patch / env 片段</summary>",
-            patchContent ? "<p style=\"margin-top:12px;\"><strong>Patch template</strong></p>" + patchContent : "",
-            envContent ? "<p style=\"margin-top:12px;\"><strong>.env snippet</strong></p>" + envContent : "",
+            "<summary style=\"cursor:pointer; color:#1292ee;\">查看可視化配置欄位</summary>",
+            patchContent ? "<p style=\"margin-top:12px;\"><strong>網站配置欄位</strong></p>" + patchContent : "",
+            envContent ? "<p style=\"margin-top:12px;\"><strong>環境變數欄位</strong></p>" + envContent : "",
             "</details>"
         ].join("");
     }
@@ -2387,15 +2409,118 @@
         };
     }
 
-    function configDraftTemplate() {
-        return JSON.stringify({
+    function configDraftTemplateData() {
+        return {
             base_url: siteConfigData.base_url || "",
             analytics: siteConfigData.analytics || {},
             search_console: siteConfigData.search_console || {},
             backend: siteConfigData.backend || {},
             security: siteConfigData.security || {},
             line: siteConfigData.line || {}
-        }, null, 2);
+        };
+    }
+
+    function configDraftTemplate() {
+        return JSON.stringify(configDraftTemplateData(), null, 2);
+    }
+
+    function setFormValue(form, name, value) {
+        var field = form ? form.querySelector("[name=\"" + name + "\"]") : null;
+        if (!field) return;
+        if (field.type === "checkbox") {
+            field.checked = !!value;
+        } else {
+            field.value = value || "";
+        }
+    }
+
+    function getFormValue(form, name) {
+        var field = form ? form.querySelector("[name=\"" + name + "\"]") : null;
+        if (!field) return "";
+        return field.type === "checkbox" ? field.checked : field.value.trim();
+    }
+
+    function pruneEmptyConfigNode(value) {
+        if (Array.isArray(value)) return value;
+        if (!value || typeof value !== "object") return value;
+        Object.keys(value).forEach(function (key) {
+            var child = pruneEmptyConfigNode(value[key]);
+            if (child && typeof child === "object" && !Array.isArray(child) && !Object.keys(child).length) {
+                delete value[key];
+            } else if (child === "" || child === null || typeof child === "undefined") {
+                delete value[key];
+            } else {
+                value[key] = child;
+            }
+        });
+        return value;
+    }
+
+    function configDraftFromVisualForm() {
+        if (!configVisualForm) return null;
+        var data = {
+            base_url: getFormValue(configVisualForm, "base_url"),
+            backend: {
+                mode: getFormValue(configVisualForm, "backend_mode") || "localStorage",
+                api_base_url: getFormValue(configVisualForm, "backend_api_base_url")
+            },
+            line: {
+                oa_url: getFormValue(configVisualForm, "line_oa_url")
+            },
+            analytics: {
+                ga4_measurement_id: getFormValue(configVisualForm, "ga4_measurement_id"),
+                meta_pixel_id: getFormValue(configVisualForm, "meta_pixel_id"),
+                server_event_endpoint: getFormValue(configVisualForm, "server_event_endpoint"),
+                sentry_dsn: getFormValue(configVisualForm, "sentry_dsn")
+            },
+            search_console: {
+                google_site_verification: getFormValue(configVisualForm, "google_site_verification")
+            },
+            security: {
+                turnstile: {
+                    enabled: !!getFormValue(configVisualForm, "turnstile_enabled"),
+                    site_key: getFormValue(configVisualForm, "turnstile_site_key")
+                }
+            }
+        };
+        if (!data.security.turnstile.enabled && !data.security.turnstile.site_key) {
+            delete data.security.turnstile;
+        }
+        return pruneEmptyConfigNode(data);
+    }
+
+    function syncConfigDraftInputFromVisualForm() {
+        var data = configDraftFromVisualForm();
+        if (!data || !configDraftInput) return;
+        configDraftInput.value = JSON.stringify(data, null, 2);
+        localStorage.setItem("tfse_site_config_update_draft", configDraftInput.value);
+        renderConfigDraft();
+    }
+
+    function syncVisualConfigFormFromData(data) {
+        if (!configVisualForm) return;
+        data = data || {};
+        var analytics = data.analytics || {};
+        var backend = data.backend || {};
+        var line = data.line || {};
+        var searchConsole = data.search_console || {};
+        var turnstile = ((data.security || {}).turnstile || {});
+        setFormValue(configVisualForm, "base_url", data.base_url || "");
+        setFormValue(configVisualForm, "backend_mode", backend.mode || "localStorage");
+        setFormValue(configVisualForm, "backend_api_base_url", backend.api_base_url || "");
+        setFormValue(configVisualForm, "line_oa_url", line.oa_url || "");
+        setFormValue(configVisualForm, "ga4_measurement_id", analytics.ga4_measurement_id || "");
+        setFormValue(configVisualForm, "meta_pixel_id", analytics.meta_pixel_id || "");
+        setFormValue(configVisualForm, "server_event_endpoint", analytics.server_event_endpoint || "");
+        setFormValue(configVisualForm, "sentry_dsn", analytics.sentry_dsn || "");
+        setFormValue(configVisualForm, "google_site_verification", searchConsole.google_site_verification || "");
+        setFormValue(configVisualForm, "turnstile_enabled", !!turnstile.enabled);
+        setFormValue(configVisualForm, "turnstile_site_key", turnstile.site_key || "");
+    }
+
+    function syncVisualConfigFormFromDraft() {
+        var parsed = parseConfigDraft();
+        syncVisualConfigFormFromData(parsed.errors.length ? configDraftTemplateData() : parsed.data);
     }
 
     function parseConfigDraft() {
@@ -6670,7 +6795,7 @@
         var payload = configDraftPayload();
         var messages = payload.validation.errors.concat(payload.validation.warnings);
         configDraftPanel.innerHTML = [
-            "<p>site-config 更新包狀態：" + escapeHtml(payload.status) + "；草稿欄位：" + escapeHtml(payload.draft_keys.join(", ") || "尚未貼上") + "。</p>",
+            "<p>網站配置更新狀態：" + escapeHtml(payload.status) + "；已填欄位：" + escapeHtml(payload.draft_keys.join(", ") || "尚未填寫") + "。</p>",
             messages.length ? messages.slice(0, 6).map(function (message) {
                 return "<p>" + escapeHtml(message) + "</p>";
             }).join("") : "<p>草稿格式可供人工合併；合併後需重生 SEO 資產並重新驗收。</p>"
@@ -8646,7 +8771,7 @@
         return "<aside class=\"tfse-visual-sidebar\"><a class=\"tfse-visual-brand\" href=\"index.html\" target=\"_blank\" rel=\"noopener\"><img src=\"assets/images/logo/tfse-logo.png\" alt=\"TFSE 金融便民中心\"></a><nav>" + items.map(function (item) {
             var active = visualConsoleState.tab === item[0] ? " is-active" : "";
             return "<button type=\"button\" class=\"" + active + "\" data-visual-tab=\"" + item[0] + "\"><i class=\"fa " + item[1] + "\"></i><span>" + item[2] + "</span></button>";
-        }).join("") + "</nav><button type=\"button\" class=\"tfse-visual-collapse\" data-visual-trigger=\"[data-admin-export]\"><i class=\"fa fa-download\"></i><span>匯出線索 JSON</span></button></aside>";
+        }).join("") + "</nav><button type=\"button\" class=\"tfse-visual-collapse\" data-visual-trigger=\"[data-admin-export]\"><i class=\"fa fa-download\"></i><span>匯出線索資料</span></button></aside>";
     }
 
     function visualPageTitles() {
@@ -8753,6 +8878,49 @@
         ].join("");
     }
 
+    function visualRenderDashboardModule(payload) {
+        var counts = visualLeadStageCounts();
+        var legalCounts = payload.legal.status_counts || {};
+        var reviewCount = (legalCounts.needs_review || 0) + (legalCounts.external_pending || 0) + (legalCounts.manual_external || 0);
+        var pendingFeedback = publicFeedbackItemsCache.filter(function (item) {
+            return (item.status || "queued") !== "closed" && (item.status || "queued") !== "resolved";
+        }).length;
+        var sourceTotal = payload.leads.length || 1;
+        var topOpenLeads = payload.leads.filter(function (lead) {
+            var statusValue = lead.status || "new";
+            return statusValue !== "closed" && statusValue !== "spam";
+        }).slice(0, 4);
+        return [
+            "<div class=\"tfse-visual-dashboard-page\">",
+            "<section class=\"tfse-visual-dashboard-hero\">",
+            "<div><span class=\"tfse-visual-eyebrow\">總覽儀表盤</span><h3>今日營運狀態</h3><p>只顯示總覽、趨勢與快捷入口；表單資料、編輯、刪除與客戶詳情已獨立放到「線索與客戶」。</p></div>",
+            "<button type=\"button\" data-visual-refresh><i class=\"fa fa-sync-alt\"></i> 更新儀表盤</button>",
+            "</section>",
+            "<section class=\"tfse-visual-dashboard-grid\">",
+            "<article class=\"tfse-visual-dashboard-tile is-primary\"><small>真實線索</small><strong>" + counts.total + "</strong><span>前台表單 / API 寫入</span></article>",
+            "<article class=\"tfse-visual-dashboard-tile\"><small>待處理</small><strong>" + counts.open + "</strong><span>未成交、未排除</span></article>",
+            "<article class=\"tfse-visual-dashboard-tile\"><small>諮詢中</small><strong>" + (counts.consulted || 0) + "</strong><span>人工跟進中</span></article>",
+            "<article class=\"tfse-visual-dashboard-tile\"><small>成交客戶</small><strong>" + (counts.closed || 0) + "</strong><span>已完成轉換</span></article>",
+            "</section>",
+            "<section class=\"tfse-visual-dashboard-bottom\">",
+            "<article class=\"tfse-visual-dashboard-card is-source\"><div class=\"tfse-visual-module-head\"><div><h3>來源追蹤</h3><p>依真實線索統計，不使用假資料補數。</p></div><button type=\"button\" data-visual-tab=\"reports\">看報表</button></div>" + visualCountRows(payload.sourceCounts, visualSourceLabel, sourceTotal) + "</article>",
+            "<div class=\"tfse-visual-dashboard-stack\">",
+            "<article class=\"tfse-visual-dashboard-card is-todo\"><div class=\"tfse-visual-module-head\"><div><h3>待辦摘要</h3><p>今日需要處理的營運事項。</p></div><button type=\"button\" data-visual-tab=\"tasks\">看任務</button></div><ul class=\"tfse-visual-checklist\"><li><span>高優先跟進</span><b>" + (counts.high_priority || 0) + "</b></li><li><span>合規待檢視</span><b>" + reviewCount + "</b></li><li><span>資料回報工單</span><b>" + pendingFeedback + "</b></li><li><span>Line 可分群</span><b>" + payload.lineItems.length + "</b></li></ul></article>",
+            "<article class=\"tfse-visual-dashboard-card is-shortcuts\"><div class=\"tfse-visual-module-head\"><div><h3>快捷入口</h3><p>表單操作進入對應模組。</p></div></div>",
+            "<div class=\"tfse-visual-dashboard-actions\">",
+            "<button type=\"button\" data-visual-tab=\"leads\"><i class=\"fa fa-user-friends\"></i><strong>線索與客戶</strong></button>",
+            "<button type=\"button\" data-visual-tab=\"workbench\"><i class=\"fa fa-th-large\"></i><strong>後台模組</strong></button>",
+            "<button type=\"button\" data-visual-tab=\"compliance\"><i class=\"fa fa-shield-alt\"></i><strong>合規掃描</strong></button>",
+            "<button type=\"button\" data-visual-tab=\"reports\"><i class=\"fa fa-chart-bar\"></i><strong>報表分析</strong></button>",
+            "</div>",
+            "</article>",
+            topOpenLeads.length ? "<article class=\"tfse-visual-dashboard-card is-followups\"><div class=\"tfse-visual-module-head\"><div><h3>近期待跟進</h3><p>摘要顯示，不展開表單。</p></div><button type=\"button\" data-visual-tab=\"leads\">處理</button></div><div class=\"tfse-visual-dashboard-list\">" + topOpenLeads.slice(0, 3).map(function (lead) { return "<article><span>" + escapeHtml(formatDate(lead.next_follow_up_at || lead.submitted_at || lead.updated_at)) + "</span><strong>" + escapeHtml(lead.display_name || "未命名線索") + "</strong><small>" + escapeHtml(visualStatusLabel(lead.status || "new")) + "</small></article>"; }).join("") + "</div></article>" : "",
+            "</div>",
+            "</section>",
+            "</div>"
+        ].join("");
+    }
+
     function visualLeadCard(lead, actionLabel) {
         var statusValue = lead.status || "new";
         return [
@@ -8814,7 +8982,7 @@
             "<div class=\"tfse-visual-module-head\"><div><h3>報表分析</h3><p>報表只根據目前可讀到的真實線索、來源、回報與合規狀態生成。</p></div><button type=\"button\" data-visual-trigger=\"[data-admin-attribution-export]\"><i class=\"fa fa-chart-line\"></i> 匯出歸因報表</button></div>",
             "<div class=\"tfse-visual-panel-nav\"><span class=\"is-active\">來源分布</span><span>數據摘要</span><span>匯出工具</span></div>",
             "<div class=\"tfse-visual-split\"><div class=\"tfse-visual-module-card\"><h4>來源分布</h4>" + visualCountRows(payload.sourceCounts, visualSourceLabel, payload.leads.length || 1) + "</div><div class=\"tfse-visual-module-card\"><h4>數據摘要</h4><ul class=\"tfse-visual-checklist\"><li><span>真實線索</span><b>" + payload.leads.length + "</b></li><li><span>公開回報工單</span><b>" + publicFeedbackItemsCache.length + "</b></li><li><span>合規掃描項</span><b>" + payload.legal.items.length + "</b></li><li><span>資料模式</span><b>" + escapeHtml(leadSourceMode) + "</b></li></ul></div></div>",
-            "<div class=\"tfse-visual-action-row\"><button type=\"button\" data-visual-trigger=\"[data-admin-export]\">匯出線索 JSON</button><button type=\"button\" data-visual-trigger=\"[data-admin-line-segments-export]\">匯出 Line 分群</button><button type=\"button\" data-visual-trigger=\"[data-admin-backup-export]\">匯出備份包</button></div>",
+            "<div class=\"tfse-visual-action-row\"><button type=\"button\" data-visual-trigger=\"[data-admin-export]\">匯出線索資料</button><button type=\"button\" data-visual-trigger=\"[data-admin-line-segments-export]\">匯出 Line 分群</button><button type=\"button\" data-visual-trigger=\"[data-admin-backup-export]\">匯出備份包</button></div>",
             "</div>"
         ].join("");
     }
@@ -8843,6 +9011,7 @@
     }
 
     function visualRenderMainModule(payload, leads) {
+        if (visualConsoleState.tab === "dashboard") return visualRenderDashboardModule(payload);
         if (visualConsoleState.tab === "schedule") return visualRenderCalendar(payload);
         if (visualConsoleState.tab === "tasks") return visualRenderTasks(payload);
         if (visualConsoleState.tab === "compliance") return visualRenderComplianceModule(payload);
@@ -8905,11 +9074,12 @@
             visualConsoleState.tab === "dashboard" ? "<section class=\"tfse-visual-metrics\">" + visualRenderMetricCards(payload.metrics) + "</section>" : "",
             "<section class=\"tfse-visual-workgrid is-page-" + escapeHtml(visualConsoleState.tab || "dashboard") + "\">",
             visualRenderMainModule(payload, leads),
-            "<aside class=\"tfse-visual-rightcol\">",
-            visualRenderLeadDetail(selectedLead),
-            visualRenderRightSummary(payload, legalCounts, lineItems),
-            "</aside></section></main></div>",
-            visualConsoleState.selectedLeadId ? visualRenderLeadLightbox(selectedLead) : ""
+            visualConsoleState.tab === "dashboard" ? "" : "<aside class=\"tfse-visual-rightcol\">",
+            visualConsoleState.tab === "dashboard" ? "" : visualRenderLeadDetail(selectedLead),
+            visualConsoleState.tab === "dashboard" ? "" : visualRenderRightSummary(payload, legalCounts, lineItems),
+            visualConsoleState.tab === "dashboard" ? "" : "</aside>",
+            "</section></main></div>",
+            visualConsoleState.tab !== "dashboard" && visualConsoleState.selectedLeadId ? visualRenderLeadLightbox(selectedLead) : ""
         ].join("");
         var statusSelect = visualConsolePanel.querySelector("[data-visual-filter='status']");
         var sourceSelect = visualConsolePanel.querySelector("[data-visual-filter='source']");
@@ -9770,6 +9940,11 @@
             sourceEvidenceSeedRecords = [];
             adminRecordSeedData = {};
             if (configDraftInput && !configDraftInput.value) configDraftInput.value = localStorage.getItem("tfse_site_config_update_draft") || "";
+            if (configDraftInput && configDraftInput.value) {
+                syncVisualConfigFormFromDraft();
+            } else {
+                syncVisualConfigFormFromData(configDraftTemplateData());
+            }
             syncAdminContentFromApi();
             renderFaq();
             renderContentVersions();
@@ -10470,6 +10645,7 @@
         if (configDraftInput) {
             configDraftInput.value = configDraftTemplate();
             localStorage.setItem("tfse_site_config_update_draft", configDraftInput.value);
+            syncVisualConfigFormFromDraft();
         }
         addAudit("config_draft_template_loaded", "site-config.json");
         renderConfigDraft();
@@ -10477,8 +10653,13 @@
     });
     if (configDraftInput) configDraftInput.addEventListener("input", function () {
         localStorage.setItem("tfse_site_config_update_draft", configDraftInput.value);
+        syncVisualConfigFormFromDraft();
         renderConfigDraft();
     });
+    if (configVisualForm) {
+        configVisualForm.addEventListener("input", syncConfigDraftInputFromVisualForm);
+        configVisualForm.addEventListener("change", syncConfigDraftInputFromVisualForm);
+    }
     if (configDraftExportButton) configDraftExportButton.addEventListener("click", function () {
         if (!can("launch_health")) {
             addAudit("config_draft_export_denied", "tfse-site-config-update-package.json");

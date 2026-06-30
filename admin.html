@@ -38,12 +38,12 @@
      -->
 
     <!-- Main Style CSS -->
-    <!-- <link rel="stylesheet" href="assets/css/style.css?v=20260701-admin-compact-layout"> -->
+    <!-- <link rel="stylesheet" href="assets/css/style.css?v=20260701-admin-dashboard-split"> -->
 
     <!-- Use the minified version files listed below for better performance and remove the files listed above -->
     <link rel="stylesheet" href="assets/css/vendor/vendor.min.css">
     <link rel="stylesheet" href="assets/css/plugins/plugins.min.css">
-    <link rel="stylesheet" href="assets/css/style.css?v=20260701-admin-compact-layout">
+    <link rel="stylesheet" href="assets/css/style.css?v=20260701-admin-dashboard-split">
     <link rel="alternate" type="application/rss+xml" title="TFSE金融便民中心 RSS" href="https://www.tfse-fcc.com/feed.xml">
     <script type="application/ld+json" id="tfse-structured-data">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.tfse-fcc.com/#organization","name":"TFSE金融便民中心","url":"https://www.tfse-fcc.com/","logo":"https://www.tfse-fcc.com/assets/images/logo/tfse-logo.png","description":"TFSE 僅彙整公開合法金融商品與法令資訊，非銀行、放款機構或貸款代辦單位。"},{"@type":"WebSite","@id":"https://www.tfse-fcc.com/#website","name":"TFSE金融便民中心","url":"https://www.tfse-fcc.com/","publisher":{"@id":"https://www.tfse-fcc.com/#organization"},"inLanguage":"zh-TW","potentialAction":{"@type":"SearchAction","target":"https://www.tfse-fcc.com/search.html?q={search_term_string}","query-input":"required name=search_term_string"}},{"@type":"WebPage","@id":"https://www.tfse-fcc.com/admin.html#webpage","url":"https://www.tfse-fcc.com/admin.html","name":"TFSE金融便民中心","isPartOf":{"@id":"https://www.tfse-fcc.com/#website"},"publisher":{"@id":"https://www.tfse-fcc.com/#organization"},"inLanguage":"zh-TW"}]}</script>
     <link rel="manifest" href="site.webmanifest">
@@ -331,7 +331,7 @@
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-2 col-12 mb-4">
-                        <button class="btn btn-primary btn-hover-secondary" data-admin-export>匯出 JSON</button>
+                        <button class="btn btn-primary btn-hover-secondary" data-admin-export>匯出線索資料</button>
                     </div>
                     <div class="col-lg-12 col-md-12 col-12 mb-4">
                     </div>
@@ -818,9 +818,67 @@
                             <div class="mt-4" data-admin-config-draft>
                                 <p>site-config 更新草稿載入中。</p>
                             </div>
-                            <textarea class="mt-3" data-admin-config-draft-input rows="8" placeholder="貼上準備更新的 site-config.json 片段，例如 analytics、search_console、backend、line 或 security。"></textarea>
+                            <form class="tfse-config-visual-form mt-3" data-admin-config-visual-form>
+                                <div class="tfse-config-form-head">
+                                    <strong>正式配置可視化填寫</strong>
+                                    <span>填好欄位後，系統會自動生成更新草稿。</span>
+                                </div>
+                                <div class="tfse-config-field-grid">
+                                    <label>
+                                        <span>正式網站網址</span>
+                                        <input type="url" name="base_url" placeholder="https://www.tfse-fcc.com">
+                                    </label>
+                                    <label>
+                                        <span>後端模式</span>
+                                        <select name="backend_mode">
+                                            <option value="localStorage">本機暫存</option>
+                                            <option value="api">正式 API</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>API 入口網址</span>
+                                        <input type="url" name="backend_api_base_url" placeholder="https://api.example.com">
+                                    </label>
+                                    <label>
+                                        <span>Line 官方帳號連結</span>
+                                        <input type="url" name="line_oa_url" placeholder="https://lin.ee/xxxx">
+                                    </label>
+                                    <label>
+                                        <span>GA4 Measurement ID</span>
+                                        <input type="text" name="ga4_measurement_id" placeholder="G-XXXXXXXXXX">
+                                    </label>
+                                    <label>
+                                        <span>Meta Pixel ID</span>
+                                        <input type="text" name="meta_pixel_id" placeholder="000000000000000">
+                                    </label>
+                                    <label>
+                                        <span>Server Event Endpoint</span>
+                                        <input type="url" name="server_event_endpoint" placeholder="https://api.example.com/events">
+                                    </label>
+                                    <label>
+                                        <span>Sentry DSN</span>
+                                        <input type="url" name="sentry_dsn" placeholder="https://public@sentry.example/1">
+                                    </label>
+                                    <label>
+                                        <span>Search Console 驗證碼</span>
+                                        <input type="text" name="google_site_verification" placeholder="google-site-verification-token">
+                                    </label>
+                                    <label>
+                                        <span>Turnstile Site Key</span>
+                                        <input type="text" name="turnstile_site_key" placeholder="0x4AAAA...">
+                                    </label>
+                                </div>
+                                <label class="tfse-config-toggle">
+                                    <input type="checkbox" name="turnstile_enabled">
+                                    <span>啟用 Turnstile 防刷驗證</span>
+                                </label>
+                            </form>
+                            <details class="tfse-config-advanced mt-3">
+                                <summary>進階：查看原始配置草稿</summary>
+                                <textarea class="mt-3" data-admin-config-draft-input rows="8" placeholder="系統會根據上方表單自動生成配置草稿。"></textarea>
+                            </details>
                             <button class="btn btn-light btn-hover-primary mt-4" data-admin-config-draft-template>載入目前配置範本</button>
-                            <button class="btn btn-primary btn-hover-secondary mt-4" data-admin-config-draft-export>匯出 site-config 更新包</button>
+                            <button class="btn btn-primary btn-hover-secondary mt-4" data-admin-config-draft-export>匯出網站配置更新包</button>
                             <button class="btn btn-light btn-hover-primary mt-4" data-admin-config-approval-export>匯出配置變更簽核包</button>
                             <div class="mt-4" data-admin-env-template>
                                 <p>正式環境變數模板載入中。</p>
@@ -1239,9 +1297,9 @@
                                     <p>本中心僅彙整公開合法金融商品與法令資訊，非銀行、放款機構、貸款代辦單位；所有融資、貸款業務須民眾親自洽詢合法金融機構辦理。</p>
                                 </div>
                                 <div class="footer-social-inline">
-                                    <a href="source-policy.html"><i class="fab fa-twitter-square"></i></a>
-                                    <a href="source-policy.html"><i class="fab fa-facebook-square"></i></a>
-                                    <a href="source-policy.html"><i class="fab fa-instagram"></i></a>
+                                    <a href="database.html" aria-label="前往資料庫"><i class="fas fa-database"></i></a>
+                                    <a href="source-policy.html" aria-label="查看來源政策"><i class="fas fa-shield-alt"></i></a>
+                                    <a href="contact.html" aria-label="聯絡 TFSE"><i class="fas fa-envelope"></i></a>
                                 </div>
                             </div>
                         </div>
@@ -1251,7 +1309,7 @@
                     <!-- Footer Widget Start -->
                     <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6 col-6 mb-6">
                         <div class="footer-widget">
-                            <h4 class="footer-widget-title">資料庫</h4>
+                            <h4 class="footer-widget-title">分類導覽</h4>
                             <div class="footer-widget-content">
                                 <ul>
                                     <li><a href="category.html?slug=mortgage">房貸資訊</a></li>
@@ -1270,10 +1328,10 @@
                             <h4 class="footer-widget-title">資料庫</h4>
                             <div class="footer-widget-content">
                                 <ul>
-                                    <li><a href="database.html">銀行金融商品</a></li>
-                                    <li><a href="database.html">合法融資公司</a></li>
-                                    <li><a href="database.html">儲蓄互助社 <span class="ft-badge">New</span></a></li>
-                                    <li><a href="articles.html">金融防詐</a></li>
+                                    <li><a href="database/banks.html">銀行金融商品</a></li>
+                                    <li><a href="database/finance-companies.html">合法融資公司</a></li>
+                                    <li><a href="database/credit-unions.html">儲蓄互助社 <span class="ft-badge">New</span></a></li>
+                                    <li><a href="anti-fraud.html">金融防詐</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -1289,7 +1347,7 @@
                                     <li><a href="source-policy.html">來源政策</a></li>
                                     <li><a href="privacy.html">隱私權政策</a></li>
                                     <li><a href="disclaimer.html">免責聲明</a></li>
-                                    <li><a href="articles.html">常見問題</a></li>
+                                    <li><a href="free-check.html#tfseFaqAccordion">常見問題</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -1305,7 +1363,7 @@
                                     <li><a href="free-check.html#line-cta">Line 諮詢</a></li>
                                     <li><a href="free-check.html">免費財務健檢查詢</a></li>
                                     <li><a href="contact.html">聯絡我們</a></li>
-                                    <li><a href="disclaimer.html">合規問答</a></li>
+                                    <li><a href="disclaimer.html#compliance-faq">合規問答</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -1423,9 +1481,9 @@
 
     <!-- Admin keeps the template header but swaps heavy vendor JS for a lightweight shell script. -->
     <script src="assets/js/tfse-admin-shell.js"></script>
-    <script src="assets/js/tfse-api.js?v=20260701-admin-compact-layout"></script>
+    <script src="assets/js/tfse-api.js?v=20260701-admin-dashboard-split"></script>
     <script src="assets/js/tfse-events.js"></script>
-    <script src="assets/js/tfse-admin.js?v=20260701-admin-compact-layout"></script>
+    <script src="assets/js/tfse-admin.js?v=20260701-admin-dashboard-split"></script>
 
 
 
