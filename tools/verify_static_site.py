@@ -623,7 +623,7 @@ def verify_lead_forms():
             failures.append(f"{name}: missing explicit lead submit button")
 
     landing_script = (ROOT / "assets/js/tfse-landing-pages.js").read_text(errors="ignore")
-    for marker in ("slugFromPath", "landingPath", "window.location.pathname", "renderFreeCheckEntry", "tfse-unique-entry", "前往唯一免費健檢入口"):
+    for marker in ("slugFromPath", "landingPath", "window.location.pathname", "renderFreeCheckEntry", "tfse-unique-entry", "前往唯一免費財務健檢查詢入口"):
         if marker not in landing_script:
             failures.append(f"tfse-landing-pages.js: missing landing alias marker {marker}")
 

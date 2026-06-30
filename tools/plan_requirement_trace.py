@@ -98,7 +98,7 @@ def build_report():
     requirements = [
         ("17.1 业务闭环", "用户能从首页进入资料库。", "home_to_database"),
         ("17.1 业务闭环", "用户能从分类页进入资料详情。", "category_to_detail"),
-        ("17.1 业务闭环", "用户能从文章页进入免费健检。", "article_to_free_check"),
+        ("17.1 业务闭环", "用户能从文章页进入免费财务健检查询。", "article_to_free_check"),
         ("17.1 业务闭环", "表单提交后后台可见。", "lead_visible_in_admin"),
         ("17.1 业务闭环", "表单记录 UTM。", "utm_recorded"),
         ("17.1 业务闭环", "提交成功后可导向 Line。", "line_cta"),
@@ -139,7 +139,7 @@ def build_report():
         ("17.5 SEO 验收", "内链。", "internal_links"),
         ("21. 上线前最终检查", "所有页面都有标题和描述。", "metadata"),
         ("21. 上线前最终检查", "所有页面都有免责声明或页脚免责声明。", "disclaimer"),
-        ("21. 上线前最终检查", "免费健检表单不收证件。", "no_sensitive_docs"),
+        ("21. 上线前最终检查", "免费财务健检查询表单不收证件。", "no_sensitive_docs"),
         ("21. 上线前最终检查", "所有 CTA 没有“代办、包过、保证核贷”。", "no_loan_guarantee"),
         ("21. 上线前最终检查", "所有产品资料有来源链接。", "product_sources"),
         ("21. 上线前最终检查", "所有文章有更新日期。", "article_updated_at"),

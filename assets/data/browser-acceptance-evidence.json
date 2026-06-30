@@ -12,7 +12,7 @@
       "group": "UI 驗收",
       "viewport": "desktop+mobile",
       "result": "passed",
-      "evidence_note": "Playwright smoke 已驗證首頁、資料庫、文章、免費健檢與 Admin 在桌面/手機 viewport 的 layout 與 text fit 均通過。",
+      "evidence_note": "Playwright smoke 已驗證首頁、資料庫、文章、免費財務健檢查詢與 Admin 在桌面/手機 viewport 的 layout 與 text fit 均通過。",
       "checked_by_role": "automation",
       "checked_at": "2026-06-28T13:32:16.395Z",
       "source_labels": [
@@ -83,7 +83,7 @@
       "group": "上線最終檢查",
       "viewport": "1440x900",
       "result": "passed",
-      "evidence_note": "Playwright smoke 已驗證免費健檢提交、UTM 寫入、Admin 可見線索並可更新跟進狀態與審計。",
+      "evidence_note": "Playwright smoke 已驗證免費財務健檢查詢提交、UTM 寫入、Admin 可見線索並可更新跟進狀態與審計。",
       "checked_by_role": "automation",
       "checked_at": "2026-06-28T13:32:16.395Z",
       "source_labels": [

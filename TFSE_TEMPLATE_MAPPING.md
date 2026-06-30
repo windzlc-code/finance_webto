@@ -14,13 +14,13 @@
 
 | 原模板页面/类型 | 当前文件 | TFSE 页面角色 | 业务脚本/数据 |
 |---|---|---|---|
-| Home / Landing | `index.html` | 金融便民首页、品牌首屏、查询面板、资料库入口、免费健检 CTA | `tfse-home-query.js`, `tfse-lead-form.js`, `categories.json`, `articles.json` |
+| Home / Landing | `index.html` | 金融便民首页、品牌首屏、查询面板、资料库入口、免费财务健检查询 CTA | `tfse-home-query.js`, `tfse-lead-form.js`, `categories.json`, `articles.json` |
 | About | `about.html` | 关于 TFSE、平台定位、资料来源和非代办边界 | shared scripts |
 | Services / Products | `database.html` | 全类金融商品资料库，含搜索、筛选、来源与更新时间 | `tfse-products.js`, `tfse-database.js`, `products.json` |
 | Work / Portfolio | `work.html` | 金融分类入口 | `tfse-categories.js`, `categories.json` |
 | Category aliases | `mortgage.html`, `credit-loan.html`, `vehicle-finance.html`, `installment.html`, `credit-union.html`, `debt-law.html`, `insurance-finance.html`, `anti-fraud.html`, `category.html` | 八大金融分类页和动态分类页 | `tfse-categories.js`, `categories.json`, `products.json`, `articles.json` |
 | Blog list/grid/classic | `articles.html` | 金融知识内容中心和专栏列表 | `tfse-articles.js`, `articles.json` |
-| Blog detail | `articles/*.html` | 金融知识文章详情，底部导向资料库和免费健检 | `tfse-articles.js`, `articles.json` |
+| Blog detail | `articles/*.html` | 金融知识文章详情，底部导向资料库和免费财务健检查询 | `tfse-articles.js`, `articles.json` |
 | Product detail | `products/*.html` | 金融商品详情，显示来源、更新时间、相关资讯和健检 CTA | `tfse-products.js`, `products.json`, `articles.json`, `categories.json` |
 | Contact / Form | `free-check.html` | 免费财务健检表单、低敏资料收集、Line CTA、FAQ | `tfse-lead-form.js`, `tfse-line.js`, `tfse-faq.js`, `faq.json`, `line-flows.json` |
 | Contact page | `contact.html` | 联络我们、个资删除/更正请求入口说明 | shared scripts |
@@ -28,7 +28,7 @@
 | Search | `search.html` | 全站搜索结果页 | `tfse-search.js`, `products.json`, `articles.json`, `categories.json` |
 | Admin / Dashboard | `admin.html` | 静态 MVP Admin CRM、资料管理、文章审核、合规、报表、备份、上线检查 | `tfse-admin.js`, `tfse-api.js`, all JSON seeds |
 | Policy pages | `privacy.html`, `terms.html`, `disclaimer.html`, `source-policy.html` | 隐私权、使用条款、免责声明、资料来源政策 | `tfse-institutions.js` on source policy |
-| Error pages | `404.html`, `500.html` | 错误页，导回资料库、文章和免费健检 | shared scripts |
+| Error pages | `404.html`, `500.html` | 错误页，导回资料库、文章和免费财务健检查询 | shared scripts |
 
 ## 已清理的重复入口
 
@@ -45,8 +45,8 @@
 
 | 模板区块 | TFSE 套用方式 | 当前证据 |
 |---|---|---|
-| Header / Navbar | 改成首页、资料库、金融分类、金融知识、免费健检、CRM；保留桌面和手机菜单结构 | 全站 HTML header |
-| Header CTA | 原 Buy Now 改成 `免費健檢` | 全站 header right |
+| Header / Navbar | 改成首页、资料库、金融分类、金融知识、免费财务健检查询、CRM；保留桌面和手机菜单结构 | 全站 HTML header |
+| Header CTA | 原 Buy Now 改成 `免費財務健檢查詢` | 全站 header right |
 | Search overlay | 原搜索弹层改成 TFSE 全站搜索入口 | `tfse-search.js` |
 | Hero / Page title | 首页放 TFSE 品牌，内页放页面角色和 breadcrumb | `index.html`, page title sections |
 | Feature / Service cards | 改成金融分类、资料库条目、文章卡片或 CTA | `tfse-categories.js`, `tfse-products.js`, `tfse-articles.js` |
@@ -54,7 +54,7 @@
 | Contact form | 改成免费财务健检表单，记录低敏资料、UTM、隐私同意和 Line 同意 | `free-check.html`, `tfse-lead-form.js` |
 | FAQ accordion | 改成合规 FAQ、分类 FAQ 和落地页 FAQ | `faq.json`, `landing-pages.json`, `tfse-faq.js` |
 | Blog cards/details | 改成金融知识文章中心和详情页 | `articles.json`, `tfse-articles.js` |
-| CTA / Newsletter | 改成免费健检、Line 承接、资料库导流 | `free-check.html`, `lp.html`, `blog-details.html` |
+| CTA / Newsletter | 改成免费财务健检查询、Line 承接、资料库导流 | `free-check.html`, `lp.html`, `blog-details.html` |
 | Footer | 放 Logo、免责声明、资料库、合规页面、联络入口 | 全站 footer |
 
 ## 数据与脚本映射
@@ -66,13 +66,13 @@
 | `assets/data/articles.json` | 40 篇金融知识 seed，供内容中心、文章详情、RSS 和 SEO 使用 |
 | `assets/data/landing-pages.json` | 8 个投流落地页配置，含痛点、FAQ、对应分类和产品 |
 | `assets/data/institutions.json` | 机构和官方来源 seed，供资料来源政策与正式资料库导入 |
-| `assets/data/faq.json` | 免费健检与合规 FAQ |
+| `assets/data/faq.json` | 免费财务健检查询与合规 FAQ |
 | `assets/data/line-flows.json` | Line OA 欢迎语、快速回复、标签和自动回复原则 |
 | `assets/data/compliance-rules.json` | 禁用词、允许上下文、敏感个资字段和必要免责声明 |
 | `assets/js/tfse-api.js` | 前台表单与 Admin CRM API 适配层，API 不可用时 fallback 到 localStorage |
 | `assets/js/tfse-events.js` | 前台事件、GA4、Meta Pixel、Server Event、Sentry 与敏感资料过滤 |
 | `assets/js/tfse-admin.js` | Admin CRM、权限、审计、资料管理、文章审核、合规、报表、备份、上线检查 |
-| `assets/js/tfse-lead-form.js` | 免费健检表单、UTM、Turnstile、重复提交、Line CTA、推荐分类和文章 |
+| `assets/js/tfse-lead-form.js` | 免费财务健检查询表单、UTM、Turnstile、重复提交、Line CTA、推荐分类和文章 |
 | `assets/js/tfse-products.js` | 产品/资料库详情渲染和 canonical base 支持 |
 | `assets/js/tfse-database.js` | 资料库搜索、筛选和列表 |
 | `assets/js/tfse-categories.js` | 分类页和分类别名页渲染 |

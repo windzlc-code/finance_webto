@@ -118,7 +118,7 @@ def audit_html():
 def audit_landing_renderer():
     failures = []
     script = (ROOT / "assets/js/tfse-landing-pages.js").read_text(encoding="utf-8", errors="ignore")
-    for marker in ("renderFreeCheckEntry", "tfse-unique-entry", "前往唯一免費健檢入口", "free-check.html?"):
+    for marker in ("renderFreeCheckEntry", "tfse-unique-entry", "前往唯一免費財務健檢查詢入口", "free-check.html?"):
         if marker not in script:
             failures.append(f"tfse-landing-pages.js: missing unique free-check entry marker {marker}")
     return failures

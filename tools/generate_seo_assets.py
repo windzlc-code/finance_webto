@@ -226,7 +226,7 @@ def base_structured_data(config, path):
             "provider": {"@id": org_id},
             "serviceType": "公開金融資訊整理與法令導引",
             "areaServed": "TW",
-            "description": "免費健檢僅整理需求與公開資訊查詢方向，不代辦貸款、不代收證件、不保證核貸。",
+            "description": "免費財務健檢查詢僅整理需求與公開資訊查詢方向，不代辦貸款、不代收證件、不保證核貸。",
         })
     return {"@context": "https://schema.org", "@graph": graph}
 

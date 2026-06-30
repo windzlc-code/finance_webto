@@ -150,7 +150,7 @@ def build_report():
         "ready",
         "chapter_7",
         "页面架构",
-        "首页、资料库、分类页、详情页、文章中心、免费健检、关于、政策页、联络页、搜索页、后台与错误页都已落地。",
+        "首页、资料库、分类页、详情页、文章中心、免费财务健检查询、关于、政策页、联络页、搜索页、后台与错误页都已落地。",
         [
             f"已存在 {len(categories)} 个分类配置、{len(products)} 条资料、{len(articles)} 篇文章、{len(landing_pages)} 个落地页配置",
             phase_map.get("phase_2", {}).get("summary", ""),
@@ -298,7 +298,7 @@ def build_report():
         "第一版 MVP 范围",
         "计划中的 MVP 范围已全部覆盖，且当前交付已经超出首版最低范围，补上了更完整的 Admin、SEO、投流与运维能力。",
         [
-            "首页、资料库、分类页、免费健检、Line CTA、政策页、文章中心、Admin、UTM 与合规扫描均已存在",
+            "首页、资料库、分类页、免费财务健检查询、Line CTA、政策页、文章中心、Admin、UTM 与合规扫描均已存在",
             phase_map.get("phase_4", {}).get("summary", ""),
             phase_map.get("phase_5", {}).get("summary", ""),
         ],

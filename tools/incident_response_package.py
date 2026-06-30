@@ -30,7 +30,7 @@ def build_report():
         "recent_errors": [],
         "severity_triggers": {
             "p0": [
-                "免費健檢無法提交",
+                "免費財務健檢查詢無法提交",
                 "Admin 未授權可見",
                 "正式個資外洩或疑似外洩",
                 "全站不可用",

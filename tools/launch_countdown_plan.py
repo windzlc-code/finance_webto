@@ -104,7 +104,7 @@ def build_report(owner=None, slot=None, statuses=None, pending_only=False):
         elif slot_id == "d_plus_1":
             manual_checks = [
                 "檢查 GA4 / Meta / Server Event / Sentry 是否持續收件。",
-                "抽查首頁、資料庫、免費健檢、聯絡頁資料回報與 Admin CRM 是否仍可用。",
+                "抽查首頁、資料庫、免費財務健檢查詢、聯絡頁資料回報與 Admin CRM 是否仍可用。",
                 "檢查 Search Console coverage / URL Inspection、Line OA quick reply、退訂關鍵字與 lead follow-up 是否正常。",
             ]
         slots.append({

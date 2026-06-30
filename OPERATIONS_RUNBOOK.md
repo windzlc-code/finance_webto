@@ -212,7 +212,7 @@ python3 -m http.server 4173
 
 檢查重點：
 
-- 首頁 CTA、需求查詢面板、資料庫入口與免費健檢入口可正常使用。
+- 首頁 CTA、需求查詢面板、資料庫入口與免費財務健檢查詢入口可正常使用。
 - `database.html`、`products/bank-credit-products.html`、`articles.html`、`articles/credit-score-debt-ratio-check.html` 可正常載入。
 - `free-check.html` 表單提交成功後有 Line CTA、UTM、隱私同意、蜜罐與 Turnstile 欄位。
 - `admin.html` 登入後可看到 CRM、來源復核、內容管理、合規摘要、上線健康檢查與本機備份。
@@ -265,7 +265,7 @@ python3 -m http.server 4173
 - Search Console 驗證：後台匯出 `tfse_search_console_verification_package`，保存 property URL、驗證方式、sitemap 狀態、URL Inspection 抽查、coverage status、last crawl 與 reviewer 留痕。
 - SEO 收錄：後台匯出 `tfse_seo_indexing_followup_queue`，按高優先頁、分類、產品、文章與落地頁逐項保存 coverage、indexed URL、last crawl 與證據備註。
 - Line OA：確認 `line.oa_url` 為正式加友網址，並依 `assets/data/line-flows.json` 建立圖文選單、分群標籤與自動回覆。
-- Line OA 導向驗收：後台匯出 `tfse_line_oa_handoff_check`，保存免費健檢成功承接、首頁/落地頁 CTA、quick reply、退訂關鍵字、手機瀏覽器結果與截圖證據。
+- Line OA 導向驗收：後台匯出 `tfse_line_oa_handoff_check`，保存免費財務健檢查詢成功承接、首頁/落地頁 CTA、quick reply、退訂關鍵字、手機瀏覽器結果與截圖證據。
 - Line 退訂/投訴：後台匯出 `tfse_line_optout_complaint_queue`，確認停止接收、投訴、封鎖、個資請求升級與 Line tag 移除都有處理人、時間、結果與去識別證據。
 - 公眾資料回報：後台匯出 `tfse_public_feedback_intake_package`，確認 `contact.html` 收件可分流到來源復核、內容修正、合規送審或個資請求，且不得保存高敏資料。
 
@@ -305,7 +305,7 @@ python3 -m http.server 4173
 1. 保留上一個可用部署版本或主機部署快照。
 2. 若新版本出現阻斷性問題，先切回上一個版本。
 3. 清除 CDN 快取。
-4. 驗證首頁、資料庫、免費健檢、Admin 登入、sitemap、robots、404/500。
+4. 驗證首頁、資料庫、免費財務健檢查詢、Admin 登入、sitemap、robots、404/500。
 5. 在事故紀錄中標記 rollback 時間、影響頁面與修復版本。
 
 正式主機部署或 rollback 後，從 Admin 匯出 `tfse_host_fallback_deployment_check`，逐項保存 404、500、未知路徑與 server error fallback 的 checked_url、status_code、screenshot_url、result 與 reviewer_role；若平台不支援 500 fallback，需在事故/待辦中標記由後端或反向代理補齊。
@@ -321,7 +321,7 @@ python3 -m http.server 4173
 
 incident 等級：
 
-- P0：免費健檢無法提交、正式資料外洩、Admin 未授權可見、全站不可用。
+- P0：免費財務健檢查詢無法提交、正式資料外洩、Admin 未授權可見、全站不可用。
 - P1：主要分類/資料庫不可用、Line OA 導流失效、GA4/Sentry 全部中斷。
 - P2：單篇文章、單個落地頁、非阻斷性樣式或內容錯誤。
 
@@ -339,7 +339,7 @@ incident 等級：
 
 - 廣告文案與 CTA。
 - 金融商品資訊展示方式。
-- 免費健檢表單欄位。
+- 免費財務健檢查詢表單欄位。
 - 隱私權政策、服務條款與免責聲明。
 - Line OA 歡迎語、自動回覆與分群標籤。
 - 後台匯出 `tfse_legal_external_review_evidence`，保存外部複核狀態、開放項目、去識別證據摘要與送審包版本；未完成外部簽核前不得視為正式法務通過。

@@ -29,7 +29,7 @@
             var links = [
                 item.article_href ? "<a class=\"link me-3\" data-line-quick-reply=\"" + escapeHtml(item.tag) + "\" data-line-action=\"article\" href=\"" + escapeHtml(item.article_href) + "\"><mark>入門文章</mark></a>" : "",
                 item.database_href ? "<a class=\"link me-3\" data-line-quick-reply=\"" + escapeHtml(item.tag) + "\" data-line-action=\"database\" href=\"" + escapeHtml(item.database_href) + "\"><mark>資料庫</mark></a>" : "",
-                item.free_check_href ? "<a class=\"link\" data-line-quick-reply=\"" + escapeHtml(item.tag) + "\" data-line-action=\"free_check\" href=\"" + escapeHtml(item.free_check_href) + "\"><mark>免費健檢</mark></a>" : ""
+                item.free_check_href ? "<a class=\"link\" data-line-quick-reply=\"" + escapeHtml(item.tag) + "\" data-line-action=\"free_check\" href=\"" + escapeHtml(item.free_check_href) + "\"><mark>免費財務健檢查詢</mark></a>" : ""
             ].filter(Boolean).join("");
             return [
                 "<div class=\"col mb-6\">",

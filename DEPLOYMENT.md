@@ -168,18 +168,18 @@ Search Console 驗證前，可從 Admin 匯出 `tfse_search_console_verification
 `assets/js/tfse-events.js` 會先寫入本機事件，再依 `site-config.json` 的 `analytics` 設定選擇性同步：
 
 - `ga4_measurement_id`：填入正式 GA4 Measurement ID 後，前台事件會透過 `gtag` 轉送。
-- `meta_pixel_id`：填入正式 Meta Pixel ID 後，前台會載入 `fbq`，並把 `page_view`、`lead_submit`、搜尋、免費健檢與 Line CTA 事件轉送到 Meta Events Manager。
+- `meta_pixel_id`：填入正式 Meta Pixel ID 後，前台會載入 `fbq`，並把 `page_view`、`lead_submit`、搜尋、免費財務健檢查詢與 Line CTA 事件轉送到 Meta Events Manager。
 - `server_event_endpoint`：填入正式事件 API 後，事件會以去識別 payload POST 到伺服器。
 - `sentry_dsn`：填入正式 Sentry DSN 後，前台錯誤摘要會送往 Sentry。
 - `sample_rate`：控制前台事件抽樣比例，預設 1。
-- `line.oa_url`：填入正式 Line OA 加友網址後，免費健檢成功訊息會顯示可追蹤的 Line 承接 CTA；未填正式網址前，靜態 MVP 會導向站內 Line 承接說明。
-- `security.turnstile.site_key`：填入 Cloudflare Turnstile site key 並把 `enabled` 設為 `true` 後，免費健檢與投流落地頁表單會載入 Turnstile widget，並把 `cf_turnstile_response` 送到 `POST /api/leads`。
+- `line.oa_url`：填入正式 Line OA 加友網址後，免費財務健檢查詢成功訊息會顯示可追蹤的 Line 承接 CTA；未填正式網址前，靜態 MVP 會導向站內 Line 承接說明。
+- `security.turnstile.site_key`：填入 Cloudflare Turnstile site key 並把 `enabled` 設為 `true` 後，免費財務健檢查詢與投流落地頁表單會載入 Turnstile widget，並把 `cf_turnstile_response` 送到 `POST /api/leads`。
 
 GA4、Meta Pixel 與 Server Event 只有在使用者於追蹤偏好橫幅同意 analytics 後才會接收去識別事件；本機 `tfse_events` 仍可用於 MVP 復盤。正式追蹤收件前，先從 Admin 匯出 `tfse_tracking_consent_audit`，確認同意狀態、`tracking_consent_update` 事件與外部追蹤阻擋項。
 
 正式 Line OA 後台建立前，可先從 Admin 匯出 `tfse_line_oa_setup_package`。此包會整理歡迎語、圖文選單入口、quick reply、自動回覆原則、分群標籤、已同意 Line 的同步隊列與合規邊界；完成 Line OA 設定後，再把正式加友網址填入 `site-config.json > line.oa_url` 並重新驗收。
 
-正式 Line OA URL 填入並部署後，可從 Admin 匯出 `tfse_line_oa_handoff_check`，逐項核對免費健檢成功訊息、首頁/落地頁 CTA、Line quick reply、退訂/停止接收關鍵字、手機瀏覽器開啟結果與截圖留痕。此包只保存公開 URL、去識別結果與 reviewer 備註，不保存完整 Line 對話或明文 Line user id。
+正式 Line OA URL 填入並部署後，可從 Admin 匯出 `tfse_line_oa_handoff_check`，逐項核對免費財務健檢查詢成功訊息、首頁/落地頁 CTA、Line quick reply、退訂/停止接收關鍵字、手機瀏覽器開啟結果與截圖留痕。此包只保存公開 URL、去識別結果與 reviewer 備註，不保存完整 Line 對話或明文 Line user id。
 
 事件與錯誤上報都會過濾手機、Line ID、姓名、Email、備註、身分證字號、帳戶、卡號、密碼等敏感欄位。未填正式 GA4/API/Sentry 前，後台的數據復盤僅代表本機瀏覽器資料。
 
@@ -198,7 +198,7 @@ GA4 與 Meta Pixel 填入後，也可從 Admin 匯出 `tfse_analytics_debug_veri
 - `PRODUCTION_BACKEND_PLAN.md`：從靜態 MVP 遷移到正式 API/資料庫/權限/備份的順序。
 - `OPERATIONS_RUNBOOK.md`：正式部署、監控、備份、restore drill、rollback 與 incident 處理步驟。
 
-正式版第一優先是將免費健檢從 `localStorage` 切到 `POST /api/leads`，再將 Admin CRM 切到 `/api/admin/leads`。靜態 JSON 可作為 seed，不應作為正式營運資料庫。
+正式版第一優先是將免費財務健檢查詢從 `localStorage` 切到 `POST /api/leads`，再將 Admin CRM 切到 `/api/admin/leads`。靜態 JSON 可作為 seed，不應作為正式營運資料庫。
 
 正式前台內容 API 切換前，可從 Admin 匯出 `tfse_content_api_cutover_package`，逐項核對 `/api/products`、`/api/articles`、`/api/institutions`、`/api/search` 的 status code、row count、sample slug、published-only、source_url 與 fallback 邊界。API 不可回傳草稿、退回文章、後台審計或任何潛客資料。
 
@@ -250,7 +250,7 @@ python3 tools/persistent_api_smoke.py
 
 填入後：
 
-- 免費健檢會優先 POST `backend.api_base_url + /api/leads`，payload 會包含本機匿名 `device_id`，供正式後端搭配 IP 做限流與重複提交識別。
+- 免費財務健檢查詢會優先 POST `backend.api_base_url + /api/leads`，payload 會包含本機匿名 `device_id`，供正式後端搭配 IP 做限流與重複提交識別。
 - Admin CRM 會優先 GET `backend.api_base_url + /api/admin/leads`。
 - Admin 狀態更新會優先 PATCH `backend.api_base_url + /api/admin/leads/:id/status`。
 - API 不可用時會記錄 `api_fallback` 錯誤摘要，並暫時 fallback 到本機 MVP，避免前台表單完全失效。
@@ -299,7 +299,7 @@ python3 tools/persistent_api_smoke.py
 - 金融資訊展示方式
 - Line 承接話術
 
-Admin 可匯出 `tfse_legal_compliance_review_package`，集中整理站點邊界、免費健檢表單欄位、Line OA 話術、廣告落地頁、來源復核、禁用詞規則、隱私請求、正式配置與驗收留痕。正式投流、SEO 大量收錄或 Line OA 對外承接前，應將此包連同 `tfse_ad_campaign_checklist`、`tfse_source_review_queue`、`tfse_privacy_request_queue` 與 `tfse_acceptance_checklist` 一併交給法務/合規人員複核。
+Admin 可匯出 `tfse_legal_compliance_review_package`，集中整理站點邊界、免費財務健檢查詢表單欄位、Line OA 話術、廣告落地頁、來源復核、禁用詞規則、隱私請求、正式配置與驗收留痕。正式投流、SEO 大量收錄或 Line OA 對外承接前，應將此包連同 `tfse_ad_campaign_checklist`、`tfse_source_review_queue`、`tfse_privacy_request_queue` 與 `tfse_acceptance_checklist` 一併交給法務/合規人員複核。
 
 合規審核切到正式後端前，可從 Admin 匯出 `tfse_compliance_api_persistence_package`，核對 `POST /api/admin/compliance/review`、`compliance_reviews`、`audit_logs`、RBAC、CSRF、未授權拒絕與 `scan_payload` 脫敏。此包只保存審核與掃描摘要、狀態碼、角色與 audit log ID，不保存法律意見全文、token、完整手機、Line ID、證件、帳戶、卡號或密碼。
 

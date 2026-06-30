@@ -36,6 +36,7 @@
     function endpoint(config, path) {
         var base = apiBase(config);
         if (!base) return "";
+        if (base === ".") return path;
         return base + path;
     }
 

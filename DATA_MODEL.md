@@ -79,7 +79,7 @@ Admin 權限與安全矩陣，對應後台 `data-admin-security-matrix` 與 `tfs
 | source_files | text[] | `_headers`、`.well-known/security.txt`、部署與 Runbook 文件 |
 | expected_headers | text[] | CSP、X-Frame-Options、nosniff、Referrer-Policy、Permissions-Policy、Cache-Control 等 |
 | csp_allowlist | text[] | GA4、Meta Pixel、Sentry、Turnstile 等必要來源 |
-| critical_urls | text[] | 首頁、免費健檢、Admin、錯誤頁、site-config 與 security.txt |
+| critical_urls | text[] | 首頁、免費財務健檢查詢、Admin、錯誤頁、site-config 與 security.txt |
 | host_notes | text[] | GitHub Pages / Netlify / Cloudflare Pages 等平台注意事項 |
 | verification_commands | text[] | curl 與本機驗收命令 |
 | evidence_fields | text[] | checked_url、actual_value、result、evidence_note 等正式留痕欄位 |
@@ -346,7 +346,7 @@ Line OA 設定交接包，對應後台 `data-admin-line-oa-setup-export` 與 `tf
 | line_oa_url | text | 正式 Line OA 加友網址 |
 | welcome_messages | jsonb | 歡迎語 |
 | rich_menu | jsonb | 圖文選單入口與 URL |
-| quick_replies | jsonb | 自動回覆、文章、資料庫與免費健檢入口 |
+| quick_replies | jsonb | 自動回覆、文章、資料庫與免費財務健檢查詢入口 |
 | tags | jsonb | 需求、來源、分群與同意標籤 |
 | reply_principles | jsonb | 自動回覆原則 |
 | segment_sync_queue | jsonb | 可匯入 Line OA 的已同意分群資料 |
@@ -359,7 +359,7 @@ Line OA 設定交接包，對應後台 `data-admin-line-oa-setup-export` 與 `tf
 
 ## line_oa_handoff_checks
 
-正式 Line OA 導向驗收包，對應後台 `data-admin-line-oa-handoff-export` 與 `tfse_line_oa_handoff_check` 匯出包。正式 Line OA 建立後，用於保存正式加友 URL、站內 CTA、免費健檢成功承接、quick reply、自動回覆、退訂/投訴入口與外部留痕欄位；不得保存完整 Line 對話、明文 Line user id 或高敏個資。
+正式 Line OA 導向驗收包，對應後台 `data-admin-line-oa-handoff-export` 與 `tfse_line_oa_handoff_check` 匯出包。正式 Line OA 建立後，用於保存正式加友 URL、站內 CTA、免費財務健檢查詢成功承接、quick reply、自動回覆、退訂/投訴入口與外部留痕欄位；不得保存完整 Line 對話、明文 Line user id 或高敏個資。
 
 | 欄位 | 型別 | 說明 |
 |---|---|---|
@@ -369,7 +369,7 @@ Line OA 設定交接包，對應後台 `data-admin-line-oa-setup-export` 與 `tf
 | official_url_ready | boolean | 是否已配置正式 HTTPS Line OA URL |
 | source_files | text[] | site-config、line-flows、表單與 Line 腳本來源 |
 | cta_routes | jsonb | 需抽查的站內 Line CTA 與成功承接入口 |
-| quick_reply_checks | jsonb | quick reply、標籤、文章、資料庫與免費健檢入口 |
+| quick_reply_checks | jsonb | quick reply、標籤、文章、資料庫與免費財務健檢查詢入口 |
 | handoff_steps | text[] | 正式 Line OA 驗收步驟 |
 | evidence_fields | text[] | checked_url、line_oa_url、device、result、screenshot_url 等留痕欄位 |
 | compliance_boundaries | text[] | Line 話術與個資限制 |
@@ -1407,6 +1407,6 @@ GA4 DebugView 與 Meta Events Manager 驗證包，對應後台 `data-admin-analy
 1. 建立資料表與 enum。
 2. 匯入 `assets/data/products.json`、`articles.json`、`categories.json`、`landing-pages.json`。
 3. 將前台 fetch 從靜態 JSON 切到 `/api/products`、`/api/articles`。
-4. 將免費健檢從 `localStorage` 切到 `POST /api/leads`。
+4. 將免費財務健檢查詢從 `localStorage` 切到 `POST /api/leads`。
 5. 將後台 localStorage 狀態切到 Admin API。
 6. 啟用每日備份、審計查詢、Sentry、GA4 與 Search Console。

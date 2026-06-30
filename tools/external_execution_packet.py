@@ -16,7 +16,7 @@ ITEM_SPECS = OrderedDict([
         "execution_steps": [
             "在正式 Line OA 後台建立 rich menu、歡迎語、6 個 quick replies 與對應自動回覆。",
             "依 line-flows.json 建立 need_*、segment_*、source_*、form_submitted 等標籤。",
-            "確認 quick reply 內的文章、資料庫與免費健檢入口保留 utm_source=line。",
+            "確認 quick reply 內的文章、資料庫與免費財務健檢查詢入口保留 utm_source=line。",
             "檢查 consent_line 為 true 的同步邊界與個資/法務升級規則是否已同步到營運 SOP。",
         ],
         "evidence_fields": ["line_oa_account_id", "rich_menu_id", "quick_reply_count", "tag_count", "welcome_message_checked", "checked_at", "reviewer_role", "evidence_note"],
@@ -30,7 +30,7 @@ ITEM_SPECS = OrderedDict([
         "dependency_keys": ["line_oa_url", "line_oa_setup"],
         "execution_steps": [
             "在 free-check、首頁與落地頁完成一次真實導向，確認 line.oa_url 會開啟正式加友頁。",
-            "抽查 quick reply 是否能回到對應文章、資料庫與免費健檢頁。",
+            "抽查 quick reply 是否能回到對應文章、資料庫與免費財務健檢查詢頁。",
             "驗證退訂或停止接收關鍵字有對應處理流程，不會變成持續騷擾。",
             "保存桌面與手機截圖，回填到 tfse_line_oa_handoff_check 或外部驗證留痕。",
         ],
@@ -120,7 +120,7 @@ ITEM_SPECS = OrderedDict([
         "dependency_keys": [],
         "execution_steps": [
             "匯出 tfse_legal_compliance_review_package 與 tfse_legal_external_review_evidence 作為送審基礎包。",
-            "逐項複核廣告落地頁、首頁、免費健檢、Line OA 話術、SEO 文章、資料來源政策與個資告知。",
+            "逐項複核廣告落地頁、首頁、免費財務健檢查詢、Line OA 話術、SEO 文章、資料來源政策與個資告知。",
             "記錄 review_status、issue_count、required_changes 與 reviewer_role，不保存不必要個資。",
             "未完成簽核前，不放行正式投流、Search Console 大量提交或 Line OA 對外承接。",
         ],

@@ -227,7 +227,7 @@ def build_host_fallback_report(site_config=None):
         "source_files": ["404.html", "500.html", "DEPLOYMENT.md", "OPERATIONS_RUNBOOK.md", "site-config.json"],
         "privacy_note": "此包只保存公開 URL、檢查步驟與結果欄位，不保存 cookie、session、錯誤堆疊全文或個資。",
         "critical_routes": [
-            {"route": absolute_url(base_url, "404.html"), "expected": "自訂 404 可導回資料庫、文章與免費健檢"},
+            {"route": absolute_url(base_url, "404.html"), "expected": "自訂 404 可導回資料庫、文章與免費財務健檢查詢"},
             {"route": absolute_url(base_url, "500.html"), "expected": "自訂 500/server error fallback 可導回首頁、資料庫與聯絡入口"},
             {"route": absolute_url(base_url, f"missing-page-{year}.html"), "expected": "正式主機未知路徑應回 404 狀態或顯示 404.html"},
             {"route": absolute_url(base_url, "api/server-error-probe"), "expected": "正式後端若接入 server error fallback，應回 5xx 且不暴露 stack trace"},

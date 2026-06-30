@@ -69,7 +69,7 @@ function browserAcceptanceEvidence(results, baseUrl) {
       group: "UI 驗收",
       viewport: "desktop+mobile",
       result: "passed",
-      evidence_note: "Playwright smoke 已驗證首頁、資料庫、文章、免費健檢與 Admin 在桌面/手機 viewport 的 layout 與 text fit 均通過。",
+      evidence_note: "Playwright smoke 已驗證首頁、資料庫、文章、免費財務健檢查詢與 Admin 在桌面/手機 viewport 的 layout 與 text fit 均通過。",
       checked_by_role: "automation",
       checked_at: new Date().toISOString(),
       source_labels: desktopMobileChecks
@@ -133,7 +133,7 @@ function browserAcceptanceEvidence(results, baseUrl) {
       group: "上線最終檢查",
       viewport: "1440x900",
       result: "passed",
-      evidence_note: "Playwright smoke 已驗證免費健檢提交、UTM 寫入、Admin 可見線索並可更新跟進狀態與審計。",
+      evidence_note: "Playwright smoke 已驗證免費財務健檢查詢提交、UTM 寫入、Admin 可見線索並可更新跟進狀態與審計。",
       checked_by_role: "automation",
       checked_at: new Date().toISOString(),
       source_labels: leadSubmitLabels
@@ -447,7 +447,7 @@ async function smokeMobileMenu(browser, baseUrl, results) {
     return {
       active: !!shell,
       hasDatabase: text.includes("資料庫"),
-      hasFreeCheck: text.includes("免費健檢"),
+      hasFreeCheck: text.includes("免費財務健檢查詢"),
       hasArticles: text.includes("金融知識"),
       overflowX: document.documentElement.scrollWidth > window.innerWidth + 2
     };
@@ -468,7 +468,7 @@ async function smokeMobileMenu(browser, baseUrl, results) {
     return {
       visible: !!menu && box.width > 0 && box.height > 0,
       hasDatabase: text.includes("資料庫"),
-      hasFreeCheck: text.includes("免費健檢"),
+      hasFreeCheck: text.includes("免費財務健檢查詢"),
       hasArticles: text.includes("金融知識")
     };
   });
@@ -480,11 +480,11 @@ async function smokeMobileMenu(browser, baseUrl, results) {
   await page.waitForFunction(() => !!document.querySelector(".site-mobile-menu .has-children.open"));
   const submenuOk = await page.evaluate(() => {
     const item = document.querySelector(".site-mobile-menu .has-children.open");
-    return !!item && (item.textContent || "").includes("免費健檢");
+    return !!item && /房貸資訊|信貸與企業融資|債務法令/.test(item.textContent || "");
   });
   results.push(submenuOk
     ? ok("mobile submenu expands")
-    : fail("mobile submenu expands", "first submenu did not expose expected links"));
+    : fail("mobile submenu expands", "category submenu did not expose expected links"));
 
   await page.click(".mobile-menu-close .toggle");
   await page.waitForFunction(() => !document.body.classList.contains("mobile-menu-open"));
@@ -505,7 +505,7 @@ async function smokeAdminShell(browser, baseUrl, results) {
     return {
       active: !!shell,
       hasCrm: text.includes("儀表板"),
-      hasFreeCheck: text.includes("免費健檢"),
+      hasFreeCheck: text.includes("免費財務健檢查詢"),
       hasCompliance: text.includes("合規掃描")
     };
   });
@@ -540,7 +540,7 @@ async function smokeAdminShell(browser, baseUrl, results) {
       return {
         visible: !!menu && menu.getBoundingClientRect().height > 0,
         hasCrm: text.includes("CRM"),
-        hasFreeCheck: text.includes("免費健檢")
+        hasFreeCheck: text.includes("免費財務健檢查詢")
       };
     });
     results.push(adminMobileOpen.visible && adminMobileOpen.hasCrm && adminMobileOpen.hasFreeCheck
@@ -623,16 +623,16 @@ async function smokeLeadAndAdmin(browser, baseUrl, results, adminRecordCollector
       });
     }
   } else {
-    await page.fill('input[name="display_name"]', "QA 瀏覽器驗收");
-    await page.fill('input[name="phone"]', "0912345678");
-    await page.fill('input[name="line_id"]', "qa_tfse");
-    await page.fill('input[name="region"]', "台北");
-    await page.fill('input[name="needs"]', "信貸與債務法令資訊");
-    await page.fill('input[name="occupation_type"]', "上班族");
-    await page.fill('input[name="income_type"]', "固定薪轉");
-    await page.fill('textarea[name="message"]', "瀏覽器驗收測試，不含敏感資料。");
-    await page.check('input[name="consent_privacy"]');
-    await page.check('input[name="consent_line"]');
+    await page.fill('#contact-form input[name="display_name"]', "QA 瀏覽器驗收");
+    await page.fill('#contact-form input[name="phone"]', "0912345678");
+    await page.fill('#contact-form input[name="line_id"]', "qa_tfse");
+    await page.fill('#contact-form input[name="region"]', "台北");
+    await page.fill('#contact-form input[name="needs"]', "信貸與債務法令資訊");
+    await page.fill('#contact-form input[name="occupation_type"]', "上班族");
+    await page.fill('#contact-form input[name="income_type"]', "固定薪轉");
+    await page.fill('#contact-form textarea[name="message"]', "瀏覽器驗收測試，不含敏感資料。");
+    await page.check('#contact-form input[name="consent_privacy"]');
+    await page.check('#contact-form input[name="consent_line"]');
     await page.click("[data-lead-submit]");
     await page.waitForFunction(() => {
       const dialog = document.querySelector(".tfse-lead-dialog");
@@ -1325,6 +1325,19 @@ async function smokeLineFlow(browser, baseUrl, results) {
     results.push(finalCheckInfo.hasConsent && finalCheckInfo.noDocuments && finalCheckInfo.noFees && finalCheckInfo.noLoanAgency && finalCheckInfo.formFields >= 6 && finalCheckInfo.promiseItems >= 4
       ? ok("final free-check compliance flow", JSON.stringify(finalCheckInfo))
       : fail("final free-check compliance flow", JSON.stringify(finalCheckInfo)));
+    await context.close();
+    return;
+  }
+  const hasLineFlow = await page.locator("[data-line-flow]").count();
+  if (!hasLineFlow) {
+    const compactInfo = await page.evaluate(() => ({
+      hasForm: !!document.querySelector("#contact-form"),
+      hasFaq: !!document.querySelector("[data-faq-list]"),
+      hasFaqContent: (document.querySelector("[data-faq-list]")?.textContent || "").trim().length > 20
+    }));
+    results.push(compactInfo.hasForm && compactInfo.hasFaq && compactInfo.hasFaqContent
+      ? ok("free-check page keeps form and compact FAQ", JSON.stringify(compactInfo))
+      : fail("free-check page keeps form and compact FAQ", JSON.stringify(compactInfo)));
     await context.close();
     return;
   }

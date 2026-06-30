@@ -51569,7 +51569,7 @@ textarea:focus {
 .tfse-check-stepper {
   position: relative;
   z-index: 2;
-  margin: -58px auto 26px;
+  margin: 0 auto 28px;
   padding: 18px 28px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -51666,8 +51666,57 @@ textarea:focus {
   padding-right: 10px;
 }
 .tfse-check-workbench input,
+.tfse-check-workbench select,
 .tfse-check-workbench textarea {
   min-height: 56px;
+}
+.tfse-check-workbench select {
+  width: 100%;
+  padding: 0 44px 0 20px;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #b98b2f 50%), linear-gradient(135deg, #b98b2f 50%, transparent 50%) !important;
+  background-position: calc(100% - 22px) 50%, calc(100% - 15px) 50% !important;
+  background-size: 7px 7px, 7px 7px !important;
+  background-repeat: no-repeat !important;
+  color: var(--tfse-ink);
+  font-weight: 850;
+}
+.tfse-check-workbench select:disabled {
+  color: #8a96a5 !important;
+  background-color: #f7f9fc !important;
+  cursor: not-allowed;
+}
+.tfse-check-workbench select:focus,
+.tfse-check-workbench input:focus,
+.tfse-check-workbench textarea:focus {
+  border-color: #c19437 !important;
+  box-shadow: 0 0 0 3px rgba(193, 148, 55, 0.12) !important;
+}
+.tfse-phone-picker {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.52fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.tfse-phone-picker select,
+.tfse-phone-picker input {
+  min-width: 0;
+}
+.tfse-region-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.tfse-region-picker input {
+  grid-column: 1 / -1;
+}
+.tfse-check-workbench [hidden] {
+  display: none !important;
+}
+@media only screen and (max-width: 767px) {
+  .tfse-phone-picker,
+  .tfse-region-picker {
+    grid-template-columns: 1fr;
+  }
 }
 .tfse-check-workbench input[list] {
   padding-right: 42px;

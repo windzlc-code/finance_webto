@@ -193,6 +193,79 @@
         });
     }
 
+    function normalizedMenuText(element) {
+        return String((element && element.textContent) || "").replace(/\s+/g, "");
+    }
+
+    function stripMenuSubmenu(item) {
+        Array.prototype.forEach.call(item.querySelectorAll(":scope > .sub-menu, :scope > .mega-menu, :scope > .menu-toggle"), function (node) {
+            node.remove();
+        });
+        item.classList.remove("has-children", "open");
+    }
+
+    function simplifyNavigationMenus() {
+        Array.prototype.forEach.call(document.querySelectorAll(".site-main-menu li, .site-mobile-menu li"), function (item) {
+            var link = item.querySelector(":scope > a");
+            var submenu = item.querySelector(":scope > .sub-menu, :scope > .mega-menu");
+            if (!link || !submenu) return;
+            var text = normalizedMenuText(link);
+            if (text === "首頁" || text === "首页" || text === "金融知識" || text === "金融知识") {
+                stripMenuSubmenu(item);
+                return;
+            }
+            if (text === "金融分類" || text === "金融分类") {
+                Array.prototype.forEach.call(submenu.querySelectorAll(":scope > li"), function (child) {
+                    var childLink = child.querySelector("a");
+                    var childText = normalizedMenuText(childLink);
+                    var childPath = normalizePath(childLink ? childLink.getAttribute("href") : "");
+                    if (childText === "金融分類" || childText === "金融分类" || childPath === "work.html") child.remove();
+                });
+                if (!submenu.querySelector("li")) stripMenuSubmenu(item);
+            }
+        });
+    }
+
+    function removeClosestSection(node) {
+        var section = node && node.closest(".section");
+        if (section && section.parentNode) section.parentNode.removeChild(section);
+    }
+
+    function pruneRedundantContentBlocks() {
+        if (!document.body) return;
+        if (document.body.classList.contains("tfse-final-home")) {
+            Array.prototype.forEach.call(document.querySelectorAll(".testimonial-slider, .blog"), removeClosestSection);
+            Array.prototype.forEach.call(document.querySelectorAll(".tfse-unique-entry"), removeClosestSection);
+        }
+        if (document.body.classList.contains("tfse-about-page")) {
+            Array.prototype.forEach.call(document.querySelectorAll(".testimonial-slider"), removeClosestSection);
+        }
+        if (document.body.classList.contains("tfse-check-page")) {
+            Array.prototype.forEach.call(document.querySelectorAll("[data-line-flow]"), removeClosestSection);
+            var checkInfo = document.querySelector(".tfse-check-workbench .contact-Information");
+            if (checkInfo && !checkInfo.querySelector(".contact-info.ct-info-two")) {
+                checkInfo.innerHTML = [
+                    '<div class="section-title-two">',
+                    '<span class="sub-title">不代辦、不收證件、不保證核貸</span>',
+                    '<h3 class="title">免費財務健檢查詢</h3>',
+                    '</div>',
+                    '<div class="contact-info ct-info-two" data-vivus-hover>',
+                    '<div class="icon"><img class="svgInject" src="assets/images/svg/linea/linea-basic-elaboration-document-check.svg" alt="金融資訊查詢圖示"></div>',
+                    '<div class="info"><h4 class="title">低敏資料</h4><span class="info-text">不收身分證字號、證件照片、存摺、銀行帳號或信用卡卡號。</span></div>',
+                    '</div>',
+                    '<div class="contact-info ct-info-two" data-vivus-hover>',
+                    '<div class="icon"><img class="svgInject" src="assets/images/svg/linea/linea-basic-message-txt.svg" alt="金融資訊查詢圖示"></div>',
+                    '<div class="info"><h4 class="title">Line 承接</h4><span class="info-text">提交後可加入 Line 官方帳號，接收公開資訊整理與法規導引。</span></div>',
+                    '</div>',
+                    '<div class="contact-info ct-info-two" data-vivus-hover>',
+                    '<div class="icon"><img class="svgInject" src="assets/images/svg/linea/linea-basic-lock.svg" alt="金融資訊查詢圖示"></div>',
+                    '<div class="info"><h4 class="title">合規聲明</h4><span class="info-text">TFSE 僅提供資訊整理，不是銀行、放款機構或貸款代辦。</span></div>',
+                    '</div>'
+                ].join("");
+            }
+        }
+    }
+
     var textOriginals = typeof WeakMap !== "undefined" ? new WeakMap() : null;
     var attrOriginals = typeof WeakMap !== "undefined" ? new WeakMap() : null;
     var i18nApplying = false;
@@ -204,7 +277,7 @@
         "資料庫": "资料库",
         "金融分類": "金融分类",
         "金融知識": "金融知识",
-        "免費健檢": "免费健检",
+        "免費財務健檢查詢": "免费财务健检查询",
         "金融便民首頁": "金融便民首页",
         "房貸資訊": "房贷资讯",
         "信貸與企業融資": "信贷与企业融资",
@@ -212,7 +285,7 @@
         "知識列表": "知识列表",
         "知識專欄": "知识专栏",
         "文章詳情": "文章详情",
-        "開始免費健檢": "开始免费健检",
+        "開始免費財務健檢查詢": "开始免费财务健检查询",
         "查看資料庫": "查看资料库",
         "合法透明": "合法透明",
         "專業整合": "专业整合",
@@ -265,8 +338,8 @@
         "查看位置": "查看位置",
         "清除搜尋": "清除搜索",
         "直接在本頁搜尋內容": "直接在本页搜索内容",
-        "送出免費健檢需求": "提交免费健检需求",
-        "提交免費健檢需求": "提交免费健检需求",
+        "送出免費財務健檢查詢需求": "提交免费财务健检查询需求",
+        "提交免費財務健檢查詢需求": "提交免费财务健检查询需求",
         "我已閱讀並同意隱私權政策，了解 TFSE 僅作資訊整理與法規導引。": "我已阅读并同意隐私权政策，了解 TFSE 仅作信息整理与法规引导。",
         "我同意透過 Line 接收公開金融資訊與健檢結果提醒。": "我同意通过 Line 接收公开金融信息与健检结果提醒。",
         "請勿填寫身分證字號、帳戶、卡號、密碼或證件資料。": "请勿填写身份证字号、账户、卡号、密码或证件资料。",
@@ -636,6 +709,8 @@
 
     function setupHeaderUi() {
         syncHeaderActiveState();
+        simplifyNavigationMenus();
+        pruneRedundantContentBlocks();
         installInlineHeaderSearch();
         installLanguageToggle();
         installLanguageMenuDismissal();

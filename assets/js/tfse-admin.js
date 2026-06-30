@@ -1542,7 +1542,7 @@
                 "建立 Line OA 歡迎語並貼上 welcome_messages",
                 "依 rich_menu 建立 6 個主要入口，URL 保留 utm_source=line",
                 "依 tags 建立需求、來源與分群標籤",
-                "依 quick_replies 建立自動回覆，每則包含文章、資料庫與免費健檢入口",
+                "依 quick_replies 建立自動回覆，每則包含文章、資料庫與免費財務健檢查詢入口",
                 "匯入 segment_sync_queue 前先確認 consent_line 為 true",
                 "完成後將 site-config.json > line.oa_url 改成正式加友網址並重跑驗收"
             ]
@@ -1564,7 +1564,7 @@
         }
         var ctaRoutes = [
             { key: "handoff_route_1", page: absolute("free-check.html"), selector: "#line-cta", expected: "表單成功後顯示正式 Line OA 加友 CTA" },
-            { key: "handoff_route_2", page: absolute("index.html"), selector: "[data-line-action]", expected: "首頁 CTA 可導向免費健檢或 Line 承接說明" },
+            { key: "handoff_route_2", page: absolute("index.html"), selector: "[data-line-action]", expected: "首頁 CTA 可導向免費財務健檢查詢或 Line 承接說明" },
             { key: "handoff_route_3", page: absolute("lp.html"), selector: "[data-line-action]", expected: "廣告落地頁 Line CTA 保留 UTM 與合規邊界" },
             { key: "handoff_route_4", page: absolute("contact.html"), selector: "contact intake", expected: "資料回報與 Line 承接不得要求高敏資料" }
         ].map(function (route) {
@@ -1601,8 +1601,8 @@
             handoff_steps: [
                 "在 Line OA 後台建立歡迎語、圖文選單、quick reply、自動回覆與分群標籤。",
                 "將 site-config.json > line.oa_url 改成正式 HTTPS 加友網址，重新跑 site-config 與瀏覽器驗收。",
-                "提交一筆測試免費健檢，確認成功訊息與 Line CTA 指向正式 Line OA。",
-                "在手機瀏覽器點擊首頁、免費健檢、落地頁與 Line quick reply，確認可開啟正式 Line OA。",
+                "提交一筆測試免費財務健檢查詢，確認成功訊息與 Line CTA 指向正式 Line OA。",
+                "在手機瀏覽器點擊首頁、免費財務健檢查詢、落地頁與 Line quick reply，確認可開啟正式 Line OA。",
                 "傳送停止接收、退訂、刪除資料等關鍵字，確認退訂/投訴隊列與個資請求升級流程。",
                 "保存 checked_url、line_oa_url、device、result、screenshot_url、reviewer_role 與 evidence_note。"
             ],
@@ -1796,7 +1796,7 @@
                     "三步流程",
                     "對應資訊卡片",
                     "FAQ",
-                    "免費健檢表單",
+                    "免費財務健檢查詢表單",
                     "Line CTA",
                     "免責聲明"
                 ]
@@ -1851,7 +1851,7 @@
                 landing_url: page.url,
                 utm_example: page.utm_example,
                 priority: actions.length > 1 || (!matches.length && page.slug !== "free-check") ? "medium" : "normal",
-                hypothesis: "若保留合規邊界並讓使用者更快理解「查詢方向」與「不代辦」，可提升免費健檢提交與 Line 承接。",
+                hypothesis: "若保留合規邊界並讓使用者更快理解「查詢方向」與「不代辦」，可提升免費財務健檢查詢提交與 Line 承接。",
                 primary_kpi: "lead_rate_percent",
                 secondary_kpi: "line_click_rate_percent",
                 baseline: {
@@ -3130,7 +3130,7 @@
             chapter("chapter_4", "模板视觉套用规范", "已維持原模板結構，只替換內容、資料與功能掛載。", []),
             chapter("chapter_5", "技术选型", "靜態 MVP 與正式後端遷移路線均已建立。", []),
             chapter("chapter_6", "模板目录接入方式", "業務腳本、資料種子與審計工具均為增量接入。", []),
-            chapter("chapter_7", "页面架构", "首頁、資料庫、文章、免費健檢、政策、聯絡與 Admin 皆已落地。", []),
+            chapter("chapter_7", "页面架构", "首頁、資料庫、文章、免費財務健檢查詢、政策、聯絡與 Admin 皆已落地。", []),
             chapter("chapter_8", "组件清单", "查詢、表單、內容、合規與後台組件已掛入既有模板容器。", []),
             chapter("chapter_9", "数据模型", "正式資料模型、schema 與種子資料已齊備。", []),
             chapter("chapter_10", "API 设计", "API 合約、前端適配層與正式切換驗收包已建立。", []),
@@ -3276,8 +3276,8 @@
             phase(
                 "ready",
                 "phase_4",
-                "免費健檢表單套入",
-                "免費健檢表單、UTM、低敏字段、Line CTA 和瀏覽器提交流程已完成本地閉環。",
+                "免費財務健檢查詢表單套入",
+                "免費財務健檢查詢表單、UTM、低敏字段、Line CTA 和瀏覽器提交流程已完成本地閉環。",
                 [
                     evidenceFor("utm_recorded"),
                     evidenceFor("no_sensitive_docs"),
@@ -3335,7 +3335,7 @@
                 "上線和運維",
                 "錯誤頁、安全標頭、部署文件、驗收腳本與運維交接已齊備；正式上線仍依賴外部配置落地。",
                 [
-                    "404.html 已建立並可導回資料庫/免費健檢",
+                    "404.html 已建立並可導回資料庫/免費財務健檢查詢",
                     evidenceFor("external_monitoring", "本機錯誤摘要與 Sentry DSN 接入點已建立"),
                     evidenceFor("backup"),
                     "DEPLOYMENT.md / OPERATIONS_RUNBOOK.md / LAUNCH_CHECKLIST.md 已存在"
@@ -3406,7 +3406,7 @@
         var items = [
             fromAcceptance("17.1 业务闭环", "用户能从首页进入资料库。", "home_to_database"),
             fromAcceptance("17.1 业务闭环", "用户能从分类页进入资料详情。", "category_to_detail"),
-            fromAcceptance("17.1 业务闭环", "用户能从文章页进入免费健检。", "article_to_free_check"),
+            fromAcceptance("17.1 业务闭环", "用户能从文章页进入免费财务健检查询。", "article_to_free_check"),
             fromAcceptance("17.1 业务闭环", "表单提交后后台可见。", "lead_visible_in_admin"),
             fromAcceptance("17.1 业务闭环", "表单记录 UTM。", "utm_recorded"),
             fromAcceptance("17.1 业务闭环", "提交成功后可导向 Line。", "line_cta"),
@@ -3430,10 +3430,10 @@
             custom("17.3 合规验收", "不承诺核贷。", "ready", "首頁、資料庫、文章、落地頁 CTA 均維持中性資訊導向；合規掃描持續檢查保證核貸/代辦等越界文案。", "custom_no_loan_guarantee"),
             fromAcceptance("17.3 合规验收", "产品资料有来源。", "product_sources"),
             custom("17.3 合规验收", "产品资料有更新时间。", "ready", "products.json " + productCount + " 筆均保留 updated_at。", "custom_product_updated_at"),
-            custom("17.3 合规验收", "广告页无夸大承诺。", "ready", "落地頁沿用原模板框架，已替換為 TFSE 中性資訊與免費健檢導向。", "custom_ad_lp_compliance"),
+            custom("17.3 合规验收", "广告页无夸大承诺。", "ready", "落地頁沿用原模板框架，已替換為 TFSE 中性資訊與免費財務健檢查詢導向。", "custom_ad_lp_compliance"),
             custom("17.4 技术验收", "`npm run build` 通过。", "not_applicable", "目前以靜態 HTML 模板與增量腳本交付，未依賴 npm build 作為唯一發版路徑。", "custom_npm_build"),
             custom("17.4 技术验收", "`npm run lint` 通过。", "not_applicable", "目前以 Python / 靜態審計工具為主，不以 npm lint 作為唯一交付門檻。", "custom_npm_lint"),
-            custom("17.4 技术验收", "关键页面 200。", "ready", "verify_static_site.py 與 browser_acceptance_verify.mjs 已覆蓋首頁、資料庫、文章、免費健檢、聯絡與 Admin。", "custom_key_pages"),
+            custom("17.4 技术验收", "关键页面 200。", "ready", "verify_static_site.py 與 browser_acceptance_verify.mjs 已覆蓋首頁、資料庫、文章、免費財務健檢查詢、聯絡與 Admin。", "custom_key_pages"),
             custom("17.4 技术验收", "404 正常。", "ready", "404.html 與 500.html 已建立，並在驗收腳本中納管。", "custom_not_found"),
             custom("17.4 技术验收", "表单 API 有限流。", backendPending ? "external_pending" : "ready", backendPending ? "正式 leads API 限流 / 去重 / Turnstile server-side 驗證仍待正式後端接入。" : "正式後端 leads API 已具備限流與去重條件。", "custom_rate_limit"),
             fromAcceptance("17.4 技术验收", "后台需要登录。", "admin_login"),
@@ -3445,15 +3445,15 @@
             custom("17.5 SEO 验收", "canonical。", "ready", "核心頁已接入 canonical。", "custom_canonical"),
             custom("17.5 SEO 验收", "Open Graph。", "ready", "核心頁已接入 Open Graph 與分享圖。", "custom_open_graph"),
             custom("17.5 SEO 验收", "图片 alt。", "ready", "可用性審計已納入圖片 alt 基線。", "custom_image_alt"),
-            custom("17.5 SEO 验收", "内链。", "ready", "首頁、分類、文章、產品與免費健檢之間已建立站內導流。", "custom_internal_links"),
+            custom("17.5 SEO 验收", "内链。", "ready", "首頁、分類、文章、產品與免費財務健檢查詢之間已建立站內導流。", "custom_internal_links"),
             custom("17.5 SEO 验收", "首页 metadata。", "ready", "首頁 metadata 已納入靜態驗收。", "custom_home_metadata"),
             custom("17.5 SEO 验收", "分类页 metadata。", "ready", "category + 8 個金融分類頁 metadata 已納入靜態驗收。", "custom_category_metadata"),
             custom("17.5 SEO 验收", "文章页 metadata。", "ready", "articles.html 與 " + articleCount + " 篇 articles/ 文章詳情 metadata 已納入靜態驗收。", "custom_article_metadata"),
             custom("17.5 SEO 验收", "产品页 metadata。", "ready", productCount + " 個產品詳情頁 metadata 已納入靜態驗收。", "custom_product_metadata"),
             custom("21. 上线前最终检查", "所有页面都有标题和描述。", "ready", "全站 metadata 基線已由 verify_static_site.py 檢查。", "custom_metadata_all"),
             fromAcceptance("21. 上线前最终检查", "所有页面都有免责声明或页脚免责声明。", "disclaimer"),
-            fromAcceptance("21. 上线前最终检查", "免费健检表单不收证件。", "no_sensitive_docs"),
-            custom("21. 上线前最终检查", "所有 CTA 没有“代办、包过、保证核贷”。", "ready", "CTA 已統一為免費健檢、查看資訊、聯絡 TFSE 等中性描述。", "custom_cta_compliance"),
+            fromAcceptance("21. 上线前最终检查", "免费财务健检查询表单不收证件。", "no_sensitive_docs"),
+            custom("21. 上线前最终检查", "所有 CTA 没有“代办、包过、保证核贷”。", "ready", "CTA 已統一為免費財務健檢查詢、查看資訊、聯絡 TFSE 等中性描述。", "custom_cta_compliance"),
             fromAcceptance("21. 上线前最终检查", "所有产品资料有来源链接。", "product_sources"),
             custom("21. 上线前最终检查", "所有文章有更新日期。", "ready", articleCount + " 篇文章種子均帶 updated_at。", "custom_article_updated_at"),
             fromAcceptance("21. 上线前最终检查", "表单提交测试通过。", "lead_submit_browser"),
@@ -4191,7 +4191,7 @@
                 keys: [],
                 manual_checks: [
                     "檢查 GA4 / Meta / Server Event / Sentry 是否持續收件。",
-                    "抽查首頁、資料庫、免費健檢、聯絡頁資料回報與 Admin CRM 是否仍可用。",
+                    "抽查首頁、資料庫、免費財務健檢查詢、聯絡頁資料回報與 Admin CRM 是否仍可用。",
                     "檢查 Search Console coverage / URL Inspection、Line OA quick reply、退訂關鍵字與 lead follow-up 是否正常。"
                 ]
             }
@@ -4283,7 +4283,7 @@
             source_files: ["404.html", "500.html", "DEPLOYMENT.md", "OPERATIONS_RUNBOOK.md", "site-config.json"],
             privacy_note: "此包只保存公開 URL、檢查步驟與結果欄位，不保存 cookie、session、錯誤堆疊全文或個資。",
             critical_routes: [
-                { route: absolute("404.html"), expected: "自訂 404 可導回資料庫、文章與免費健檢" },
+                { route: absolute("404.html"), expected: "自訂 404 可導回資料庫、文章與免費財務健檢查詢" },
                 { route: absolute("500.html"), expected: "自訂 500/server error fallback 可導回首頁、資料庫與聯絡入口" },
                 { route: absolute("missing-page-" + new Date().getFullYear() + ".html"), expected: "正式主機未知路徑應回 404 狀態或顯示 404.html" },
                 { route: absolute("api/server-error-probe"), expected: "正式後端若接入 server error fallback，應回 5xx 且不暴露 stack trace" }
@@ -4427,7 +4427,7 @@
             step(
                 "step_1_leads_api",
                 "先接入 POST /api/leads",
-                "優先把免費健檢提交從 localStorage 切到正式 lead_forms，避免潛客只停留在瀏覽器。",
+                "優先把免費財務健檢查詢提交從 localStorage 切到正式 lead_forms，避免潛客只停留在瀏覽器。",
                 apiConfigured ? "ready_for_formal_api_validation" : "pending_api_configuration",
                 [
                     apiConfigured ? "" : "site-config.json backend.mode / backend.api_base_url 尚未切到正式 API。",
@@ -5029,7 +5029,7 @@
             };
         });
         var p0Triggers = [
-            "免費健檢無法提交",
+            "免費財務健檢查詢無法提交",
             "Admin 未授權可見",
             "正式個資外洩或疑似外洩",
             "全站不可用"
@@ -5143,7 +5143,7 @@
         var acceptance = acceptanceChecklistPayload();
         return [
             { group: "站點邊界", key: "disclaimer", label: "全站免責聲明與非代辦邊界", status: "ready", evidence: "所有頁面保留 TFSE 免責聲明；禁止承諾核貸、代收證件或代辦送件" },
-            { group: "表單個資", key: "lead_form_fields", label: "免費健檢表單欄位與個資告知", status: "ready", evidence: "表單只收稱呼、手機、Line ID、地區、需求、身份、收入型態與補充說明；不收證件、帳戶、卡號或密碼" },
+            { group: "表單個資", key: "lead_form_fields", label: "免費財務健檢查詢表單欄位與個資告知", status: "ready", evidence: "表單只收稱呼、手機、Line ID、地區、需求、身份、收入型態與補充說明；不收證件、帳戶、卡號或密碼" },
             { group: "Line 承接", key: "line_flow", label: "Line OA 歡迎語、自動回覆與分群標籤", status: "external_pending", evidence: "line-flows.json 已建立話術與 quick reply；正式 Line OA 需外部照表建立並驗證" },
             { group: "廣告投流", key: "ad_campaigns", label: "廣告落地頁文案、UTM 與 CTA", status: "ready", evidence: "廣告投流檢查清單涵蓋 " + adCampaignItems().length + " 個落地頁，投流前需由合規複核" },
             { group: "資料來源", key: "source_review", label: "產品/機構來源與 90 天復核", status: sourceReviewItems().length ? "needs_review" : "ready", evidence: "來源復核隊列目前 " + sourceReviewItems().length + " 筆；正式發布需逐筆核對官方來源" },
@@ -5169,7 +5169,7 @@
             items: items,
             required_external_review: [
                 "廣告文案與落地頁主張",
-                "免費健檢表單欄位與個資告知",
+                "免費財務健檢查詢表單欄位與個資告知",
                 "隱私權政策、使用條款、免責聲明與來源政策",
                 "Line OA 歡迎語、自動回覆、分群標籤與退訂/停止接收處理",
                 "金融資訊呈現方式是否可能被誤認為代辦、放款或保證核貸"
@@ -5231,7 +5231,7 @@
                 related_exports: legal.related_exports.concat(["tfse_external_verification_evidence"])
             },
             signoff_requirements: [
-                "複核廣告落地頁、首頁、免費健檢、Line OA 話術與 SEO 文章是否維持資訊服務邊界。",
+                "複核廣告落地頁、首頁、免費財務健檢查詢、Line OA 話術與 SEO 文章是否維持資訊服務邊界。",
                 "確認表單、隱私權政策、使用條款、免責聲明與資料來源政策沒有要求高敏資料或暗示代辦。",
                 "確認所有需修改項目完成後，於外部配置驗證留痕選擇 legal_review 並保存去識別證據摘要。",
                 "正式投流、SEO 大量收錄或 Line OA 對外承接前，需保留 reviewer、reviewed_at、result、evidence_note 與相關匯出包版本。"
@@ -5624,7 +5624,7 @@
             ],
             validation_steps: [
                 "部署正式 API 後，確認 TFSE_TURNSTILE_SECRET_KEY 只存在 server env 或 secrets manager。",
-                "以瀏覽器提交正常免費健檢，確認 widget token 送到 POST /api/leads 且 lead_forms 入庫。",
+                "以瀏覽器提交正常免費財務健檢查詢，確認 widget token 送到 POST /api/leads 且 lead_forms 入庫。",
                 "逐項執行 negative_test_cases，確認狀態碼、錯誤碼、audit_logs 與不入庫行為。",
                 "抽查 server logs，確認沒有記錄 raw token、secret、完整 IP、完整手機或高敏 message。",
                 "保存 checked_case、status_code、error_code、audit_log_id、lead_created、reviewer_role 與 evidence_note。"
@@ -5649,7 +5649,7 @@
         return [
             { group: "業務閉環", key: "home_to_database", label: "使用者能從首頁進入資料庫", done: true, evidence: "首頁導航、CTA 與需求查詢面板可導向 database.html / category.html" },
             { group: "業務閉環", key: "category_to_detail", label: "分類頁能進入資料詳情", done: true, evidence: "分類頁與資料庫卡片使用 products/{slug}.html" },
-            { group: "業務閉環", key: "article_to_free_check", label: "文章頁能進入免費健檢", done: true, evidence: "文章詳情 CTA 指向 free-check.html?utm_medium=article_cta" },
+            { group: "業務閉環", key: "article_to_free_check", label: "文章頁能進入免費財務健檢查詢", done: true, evidence: "文章詳情 CTA 指向 free-check.html?utm_medium=article_cta" },
             { group: "業務閉環", key: "public_feedback_intake", label: "聯絡頁可提交低敏資料回報", done: false, status: "manual_browser", evidence: "需在 contact.html 提交低敏資料回報，確認本機工單建立，並以正式 API 模式重測送出成功。" },
             { group: "業務閉環", key: "lead_visible_in_admin", label: "表單提交後後台可見", done: true, evidence: "tfse-lead-form.js -> TFSEApi.submitLead，本機 fallback 寫入 tfse_leads，Admin CRM 讀取" },
             { group: "業務閉環", key: "utm_recorded", label: "表單記錄 UTM", done: true, evidence: "表單含 utm_source / utm_medium / utm_campaign / utm_content / utm_term" },
@@ -5660,11 +5660,11 @@
             { group: "業務閉環", key: "compliance_review", label: "合規審核可記錄", done: true, evidence: "合規審核紀錄與文案即時預檢可寫入本機審計" },
             { group: "UI 驗收", key: "logo", label: "Logo 清晰", done: true, evidence: "Header / Footer 使用透明底 tfse-logo.png 並配置 alt" },
             { group: "UI 驗收", key: "template_preserved", label: "保持模板結構且無貸款廣告風", done: true, evidence: "未重做版式，套用金融資訊、合規與來源文案" },
-            { group: "UI 驗收", key: "button_copy", label: "按鈕文案合規", done: true, evidence: "主要 CTA 使用免費健檢、查看資訊、回到資料庫等中性文案" },
+            { group: "UI 驗收", key: "button_copy", label: "按鈕文案合規", done: true, evidence: "主要 CTA 使用免費財務健檢查詢、查看資訊、回到資料庫等中性文案" },
             { group: "UI 驗收", key: "mobile_browser", label: "手機端導航清楚", done: false, status: "manual_browser", evidence: "需以手機 viewport 實測 Header menu、主要 CTA、表單欄位與頁腳連結" },
             { group: "UI 驗收", key: "form_feedback", label: "表單錯誤與成功提示清楚", done: true, evidence: "lead form 使用 validity、冷卻、重複提交與成功 Line CTA 狀態" },
             { group: "UI 驗收", key: "empty_state", label: "空資料狀態清楚", done: true, evidence: "Admin、資料庫、文章、FAQ、事件均有空狀態文案" },
-            { group: "UI 驗收", key: "no_text_overlap_browser", label: "頁面不出現文字重疊", done: false, status: "manual_browser", evidence: "需以桌面與手機 viewport 實測首頁、資料庫、文章、免費健檢與 Admin 主要區塊" },
+            { group: "UI 驗收", key: "no_text_overlap_browser", label: "頁面不出現文字重疊", done: false, status: "manual_browser", evidence: "需以桌面與手機 viewport 實測首頁、資料庫、文章、免費財務健檢查詢與 Admin 主要區塊" },
             { group: "合規驗收", key: "forbidden_terms", label: "全站無禁用詞越界", done: true, evidence: "tools/compliance_scan.py passed" },
             { group: "合規驗收", key: "disclaimer", label: "每頁有免責聲明", done: true, evidence: "verify_static_site.py 驗證 REQUIRED_DISCLAIMER" },
             { group: "合規驗收", key: "privacy_line_consent", label: "隱私與 Line 同意獨立", done: true, evidence: "表單含 consent_privacy 與 consent_line" },
@@ -5673,7 +5673,7 @@
             { group: "技術驗收", key: "static_verification", label: "靜態驗收通過", done: true, evidence: "python3 tools/verify_static_site.py passed" },
             { group: "技術驗收", key: "admin_login", label: "後台需要登入", done: true, evidence: "Admin protected panels require MVP login; formal backend pending" },
             { group: "技術驗收", key: "admin_login_browser", label: "後台登入測試通過", done: false, status: "manual_browser", evidence: "需在瀏覽器以 MVP 管理密碼登入 admin.html 並確認受保護面板可見" },
-            { group: "技術驗收", key: "lead_submit_browser", label: "表單提交測試通過", done: false, status: "manual_browser", evidence: "需在瀏覽器提交免費健檢測試線索，確認 Admin CRM 可看到並可更新狀態" },
+            { group: "技術驗收", key: "lead_submit_browser", label: "表單提交測試通過", done: false, status: "manual_browser", evidence: "需在瀏覽器提交免費財務健檢查詢測試線索，確認 Admin CRM 可看到並可更新狀態" },
             { group: "技術驗收", key: "export_permissions", label: "導出有權限", done: true, evidence: "Admin export buttons apply RBAC and audit denied/export actions" },
             { group: "技術驗收", key: "external_monitoring", label: "正式錯誤上報與外部追蹤可用", done: launchPending === 0, evidence: launchPending ? "GA4 / Meta Pixel / Sentry / Search Console / Line OA 等正式配置仍需外部填入" : "上線健康檢查已無待配置項" },
             { group: "技術驗收", key: "backup", label: "備份策略可用", done: true, evidence: "本機 MVP 備份包已可匯出/匯入；正式 PostgreSQL 備份仍需外部部署" },
@@ -7064,7 +7064,7 @@
         var suggestions = [];
 
         if (pageViews && conversionRate(ctaClicks, pageViews) < 2) {
-            suggestions.push("免費健檢 CTA 點擊率偏低，優先檢查首頁、分類頁與文章頁 CTA 文案是否清楚。");
+            suggestions.push("免費財務健檢查詢 CTA 點擊率偏低，優先檢查首頁、分類頁與文章頁 CTA 文案是否清楚。");
         }
         if (ctaClicks && conversionRate(leadSubmits, ctaClicks) < 20) {
             suggestions.push("表單提交率偏低，檢查欄位數量、錯誤提示、隱私同意和 Line 承接說明。");
@@ -7369,7 +7369,7 @@
             debug_steps: [
                 "填入正式 GA4 Measurement ID 與 Meta Pixel ID 後，先在 staging 或正式小流量環境測試。",
                 "接受 analytics 追蹤同意，確認 localStorage 有 tfse_tracking_consent 且事件 tracking_consent_update 已記錄。",
-                "依序瀏覽首頁、資料庫、搜尋、篩選、免費健檢提交與 Line CTA。",
+                "依序瀏覽首頁、資料庫、搜尋、篩選、免費財務健檢查詢提交與 Line CTA。",
                 "在 GA4 Realtime / DebugView 檢查 page_view、generate_lead、search、contact 等事件。",
                 "在 Meta Events Manager 檢查 PageView、Lead、Contact、Search，並確認 Event Match Quality 未使用敏感明文。",
                 "若啟用 Server Event endpoint，與 tfse_server_event_replay_queue 對照事件名與去識別 payload。",
@@ -7870,7 +7870,7 @@
         var legalReviewCount = (legal.status_counts.needs_review || 0) + (legal.status_counts.external_pending || 0) + (legal.status_counts.manual_external || 0);
         realMetricsPanel.innerHTML = [
             "<article><span>今日待處理</span><strong>" + (followUps.counts.overdue_or_unscheduled || 0) + "</strong><small>高優先 " + (followUps.counts.high_priority || 0) + "</small><i class=\"fa fa-clipboard-list\"></i></article>",
-            "<article><span>免費健檢名單</span><strong>" + leads.length + "</strong><small>待聯繫 " + leads.filter(function (lead) { return (lead.status || "new") === "new"; }).length + "</small><i class=\"fa fa-heart\"></i></article>",
+            "<article><span>免費財務健檢查詢名單</span><strong>" + leads.length + "</strong><small>待聯繫 " + leads.filter(function (lead) { return (lead.status || "new") === "new"; }).length + "</small><i class=\"fa fa-heart\"></i></article>",
             "<article><span>來源追蹤（本月）</span><strong>" + Object.keys(sourceCounts).length + "</strong><small>有效來源 " + leads.length + "</small><i class=\"fa fa-search\"></i></article>",
             "<article><span>合規掃描（本月）</span><strong>" + legal.items.length + "</strong><small>需檢視 " + legalReviewCount + "</small><i class=\"fa fa-shield-alt\"></i></article>",
             "<article><span>資料回報工單</span><strong>" + publicFeedbackItemsCache.length + "</strong><small>待處理 " + pendingFeedback + "</small><i class=\"fa fa-inbox\"></i></article>"
@@ -7974,7 +7974,7 @@
     function visualSourceLabel(value) {
         return {
             seo: "Google 搜尋",
-            direct: "官網免費健檢",
+            direct: "官網免費財務健檢查詢",
             facebook: "FB/IG 廣告",
             paid_social: "社群廣告",
             line: "LINE OA",
@@ -8074,7 +8074,7 @@
                     tone: "blue"
                 },
                 {
-                    label: "免費健檢名單",
+                    label: "免費財務健檢查詢名單",
                     value: leads.length,
                     hint: "待聯繫 " + leads.filter(function (lead) { return (lead.status || "new") === "new"; }).length,
                     icon: "fa-heart",
@@ -8120,7 +8120,7 @@
 
     function visualRenderLeadRows(leads, emptyText) {
         if (!leads.length) {
-            return "<tr><td colspan=\"7\" class=\"tfse-visual-empty\">" + escapeHtml(emptyText || "目前沒有符合篩選的真實線索。請從前台免費健檢表單提交，或確認正式 API 已連線。") + "</td></tr>";
+            return "<tr><td colspan=\"7\" class=\"tfse-visual-empty\">" + escapeHtml(emptyText || "目前沒有符合篩選的真實線索。請從前台免費財務健檢查詢表單提交，或確認正式 API 已連線。") + "</td></tr>";
         }
         var start = (visualConsoleState.page - 1) * visualConsoleState.pageSize;
         return leads.slice(start, start + visualConsoleState.pageSize).map(function (lead) {
@@ -8199,7 +8199,7 @@
         var items = [
             ["dashboard", "fa-tachometer-alt", "儀表板"],
             ["leads", "fa-user-friends", "線索管理"],
-            ["freecheck", "fa-heart", "免費健檢"],
+            ["freecheck", "fa-heart", "免費財務健檢查詢"],
             ["consult", "fa-clipboard-list", "諮詢案件"],
             ["clients", "fa-users", "客戶管理"],
             ["schedule", "fa-calendar-alt", "行事曆"],
@@ -8218,7 +8218,7 @@
         return {
             dashboard: "CRM 儀表板",
             leads: "線索管理",
-            freecheck: "免費健檢",
+            freecheck: "免費財務健檢查詢",
             consult: "諮詢案件",
             clients: "客戶管理",
             schedule: "行事曆",
@@ -8252,7 +8252,7 @@
         var meta = {
             leads: {
                 eyebrow: "完整管線",
-                empty: "目前沒有符合篩選的真實線索。請從前台免費健檢表單提交，或確認正式 API 已連線。",
+                empty: "目前沒有符合篩選的真實線索。請從前台免費財務健檢查詢表單提交，或確認正式 API 已連線。",
                 cards: [
                     ["全部真實線索", counts.total, "所有已提交或 API 寫入的名單"],
                     ["待處理管線", counts.open, "未成交、未排除的跟進對象"],
@@ -8262,7 +8262,7 @@
             },
             freecheck: {
                 eyebrow: "前台收件",
-                empty: "目前沒有免費健檢提交資料。請點擊「前台提交真實資料」完成一筆表單，後台才會出現資料。",
+                empty: "目前沒有免費財務健檢查詢提交資料。請點擊「前台提交真實資料」完成一筆表單，後台才會出現資料。",
                 cards: [
                     ["待聯繫", counts.new || 0, "新提交且尚未回覆"],
                     ["已聯繫", counts.contacted || 0, "已完成首次聯繫"],
@@ -8309,7 +8309,7 @@
         return [
             "<div class=\"tfse-visual-table-card\">",
             "<div class=\"tfse-visual-module-head\"><div><span class=\"tfse-visual-eyebrow\">" + escapeHtml(meta.eyebrow) + "</span><h3>" + escapeHtml(title) + "</h3><p>" + escapeHtml(description) + "</p></div><button type=\"button\" data-visual-refresh><i class=\"fa fa-sync-alt\"></i> 更新資料</button></div>",
-            "<div class=\"tfse-visual-tabs\"><button type=\"button\" class=\"" + (visualConsoleState.tab === "dashboard" || visualConsoleState.tab === "leads" ? "is-active" : "") + "\" data-visual-tab=\"leads\">線索總覽</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "freecheck" ? "is-active" : "") + "\" data-visual-tab=\"freecheck\">免費健檢</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "consult" ? "is-active" : "") + "\" data-visual-tab=\"consult\">諮詢中案件</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "clients" ? "is-active" : "") + "\" data-visual-tab=\"clients\">成交客戶</button></div>",
+            "<div class=\"tfse-visual-tabs\"><button type=\"button\" class=\"" + (visualConsoleState.tab === "dashboard" || visualConsoleState.tab === "leads" ? "is-active" : "") + "\" data-visual-tab=\"leads\">線索總覽</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "freecheck" ? "is-active" : "") + "\" data-visual-tab=\"freecheck\">免費財務健檢查詢</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "consult" ? "is-active" : "") + "\" data-visual-tab=\"consult\">諮詢中案件</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "clients" ? "is-active" : "") + "\" data-visual-tab=\"clients\">成交客戶</button></div>",
             visualRenderLeadStageSummary(meta),
             visualRenderFilters(),
             "<div class=\"tfse-visual-table-wrap\"><table><thead><tr><th>建立時間</th><th>姓名</th><th>來源</th><th>狀態</th><th>負責人</th><th>下一次行動</th><th>動作</th></tr></thead><tbody>" + visualRenderLeadRows(leads, meta.empty) + "</tbody></table></div>",
@@ -8339,7 +8339,7 @@
         return [
             "<div class=\"tfse-visual-table-card\">",
             "<div class=\"tfse-visual-module-head\"><div><h3>行事曆</h3><p>只顯示真實線索的下一次行動與跟進安排，可直接檢視並更新狀態。</p></div><button type=\"button\" data-visual-trigger=\"[data-admin-follow-ups-export]\"><i class=\"fa fa-calendar-check\"></i> 匯出跟進隊列</button></div>",
-            items.length ? "<div class=\"tfse-visual-card-grid\">" + items.map(function (lead) { return visualLeadCard(lead, "查看行程"); }).join("") + "</div>" : "<div class=\"tfse-visual-empty-block\">目前沒有真實行程。請先由前台免費健檢表單提交資料，或確認正式 API 已連線。</div>",
+            items.length ? "<div class=\"tfse-visual-card-grid\">" + items.map(function (lead) { return visualLeadCard(lead, "查看行程"); }).join("") + "</div>" : "<div class=\"tfse-visual-empty-block\">目前沒有真實行程。請先由前台免費財務健檢查詢表單提交資料，或確認正式 API 已連線。</div>",
             "</div>"
         ].join("");
     }
@@ -8402,7 +8402,7 @@
         if (visualConsoleState.tab === "compliance") return visualRenderComplianceModule(payload);
         if (visualConsoleState.tab === "reports") return visualRenderReportsModule(payload);
         if (visualConsoleState.tab === "settings") return visualRenderSettingsModule();
-        if (visualConsoleState.tab === "freecheck") return visualRenderLeadWorkspace(leads, "免費健檢名單", "從前台免費健檢表單或正式 API 進來的真實資料，可檢視並更新跟進狀態。");
+        if (visualConsoleState.tab === "freecheck") return visualRenderLeadWorkspace(leads, "免費財務健檢查詢名單", "從前台免費財務健檢查詢表單或正式 API 進來的真實資料，可檢視並更新跟進狀態。");
         if (visualConsoleState.tab === "consult") return visualRenderLeadWorkspace(leads, "諮詢中案件", "只顯示狀態為諮詢中的真實線索，便於集中跟進。");
         if (visualConsoleState.tab === "clients") return visualRenderLeadWorkspace(leads, "成交客戶", "只顯示已成交的真實客戶，方便後續服務與備份。");
         return visualRenderLeadWorkspace(leads, "線索總覽", "集中管理前台提交與 API 寫入的真實線索，支援篩選、檢視與狀態更新。");
@@ -9111,7 +9111,7 @@
         if (analyticsPanel) {
             analyticsPanel.innerHTML = [
                 "<p>事件總數：" + events.length + " 筆。</p>",
-                "<p>頁面瀏覽：" + countEvents(events, "page_view") + "；免費健檢 CTA：" + countEvents(events, "cta_free_check_click") + "。</p>",
+                "<p>頁面瀏覽：" + countEvents(events, "page_view") + "；免費財務健檢查詢 CTA：" + countEvents(events, "cta_free_check_click") + "。</p>",
                 "<p>資料庫搜尋：" + countEvents(events, "database_search") + "；資料庫篩選：" + countEvents(events, "database_filter") + "。</p>",
                 "<p>文章點擊：" + countEvents(events, "article_click") + "；落地頁瀏覽：" + countEvents(events, "landing_page_view") + "；表單提交：" + countEvents(events, "lead_submit") + "。</p>",
                 "<p>Line 承接展示：" + countEvents(events, "lead_line_cta_shown") + "；Line 點擊：" + countEvents(events, "line_cta_click") + "。</p>",
@@ -9170,7 +9170,7 @@
             "<p>Sentry 錯誤收件：" + escapeHtml(sentryVerification.status) + "；測試案例 " + sentryVerification.test_cases.length + " 項。</p>",
             payload.event_name_counts.slice(0, 8).map(function (item) {
                 return "<p><strong>" + escapeHtml(item.key) + "</strong><br>" + item.count + " 筆</p>";
-            }).join("") || "<p>尚無本機事件，請先以瀏覽器瀏覽首頁、資料庫、文章與免費健檢流程。</p>"
+            }).join("") || "<p>尚無本機事件，請先以瀏覽器瀏覽首頁、資料庫、文章與免費財務健檢查詢流程。</p>"
         ].join("");
     }
 

@@ -703,7 +703,7 @@ def turnstile_backend_verification_report():
         ],
         "validation_steps": [
             "部署正式 API 後，確認 TFSE_TURNSTILE_SECRET_KEY 只存在 server env 或 secrets manager。",
-            "以瀏覽器提交正常免費健檢，確認 widget token 送到 POST /api/leads 且 lead_forms 入庫。",
+            "以瀏覽器提交正常免費財務健檢查詢，確認 widget token 送到 POST /api/leads 且 lead_forms 入庫。",
             "逐項執行 negative_test_cases，確認狀態碼、錯誤碼、audit_logs 與不入庫行為。",
             "抽查 server logs，確認沒有記錄 raw token、secret、完整 IP、完整手機或高敏 message。",
             "保存 checked_case、status_code、error_code、audit_log_id、lead_created、reviewer_role 與 evidence_note。",
@@ -765,7 +765,7 @@ def analytics_debug_verification_report():
         "debug_steps": [
             "填入正式 GA4 Measurement ID 與 Meta Pixel ID 後，先在 staging 或正式小流量環境測試。",
             "接受 analytics 追蹤同意，確認 localStorage 有 tfse_tracking_consent 且事件 tracking_consent_update 已記錄。",
-            "依序瀏覽首頁、資料庫、搜尋、篩選、免費健檢提交與 Line CTA。",
+            "依序瀏覽首頁、資料庫、搜尋、篩選、免費財務健檢查詢提交與 Line CTA。",
             "在 GA4 Realtime / DebugView 檢查 page_view、generate_lead、search、contact 等事件。",
             "在 Meta Events Manager 檢查 PageView、Lead、Contact、Search，並確認 Event Match Quality 未使用敏感明文。",
             "若啟用 Server Event endpoint，與 tfse_server_event_replay_queue 對照事件名與去識別 payload。",
@@ -841,7 +841,7 @@ def line_oa_setup_report():
             "建立 Line OA 歡迎語並貼上 welcome_messages",
             "依 rich_menu 建立 6 個主要入口，URL 保留 utm_source=line",
             "依 tags 建立需求、來源與分群標籤",
-            "依 quick_replies 建立自動回覆，每則包含文章、資料庫與免費健檢入口",
+            "依 quick_replies 建立自動回覆，每則包含文章、資料庫與免費財務健檢查詢入口",
             "匯入 segment_sync_queue 前先確認 consent_line 為 true",
             "完成後將 site-config.json > line.oa_url 改成正式加友網址並重跑驗收",
         ],
@@ -867,7 +867,7 @@ def line_oa_handoff_report():
     ]
     cta_routes = [
         {"key": "handoff_route_1", "page": release_tooling.absolute_url(base, "free-check.html"), "selector": "#line-cta", "expected": "表單成功後顯示正式 Line OA 加友 CTA"},
-        {"key": "handoff_route_2", "page": release_tooling.absolute_url(base, "index.html"), "selector": "[data-line-action]", "expected": "首頁 CTA 可導向免費健檢或 Line 承接說明"},
+        {"key": "handoff_route_2", "page": release_tooling.absolute_url(base, "index.html"), "selector": "[data-line-action]", "expected": "首頁 CTA 可導向免費財務健檢查詢或 Line 承接說明"},
         {"key": "handoff_route_3", "page": release_tooling.absolute_url(base, "lp.html"), "selector": "[data-line-action]", "expected": "廣告落地頁 Line CTA 保留 UTM 與合規邊界"},
         {"key": "handoff_route_4", "page": release_tooling.absolute_url(base, "contact.html"), "selector": "contact intake", "expected": "資料回報與 Line 承接不得要求高敏資料"},
     ]
@@ -910,8 +910,8 @@ def line_oa_handoff_report():
         "handoff_steps": [
             "在 Line OA 後台建立歡迎語、圖文選單、quick reply、自動回覆與分群標籤。",
             "將 site-config.json > line.oa_url 改成正式 HTTPS 加友網址，重新跑 site-config 與瀏覽器驗收。",
-            "提交一筆測試免費健檢，確認成功訊息與 Line CTA 指向正式 Line OA。",
-            "在手機瀏覽器點擊首頁、免費健檢、落地頁與 Line quick reply，確認可開啟正式 Line OA。",
+            "提交一筆測試免費財務健檢查詢，確認成功訊息與 Line CTA 指向正式 Line OA。",
+            "在手機瀏覽器點擊首頁、免費財務健檢查詢、落地頁與 Line quick reply，確認可開啟正式 Line OA。",
             "傳送停止接收、退訂、刪除資料等關鍵字，確認退訂/投訴隊列與個資請求升級流程。",
             "保存 checked_url、line_oa_url、device、result、screenshot_url、reviewer_role 與 evidence_note。",
         ],

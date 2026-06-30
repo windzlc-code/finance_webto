@@ -7,6 +7,81 @@
     var turnstileScriptPromise = null;
     var cooldownTimer = null;
     var leadDialogEscHandler = null;
+    var phoneCountries = [
+        ["TW", "台灣", "+886"], ["CN", "中國大陸", "+86"], ["HK", "香港", "+852"], ["MO", "澳門", "+853"],
+        ["US", "美國", "+1"], ["CA", "加拿大", "+1"], ["GB", "英國", "+44"], ["AU", "澳洲", "+61"],
+        ["NZ", "紐西蘭", "+64"], ["JP", "日本", "+81"], ["KR", "韓國", "+82"], ["SG", "新加坡", "+65"],
+        ["MY", "馬來西亞", "+60"], ["TH", "泰國", "+66"], ["VN", "越南", "+84"], ["PH", "菲律賓", "+63"],
+        ["ID", "印尼", "+62"], ["IN", "印度", "+91"], ["AE", "阿聯酋", "+971"], ["SA", "沙烏地阿拉伯", "+966"],
+        ["DE", "德國", "+49"], ["FR", "法國", "+33"], ["IT", "義大利", "+39"], ["ES", "西班牙", "+34"],
+        ["NL", "荷蘭", "+31"], ["BE", "比利時", "+32"], ["CH", "瑞士", "+41"], ["SE", "瑞典", "+46"],
+        ["NO", "挪威", "+47"], ["DK", "丹麥", "+45"], ["FI", "芬蘭", "+358"], ["IE", "愛爾蘭", "+353"],
+        ["PT", "葡萄牙", "+351"], ["AT", "奧地利", "+43"], ["PL", "波蘭", "+48"], ["CZ", "捷克", "+420"],
+        ["TR", "土耳其", "+90"], ["RU", "俄羅斯", "+7"], ["BR", "巴西", "+55"], ["MX", "墨西哥", "+52"],
+        ["AR", "阿根廷", "+54"], ["CL", "智利", "+56"], ["CO", "哥倫比亞", "+57"], ["PE", "秘魯", "+51"],
+        ["ZA", "南非", "+27"], ["EG", "埃及", "+20"], ["NG", "奈及利亞", "+234"], ["KE", "肯亞", "+254"]
+    ];
+    var regionData = {
+        "台灣": {
+            "北部": ["台北市", "新北市", "基隆市", "桃園市", "新竹市", "新竹縣", "宜蘭縣"],
+            "中部": ["台中市", "苗栗縣", "彰化縣", "南投縣", "雲林縣"],
+            "南部": ["高雄市", "台南市", "嘉義市", "嘉義縣", "屏東縣"],
+            "東部與離島": ["花蓮縣", "台東縣", "澎湖縣", "金門縣", "連江縣"]
+        },
+        "中國大陸": {
+            "直轄市": ["北京市", "上海市", "天津市", "重慶市"],
+            "華南": ["廣州市", "深圳市", "珠海市", "佛山市", "東莞市", "廈門市", "福州市"],
+            "華東": ["杭州市", "南京市", "蘇州市", "寧波市", "合肥市", "青島市"],
+            "華中與西部": ["武漢市", "長沙市", "成都市", "西安市", "昆明市", "鄭州市"]
+        },
+        "香港": { "香港": ["香港島", "九龍", "新界"] },
+        "澳門": { "澳門": ["澳門半島", "氹仔", "路環"] },
+        "美國": {
+            "California": ["Los Angeles", "San Francisco", "San Jose", "San Diego", "Sacramento"],
+            "New York": ["New York City", "Buffalo", "Rochester", "Albany"],
+            "Texas": ["Houston", "Dallas", "Austin", "San Antonio"],
+            "Washington": ["Seattle", "Bellevue", "Tacoma"],
+            "Illinois": ["Chicago", "Springfield"]
+        },
+        "加拿大": {
+            "British Columbia": ["Vancouver", "Richmond", "Burnaby", "Victoria"],
+            "Ontario": ["Toronto", "Ottawa", "Mississauga", "Waterloo"],
+            "Quebec": ["Montreal", "Quebec City", "Laval"],
+            "Alberta": ["Calgary", "Edmonton"]
+        },
+        "英國": {
+            "England": ["London", "Manchester", "Birmingham", "Liverpool", "Leeds"],
+            "Scotland": ["Edinburgh", "Glasgow", "Aberdeen"],
+            "Wales": ["Cardiff", "Swansea"],
+            "Northern Ireland": ["Belfast"]
+        },
+        "澳洲": {
+            "New South Wales": ["Sydney", "Newcastle", "Wollongong"],
+            "Victoria": ["Melbourne", "Geelong"],
+            "Queensland": ["Brisbane", "Gold Coast", "Cairns"],
+            "Western Australia": ["Perth"]
+        },
+        "日本": {
+            "關東": ["東京", "橫濱", "川崎", "埼玉", "千葉"],
+            "關西": ["大阪", "京都", "神戶", "奈良"],
+            "中部": ["名古屋", "靜岡", "金澤"],
+            "九州與北海道": ["福岡", "熊本", "札幌"]
+        },
+        "韓國": { "首都圈": ["首爾", "仁川", "水原"], "其他": ["釜山", "大邱", "大田", "光州", "濟州"] },
+        "新加坡": { "Singapore": ["Singapore"] },
+        "馬來西亞": { "西馬": ["Kuala Lumpur", "Petaling Jaya", "Johor Bahru", "Penang"], "東馬": ["Kota Kinabalu", "Kuching"] },
+        "泰國": { "Thailand": ["Bangkok", "Chiang Mai", "Phuket", "Pattaya"] },
+        "越南": { "Vietnam": ["Ho Chi Minh City", "Hanoi", "Da Nang", "Can Tho"] },
+        "菲律賓": { "Philippines": ["Manila", "Quezon City", "Cebu City", "Davao City"] },
+        "德國": { "Germany": ["Berlin", "Munich", "Frankfurt", "Hamburg", "Cologne"] },
+        "法國": { "France": ["Paris", "Lyon", "Marseille", "Toulouse", "Nice"] },
+        "義大利": { "Italy": ["Rome", "Milan", "Florence", "Naples", "Turin"] },
+        "西班牙": { "Spain": ["Madrid", "Barcelona", "Valencia", "Seville"] },
+        "荷蘭": { "Netherlands": ["Amsterdam", "Rotterdam", "The Hague", "Utrecht"] },
+        "巴西": { "Brazil": ["Sao Paulo", "Rio de Janeiro", "Brasilia", "Curitiba"] },
+        "墨西哥": { "Mexico": ["Mexico City", "Guadalajara", "Monterrey", "Puebla"] },
+        "其他國家 / 地區": { "自定義": ["自定義城市 / 地區"] }
+    };
 
     function getQueryValue(name) {
         var params = new URLSearchParams(window.location.search);
@@ -228,30 +303,39 @@
         return escapeHtml(value).replace(/`/g, "&#096;");
     }
 
-    function normalizeTaiwanMobile(value) {
-        var raw = String(value || "").trim();
-        var digits = raw.replace(/\D/g, "");
-        if (raw.charAt(0) === "+") {
-            if (digits.indexOf("886") !== 0) return "";
-        }
-        if (digits.indexOf("00886") === 0) digits = digits.slice(2);
-        if (digits.indexOf("8860") === 0) digits = "0" + digits.slice(4);
-        if (digits.indexOf("8869") === 0) digits = "0" + digits.slice(3);
-        return digits;
+    function normalizeInternationalPhone(form) {
+        var codeField = form && form.elements.phone_country_code;
+        var customCodeField = form && form.querySelector("[data-phone-code-custom]");
+        var localField = form && form.elements.phone_local;
+        var selectedOption = codeField && codeField.options ? codeField.options[codeField.selectedIndex] : null;
+        var code = selectedOption ? selectedOption.getAttribute("data-code") : "";
+        if (!code && codeField && /^\+\d+/.test(codeField.value || "")) code = codeField.value;
+        if (code === "__custom") code = customCodeField ? customCodeField.value.trim() : "";
+        var local = localField ? localField.value : "";
+        var localDigits = String(local || "").replace(/\D/g, "");
+        if (!code || !localDigits) return "";
+        code = "+" + String(code).replace(/\D/g, "");
+        return code + localDigits;
     }
 
-    function taiwanMobileError(value) {
-        var phone = normalizeTaiwanMobile(value);
-        if (!phone) return "請填寫有效的台灣手機號碼，例如 0912-345-678 或 +886912345678。";
-        if (!/^09\d{8}$/.test(phone)) return "手機格式不正確：台灣手機需為 09 開頭共 10 碼，或使用 +8869 開頭的國際格式。";
-        if (/^09(\d)\1{7}$/.test(phone)) return "手機號碼看起來不是真實號碼，請確認後再送出。";
+    function internationalPhoneError(form) {
+        var codeField = form && form.elements.phone_country_code;
+        var customCodeField = form && form.querySelector("[data-phone-code-custom]");
+        var localField = form && form.elements.phone_local;
+        var phone = normalizeInternationalPhone(form);
+        var localDigits = localField ? String(localField.value || "").replace(/\D/g, "") : "";
+        if (!phone) return "請先選擇國碼並填寫手機號碼。";
+        if (codeField && codeField.value === "__custom" && customCodeField && !/^\+\d{1,4}$/.test(customCodeField.value.trim())) return "自定義國碼需使用 + 開頭，例如 +358。";
+        if (localDigits.length < 5 || localDigits.length > 15) return "手機號碼長度需為 5 到 15 位數字，請確認國碼與號碼。";
+        if (/^(\d)\1{4,}$/.test(localDigits)) return "手機號碼看起來不是真實號碼，請確認後再送出。";
         return "";
     }
 
     function validatePhoneField(form, message) {
-        var field = form && form.elements.phone;
+        var field = form && form.elements.phone_local;
+        var hidden = form && form.elements.phone;
         if (!field) return true;
-        var error = taiwanMobileError(field.value);
+        var error = internationalPhoneError(form);
         field.setCustomValidity(error);
         if (error) {
             setMessage(message, error, "error");
@@ -259,8 +343,202 @@
             field.focus();
             return false;
         }
-        field.value = normalizeTaiwanMobile(field.value);
+        if (hidden) hidden.value = normalizeInternationalPhone(form);
         return true;
+    }
+
+    function addOption(select, value, label) {
+        var option = document.createElement("option");
+        option.value = value;
+        option.textContent = label || value;
+        select.appendChild(option);
+    }
+
+    function resetSelect(select, label) {
+        if (!select) return;
+        select.innerHTML = "";
+        addOption(select, "", label);
+    }
+
+    function setupPhonePicker(form) {
+        var country = form.querySelector("[data-phone-country]");
+        var customCode = form.querySelector("[data-phone-code-custom]");
+        var local = form.querySelector("[data-phone-local]");
+        var hidden = form.elements.phone;
+        if (!country || country.getAttribute("data-tfse-ready") === "true") return;
+        country.setAttribute("data-tfse-ready", "true");
+        country.innerHTML = "";
+        phoneCountries.forEach(function (item) {
+            addOption(country, item[1], item[1] + " " + item[2]);
+            country.options[country.options.length - 1].setAttribute("data-code", item[2]);
+        });
+        addOption(country, "__custom", "其他國碼，自定義");
+        country.options[country.options.length - 1].setAttribute("data-code", "__custom");
+        country.value = "台灣";
+        var sync = function () {
+            if (customCode) {
+                customCode.hidden = country.value !== "__custom";
+                customCode.required = country.value === "__custom";
+                if (country.value !== "__custom") customCode.value = "";
+            }
+            if (hidden) hidden.value = normalizeInternationalPhone(form);
+            if (local) local.setCustomValidity("");
+            syncRegionCountryFromPhone(form, true);
+        };
+        country.addEventListener("change", sync);
+        if (customCode) customCode.addEventListener("input", sync);
+        if (local) local.addEventListener("input", sync);
+        sync();
+    }
+
+    function choiceValue(form, name) {
+        var select = form && form.querySelector("[data-custom-select=\"" + name + "\"]");
+        var custom = form && form.querySelector("[data-custom-input=\"" + name + "\"]");
+        if (!select) return form && form.elements[name] ? form.elements[name].value : "";
+        if (select.value === "__custom") return custom ? custom.value.trim() : "";
+        return select.value;
+    }
+
+    function setupCustomSelects(form) {
+        Array.prototype.slice.call(form.querySelectorAll("[data-custom-select]")).forEach(function (select) {
+            var name = select.getAttribute("data-custom-select");
+            var custom = form.querySelector("[data-custom-input=\"" + name + "\"]");
+            if (!custom || select.getAttribute("data-tfse-ready") === "true") return;
+            select.setAttribute("data-tfse-ready", "true");
+            var sync = function () {
+                var isCustom = select.value === "__custom";
+                custom.hidden = !isCustom;
+                custom.required = isCustom && select.required;
+                if (!isCustom) custom.value = "";
+            };
+            select.addEventListener("change", sync);
+            sync();
+        });
+    }
+
+    function selectedText(select) {
+        if (!select || !select.value) return "";
+        return select.options[select.selectedIndex] ? select.options[select.selectedIndex].textContent : select.value;
+    }
+
+    function syncRegionValue(form) {
+        var country = form.querySelector("[data-region-country]");
+        var state = form.querySelector("[data-region-state]");
+        var city = form.querySelector("[data-region-city]");
+        var custom = form.querySelector("[data-region-custom]");
+        var hidden = form.elements.region;
+        var parts = [selectedText(country), selectedText(state), selectedText(city)].filter(function (value) {
+            return value && value.indexOf("選擇") === -1 && value.indexOf("先選") === -1 && value.indexOf("自定義") === -1;
+        });
+        if (custom && !custom.hidden && custom.value.trim()) parts.push(custom.value.trim());
+        if (hidden) hidden.value = parts.join(" / ");
+    }
+
+    function setupRegionPicker(form) {
+        var country = form.querySelector("[data-region-country]");
+        var state = form.querySelector("[data-region-state]");
+        var city = form.querySelector("[data-region-city]");
+        var custom = form.querySelector("[data-region-custom]");
+        if (!country || country.getAttribute("data-tfse-ready") === "true") return;
+        country.setAttribute("data-tfse-ready", "true");
+        resetSelect(country, "選擇國家 / 地區");
+        phoneCountries.forEach(function (item) {
+            if (!regionData[item[1]]) regionData[item[1]] = null;
+        });
+        Object.keys(regionData).forEach(function (name) { addOption(country, name, name); });
+        addOption(country, "__custom", "其他國家 / 地區，自定義");
+        resetSelect(state, "先選國家");
+        resetSelect(city, "先選州省");
+
+        country.addEventListener("change", function () {
+            var data = regionData[country.value] || null;
+            var stateNames = data ? Object.keys(data) : [];
+            resetSelect(state, stateNames.length ? "選擇州省 / 行政區" : "自定義州省 / 行政區");
+            resetSelect(city, "先選州省");
+            state.disabled = !stateNames.length;
+            city.disabled = true;
+            custom.hidden = country.value !== "__custom" && !!stateNames.length;
+            custom.required = country.value === "__custom" || (!!country.value && !stateNames.length);
+            stateNames.forEach(function (name) { addOption(state, name, name); });
+            addOption(state, "__custom", "自定義州省 / 行政區");
+            syncRegionValue(form);
+        });
+
+        state.addEventListener("change", function () {
+            var data = regionData[country.value] || {};
+            var cityNames = data[state.value] || [];
+            resetSelect(city, cityNames.length ? "選擇城市" : "自定義城市");
+            city.disabled = !cityNames.length;
+            custom.hidden = state.value !== "__custom" && !!cityNames.length;
+            custom.required = state.value === "__custom";
+            cityNames.forEach(function (name) { addOption(city, name, name); });
+            addOption(city, "__custom", "自定義城市 / 地區");
+            syncRegionValue(form);
+        });
+
+        city.addEventListener("change", function () {
+            custom.hidden = city.value !== "__custom";
+            custom.required = city.value === "__custom";
+            syncRegionValue(form);
+        });
+        if (custom) custom.addEventListener("input", function () { syncRegionValue(form); });
+        syncRegionValue(form);
+    }
+
+    function syncRegionCountryFromPhone(form, force) {
+        var phoneCountry = form.querySelector("[data-phone-country]");
+        var regionCountry = form.querySelector("[data-region-country]");
+        if (!phoneCountry || !regionCountry || !phoneCountry.value) return;
+        if (phoneCountry.value === "__custom") {
+            regionCountry.value = "__custom";
+            regionCountry.dispatchEvent(new Event("change", { bubbles: true }));
+            return;
+        }
+        if (!force && regionCountry.value && regionCountry.value !== phoneCountry.value) return;
+        if (!Array.prototype.some.call(regionCountry.options, function (option) { return option.value === phoneCountry.value; })) return;
+        regionCountry.value = phoneCountry.value;
+        regionCountry.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function setupChoiceControls(form) {
+        setupRegionPicker(form);
+        setupPhonePicker(form);
+        setupCustomSelects(form);
+        syncRegionCountryFromPhone(form, true);
+    }
+
+    function resetChoiceControls(form) {
+        var country = form.querySelector("[data-region-country]");
+        var state = form.querySelector("[data-region-state]");
+        var city = form.querySelector("[data-region-city]");
+        var regionCustom = form.querySelector("[data-region-custom]");
+        var phoneCountry = form.querySelector("[data-phone-country]");
+        var phoneCustomCode = form.querySelector("[data-phone-code-custom]");
+        if (phoneCountry) phoneCountry.value = "台灣";
+        if (phoneCustomCode) {
+            phoneCustomCode.value = "";
+            phoneCustomCode.hidden = true;
+            phoneCustomCode.required = false;
+        }
+        if (form.elements.phone) form.elements.phone.value = "";
+        if (country) country.value = "";
+        resetSelect(state, "先選國家");
+        resetSelect(city, "先選州省");
+        if (state) state.disabled = true;
+        if (city) city.disabled = true;
+        if (regionCustom) {
+            regionCustom.value = "";
+            regionCustom.hidden = true;
+            regionCustom.required = false;
+        }
+        Array.prototype.slice.call(form.querySelectorAll("[data-custom-select]")).forEach(function (select) {
+            var custom = form.querySelector("[data-custom-input=\"" + select.getAttribute("data-custom-select") + "\"]");
+            if (!custom) return;
+            custom.value = "";
+            custom.hidden = true;
+            custom.required = false;
+        });
+        syncRegionValue(form);
     }
 
     function closeLeadDialog() {
@@ -286,7 +564,7 @@
             "<div class=\"tfse-lead-dialog__panel\">",
                 "<button type=\"button\" class=\"tfse-lead-dialog__close\" data-lead-dialog-close aria-label=\"關閉提示\"><i class=\"fa fa-times\" aria-hidden=\"true\"></i></button>",
                 "<div class=\"tfse-lead-dialog__icon\"><i class=\"fa fa-check\" aria-hidden=\"true\"></i></div>",
-                "<h3 id=\"tfseLeadDialogTitle\">" + escapeHtml(options.title || "已收到您的免費健檢需求") + "</h3>",
+                "<h3 id=\"tfseLeadDialogTitle\">" + escapeHtml(options.title || "已收到您的免費財務健檢查詢需求") + "</h3>",
                 "<div class=\"tfse-lead-dialog__body\">" + (options.body || "") + "</div>",
                 "<div class=\"tfse-lead-dialog__actions\">" + (options.actions || "") + "<button type=\"button\" class=\"tfse-dialog-secondary\" data-lead-dialog-close>我知道了</button></div>",
             "</div>"
@@ -317,7 +595,7 @@
         }
         button.disabled = !!disabled;
         button.classList.toggle("is-loading", !!disabled);
-        button.innerHTML = html || button.getAttribute("data-default-label") || "送出免費健檢需求";
+        button.innerHTML = html || button.getAttribute("data-default-label") || "送出免費財務健檢查詢需求";
     }
 
     function countdownText(ms) {
@@ -416,19 +694,20 @@
             window.jQuery(form).off("submit");
         }
         setHiddenUtmFields(form);
+        setupChoiceControls(form);
         setupTurnstile(form, document.querySelector(".form-messege"));
-        if (form.elements.phone) {
-            form.elements.phone.addEventListener("input", function () {
-                form.elements.phone.setCustomValidity("");
+        if (form.elements.phone_local) {
+            form.elements.phone_local.addEventListener("input", function () {
+                form.elements.phone_local.setCustomValidity("");
             });
-            form.elements.phone.addEventListener("blur", function () {
-                if (!form.elements.phone.value.trim()) return;
-                var error = taiwanMobileError(form.elements.phone.value);
-                form.elements.phone.setCustomValidity(error);
+            form.elements.phone_local.addEventListener("blur", function () {
+                if (!form.elements.phone_local.value.trim()) return;
+                var error = internationalPhoneError(form);
+                form.elements.phone_local.setCustomValidity(error);
             });
-            form.elements.phone.addEventListener("invalid", function () {
+            form.elements.phone_local.addEventListener("invalid", function () {
                 var message = document.querySelector(".form-messege");
-                setMessage(message, form.elements.phone.validationMessage || "請填寫有效的手機號碼。", "error");
+                setMessage(message, form.elements.phone_local.validationMessage || "請填寫有效的手機號碼。", "error");
             });
         }
         var initialRemaining = SUBMIT_COOLDOWN_MS - (Date.now() - getLastSubmittedAt());
@@ -469,7 +748,7 @@
             return;
         }
         setSubmitState(form, true, "<span class=\"tfse-btn-spinner\"></span> 正在送出並保存資料");
-        setMessage(message, "<strong>正在送出...</strong><br>系統正在保存您的免費健檢需求，請不要重複點擊。", "success");
+        setMessage(message, "<strong>正在送出...</strong><br>系統正在保存您的免費財務健檢查詢需求，請不要重複點擊。", "success");
 
         requireTurnstileToken(form).then(function (hasTurnstileToken) {
         if (!hasTurnstileToken) {
@@ -478,8 +757,11 @@
             return;
         }
 
-        var needs = form.elements.needs ? form.elements.needs.value : (form.elements.message ? form.elements.message.value : "");
-        var occupationType = form.elements.occupation_type ? form.elements.occupation_type.value : "";
+        syncRegionValue(form);
+        var needs = choiceValue(form, "needs") || choiceValue(form, "message");
+        var occupationType = choiceValue(form, "occupation_type");
+        var incomeType = choiceValue(form, "income_type");
+        var messageValue = choiceValue(form, "message");
         var tags = inferTags(needs, occupationType, form);
         var recommendations = recommendFromTags(tags);
         var leads = getStoredLeads();
@@ -498,13 +780,13 @@
         var payload = {
             id: makeId(),
             display_name: form.elements.display_name ? form.elements.display_name.value : (form.elements.name ? form.elements.name.value : ""),
-            phone: form.elements.phone ? normalizeTaiwanMobile(form.elements.phone.value) : "",
+            phone: form.elements.phone ? form.elements.phone.value : "",
             line_id: form.elements.line_id ? form.elements.line_id.value : (form.elements.email ? form.elements.email.value : ""),
             region: form.elements.region ? form.elements.region.value : "",
             needs: needs,
             occupation_type: occupationType,
-            income_type: form.elements.income_type ? form.elements.income_type.value : "",
-            message: form.elements.message ? form.elements.message.value : "",
+            income_type: incomeType,
+            message: messageValue,
             consent_privacy: !!(form.elements.consent_privacy && form.elements.consent_privacy.checked),
             consent_line: !!(form.elements.consent_line && form.elements.consent_line.checked),
             consent_version: "privacy-2026-06-27",
@@ -562,6 +844,7 @@
                 }
 
                 form.reset();
+                resetChoiceControls(form);
                 resetTurnstile(form);
             });
         }).catch(function (error) {

@@ -4,7 +4,7 @@
 
 ## 優先順序
 
-1. `POST /api/leads`：先替換免費健檢 localStorage，確保潛客不只存在瀏覽器。
+1. `POST /api/leads`：先替換免費財務健檢查詢 localStorage，確保潛客不只存在瀏覽器。
 2. Admin Auth：以伺服器 session 替換前端明碼密碼。
 3. `GET/PATCH /api/admin/leads`：後台 CRM 讀寫資料庫，並將 `contact_log` 落到 `lead_contact_logs` 保存每次聯繫歷史。
 4. `POST /api/events`：將本機事件寫入伺服器，並同步 GA4。
@@ -20,7 +20,7 @@ TFSE_ADMIN_PASSWORD='替換為伺服器環境密碼' python3 backend/tfse_persis
 ```
 
 前端切 API 時將 `site-config.json > backend.mode` 設為 `api`，並將 `backend.api_base_url` 指向 API 反代域名或本機 `http://127.0.0.1:8788`；未填時仍保持目前 localStorage fallback，不影響靜態站。
-可執行 `python3 tools/persistent_api_smoke.py` 驗證健康檢查、免費健檢落庫、Admin 登入、CRM 列表、狀態更新、資料回報、合規審核、個資履約、隱私同意拒收、蜜罐拒收、高敏 payload 拒收、24 小時重複提交復用與 `audit_logs`。
+可執行 `python3 tools/persistent_api_smoke.py` 驗證健康檢查、免費財務健檢查詢落庫、Admin 登入、CRM 列表、狀態更新、資料回報、合規審核、個資履約、隱私同意拒收、蜜罐拒收、高敏 payload 拒收、24 小時重複提交復用與 `audit_logs`。
 建議 staging / 小流量過渡層設定：
 
 ```bash
@@ -124,7 +124,7 @@ CRM 接入前也需匯出 `tfse_lead_dedupe_queue`，用完整手機雜湊、需
 
 ## 完成標準
 
-- 免費健檢提交後，資料庫有 `lead_forms` 紀錄。
+- 免費財務健檢查詢提交後，資料庫有 `lead_forms` 紀錄。
 - 後台登入由伺服器驗證。
 - CRM 可跨瀏覽器看到同一批資料。
 - 合規審核與審計日誌可查。

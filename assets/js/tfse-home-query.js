@@ -91,7 +91,7 @@
             "<div class=\"col mb-6\"><div class=\"icon-box box-border text-center\"><div class=\"content\">",
             "<h3 class=\"title\">推薦閱讀</h3>",
             "<div class=\"desc\"><ul class=\"text-start\">" + (picks.length ? renderLinks(picks) : "<li>暫無對應文章，可先查看資料庫。</li>") + "</ul></div>",
-            "<a class=\"btn btn-primary btn-hover-secondary mt-4\" href=\"" + sourceUrl + "\">帶入免費健檢</a>",
+            "<a class=\"btn btn-primary btn-hover-secondary mt-4\" href=\"" + sourceUrl + "\">帶入免費財務健檢查詢</a>",
             "</div></div></div>"
         ].join("");
 

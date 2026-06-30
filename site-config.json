@@ -13,8 +13,8 @@
     "google_site_verification": ""
   },
   "backend": {
-    "api_base_url": "",
-    "mode": "localStorage",
+    "api_base_url": ".",
+    "mode": "api",
     "timeout_ms": 8000
   },
   "security": {

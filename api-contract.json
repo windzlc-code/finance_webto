@@ -232,7 +232,7 @@
     {
       "method": "GET",
       "path": "/api/admin/line-oa-handoff-check",
-      "purpose": "正式 Line OA 導向驗收包，核對正式加友 URL、站內 CTA、免費健檢成功承接、quick reply、退訂入口與外部留痕欄位",
+      "purpose": "正式 Line OA 導向驗收包，核對正式加友 URL、站內 CTA、免費財務健檢查詢成功承接、quick reply、退訂入口與外部留痕欄位",
       "auth": "admin:super_admin|consultant|content_editor",
       "response": ["format", "status", "line_oa_url", "official_url_ready", "source_files", "cta_routes", "quick_reply_checks", "handoff_steps", "evidence_fields", "compliance_boundaries", "records", "record_summary", "blockers", "related_exports", "generated_at"]
     },

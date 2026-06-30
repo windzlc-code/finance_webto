@@ -100,8 +100,8 @@ def build_report():
     phases.append(phase(
         "ready",
         "phase_4",
-        "免费健检表单套入",
-        "免费健检表单、UTM、低敏字段、Line CTA 和浏览器提交流程已完成本地闭环。",
+        "免费财务健检查询表单套入",
+        "免费财务健检查询表单、UTM、低敏字段、Line CTA 和浏览器提交流程已完成本地闭环。",
         [
             item_evidence(items, "utm_recorded"),
             item_evidence(items, "no_sensitive_docs"),

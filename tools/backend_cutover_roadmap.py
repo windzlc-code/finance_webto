@@ -114,7 +114,7 @@ def build_report():
         step(
             "step_1_leads_api",
             "先接入 POST /api/leads",
-            "優先把免費健檢提交從 localStorage 切到正式 lead_forms，避免潛客只停留在瀏覽器。",
+            "優先把免費財務健檢查詢提交從 localStorage 切到正式 lead_forms，避免潛客只停留在瀏覽器。",
             step_1_ready,
             merge_blockers(item_map, "backend_api_base_url", "leads_api_persistence", "turnstile_backend_verification"),
             ["tfse_backend_acceptance_matrix", "tfse_turnstile_backend_verification_package", "tfse_form_risk_control_report"],

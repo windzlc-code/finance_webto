@@ -1133,7 +1133,7 @@ def conversion_optimization_backlog_report():
             "landing_url": page["landing_url"],
             "utm_example": page["utm_example"],
             "priority": "medium",
-            "hypothesis": "若保留合規邊界並讓使用者更快理解查詢方向與不代辦，可提升免費健檢提交與 Line 承接。",
+            "hypothesis": "若保留合規邊界並讓使用者更快理解查詢方向與不代辦，可提升免費財務健檢查詢提交與 Line 承接。",
             "primary_kpi": "lead_rate_percent",
             "secondary_kpi": "line_click_rate_percent",
             "baseline": {
@@ -1287,7 +1287,7 @@ def retrospective_report():
     page_breakdown = sort_count_map(group_count(event_items, lambda event: event.get("path") or "/"))[:10]
     suggestions = []
     if page_views and conversion_rate(cta_clicks, page_views) < 2:
-        suggestions.append("免費健檢 CTA 點擊率偏低，優先檢查首頁、分類頁與文章頁 CTA 文案是否清楚。")
+        suggestions.append("免費財務健檢查詢 CTA 點擊率偏低，優先檢查首頁、分類頁與文章頁 CTA 文案是否清楚。")
     if cta_clicks and conversion_rate(lead_submits, cta_clicks) < 20:
         suggestions.append("表單提交率偏低，檢查欄位數量、錯誤提示、隱私同意和 Line 承接說明。")
     if lead_submits and conversion_rate(line_clicks, lead_submits) < 50:
@@ -1402,7 +1402,7 @@ def legal_compliance_review_package_report():
         "items": items,
         "required_external_review": [
             "廣告文案與落地頁主張",
-            "免費健檢表單欄位與個資告知",
+            "免費財務健檢查詢表單欄位與個資告知",
             "隱私權政策、使用條款、免責聲明與來源政策",
             "Line OA 歡迎語、自動回覆、分群標籤與退訂/停止接收處理",
             "金融資訊呈現方式是否可能被誤認為代辦、放款或保證核貸",
@@ -1455,7 +1455,7 @@ def legal_external_review_evidence_report():
             "related_exports": legal["related_exports"] + ["tfse_external_verification_evidence"],
         },
         "signoff_requirements": [
-            "複核廣告落地頁、首頁、免費健檢、Line OA 話術與 SEO 文章是否維持資訊服務邊界。",
+            "複核廣告落地頁、首頁、免費財務健檢查詢、Line OA 話術與 SEO 文章是否維持資訊服務邊界。",
             "確認表單、隱私權政策、使用條款、免責聲明與資料來源政策沒有要求高敏資料或暗示代辦。",
             "確認所有需修改項目完成後，於外部配置驗證留痕選擇 legal_review 並保存去識別證據摘要。",
             "正式投流、SEO 大量收錄或 Line OA 對外承接前，需保留 reviewer、reviewed_at、result、evidence_note 與相關匯出包版本。",

@@ -5,19 +5,19 @@
 ## 已完成的 MVP 驗收
 
 - [x] 首頁、資料庫、分類、文章、健檢、合規頁可訪問。
-- [x] 首頁已建立需求查詢面板，可依需求、身份與地區推薦分類、文章並帶入免費健檢 UTM。
-- [x] `contact.html` 已恢復為聯絡與資料回報頁；免費健檢入口統一導向 `free-check.html`。
-- [x] 免費健檢表單不收證件、帳戶、卡號或密碼。
-- [x] 首頁與備用首頁的模板聯絡表單已統一套入免費健檢欄位、隱私同意、Line 同意、UTM、蜜罐與 Turnstile 欄位。
+- [x] 首頁已建立需求查詢面板，可依需求、身份與地區推薦分類、文章並帶入免費財務健檢查詢 UTM。
+- [x] `contact.html` 已恢復為聯絡與資料回報頁；免費財務健檢查詢入口統一導向 `free-check.html`。
+- [x] 免費財務健檢查詢表單不收證件、帳戶、卡號或密碼。
+- [x] 首頁與備用首頁的模板聯絡表單已統一套入免費財務健檢查詢欄位、隱私同意、Line 同意、UTM、蜜罐與 Turnstile 欄位。
 - [x] 表單送出會保存 UTM、需求標籤、推薦分類與推薦文章。
 - [x] 表單成功後會顯示可配置 Line 承接 CTA，並記錄展示與點擊事件。
 - [x] Line 官方帳號承接說明已資料化，包含歡迎語、需求按鈕、分群標籤與自動回覆原則。
-- [x] Line 每個 quick reply 已資料化邊界說明、入門文章、資料庫入口與帶 `utm_source=line` 的免費健檢入口，符合第 14 章自動回覆原則。
+- [x] Line 每個 quick reply 已資料化邊界說明、入門文章、資料庫入口與帶 `utm_source=line` 的免費財務健檢查詢入口，符合第 14 章自動回覆原則。
 - [x] 後台可匯出 Line OA 設定包，包含歡迎語、圖文選單入口、quick reply、自動回覆原則、標籤、分群同步隊列與合規邊界，供正式 Line OA 後台照表配置。
-- [x] 後台已建立 Line OA 導向驗收包，可匯出 `tfse_line_oa_handoff_check`，核對正式加友 URL、免費健檢成功承接、站內 CTA、quick reply、退訂/投訴入口與截圖留痕。
+- [x] 後台已建立 Line OA 導向驗收包，可匯出 `tfse_line_oa_handoff_check`，核對正式加友 URL、免費財務健檢查詢成功承接、站內 CTA、quick reply、退訂/投訴入口與截圖留痕。
 - [x] 表單會依需求、身份與 UTM 自動產生 Line 分群標籤；後台可查看並匯出已同意 Line 的分群同步隊列。
 - [x] 後台已建立 Line 退訂與投訴處理隊列，可匯出 `tfse_line_optout_complaint_queue`，彙整停止接收、投訴、封鎖、個資請求升級、SLA、處理步驟與去識別證據欄位。
-- [x] 免費健檢頁 FAQ 已資料化渲染，並可讀取後台本機覆蓋內容。
+- [x] 免費財務健檢查詢頁 FAQ 已資料化渲染，並可讀取後台本機覆蓋內容。
 - [x] 表單具備本機 60 秒提交冷卻、24 小時重複提交識別、匿名 `device_id` 與蜜罐欄位。
 - [x] 表單已預埋 Cloudflare Turnstile 配置、token 欄位與前端載入流程；未配置 site key 時不影響 MVP。
 - [x] 後台已建立表單風險與防刷檢查，可匯出 `tfse_form_risk_control_report`，彙整 Turnstile、蜜罐、限流、重複提交、device_id 與隱私同意風險，供正式 `POST /api/leads` 接入前核對。
@@ -66,10 +66,10 @@
 - [x] 後台可匯出/匯入本機 MVP 備份包，供正式後端導入前核對與還原演練。
 - [x] 瀏覽器煙測已用真實下載的本機備份包執行匯入復原演練，確認潛客與 `backup_import` 審計可恢復。
 - [x] 文章中心已依計劃建立首批 40 篇 SEO 內容種子，含 slug、分類、摘要、關鍵字、合規備註與公開發布狀態。
-- [x] 文章詳情頁已移除未接 CRM 的模板留言表單，改為免費健檢與資料庫 CTA，避免額外收集 Email 或留言個資。
+- [x] 文章詳情頁已移除未接 CRM 的模板留言表單，改為免費財務健檢查詢與資料庫 CTA，避免額外收集 Email 或留言個資。
 - [x] 產品資料庫已建立 30 筆示例資訊，每筆含來源標題、來源連結、更新日期、復核狀態與查詢確認事項。
 - [x] `tools/source_freshness_audit.py` 可檢查產品/機構來源時效、90 天復核週期、來源占位與核驗狀態一致性，避免已核驗資料仍使用占位來源。
-- [x] 金融資訊詳情頁可顯示官方來源、查詢前確認事項、相關公開資訊、推薦文章、分類 FAQ 與免費健檢 CTA。
+- [x] 金融資訊詳情頁可顯示官方來源、查詢前確認事項、相關公開資訊、推薦文章、分類 FAQ 與免費財務健檢查詢 CTA。
 - [x] `institutions.json` 已建立公開來源/機構目錄，來源政策頁、全站搜尋與後台合規摘要可讀取。
 - [x] 三大資料庫子頁已建立 `database/banks.html`、`database/finance-companies.html`、`database/credit-unions.html` 靜態別名，並自動套用對應機構類型篩選。
 - [x] 8 個計劃內分類入口已建立為靜態別名頁，並復用同一套分類模板與資料渲染。
@@ -81,7 +81,7 @@
 - [x] `robots.txt` 指向 sitemap。
 - [x] `site-config.json > canonical_pages` 已全量驗證：配置頁面需存在，且需出現在 sitemap。
 - [x] 全站 title、description、canonical、Open Graph 基礎標籤已補齊。
-- [x] 全站已加入 JSON-LD 結構化資料，包含 Organization、WebSite、WebPage，文章列表/資料庫/免費健檢頁會補充 Blog、ItemList 或 Service。
+- [x] 全站已加入 JSON-LD 結構化資料，包含 Organization、WebSite、WebPage，文章列表/資料庫/免費財務健檢查詢頁會補充 Blog、ItemList 或 Service。
 - [x] `site.webmanifest` 已建立，HTML head 已加入 manifest、theme-color 與 apple-touch-icon。
 - [x] `site-config.json` 與 `tools/generate_seo_assets.py` 可重生 canonical、OG、robots、sitemap、RSS feed、JSON-LD 與 manifest head 標記。
 - [x] `tools/seo_assets_audit.py` 可在臨時副本重跑 SEO 生成器，確認 HTML canonical/OG/JSON-LD、RSS、robots、sitemap、security.txt 與動態詳情頁 base URL 沒有漂移。
@@ -93,7 +93,7 @@
 - [x] `site-config.json` 已預留 GA4、Server Event、Meta Pixel、Sentry 配置位。
 - [x] 前台事件與錯誤摘要會先寫入本機復盤，並過濾敏感欄位。
 - [x] 前台已建立追蹤偏好橫幅，GA4、Meta Pixel 與 Server Event 需使用者同意 analytics 後才轉發；後台可匯出 `tfse_tracking_consent_audit` 核對同意留痕與外部追蹤阻擋項。
-- [x] Meta Pixel 已接入前台事件轉發，填入正式 `meta_pixel_id` 後可驗證瀏覽、表單、搜尋、免費健檢與 Line CTA 事件。
+- [x] Meta Pixel 已接入前台事件轉發，填入正式 `meta_pixel_id` 後可驗證瀏覽、表單、搜尋、免費財務健檢查詢與 Line CTA 事件。
 - [x] 後台已建立上線健康檢查，可匯出 base URL、sitemap、robots、404/500、GA4、Meta Pixel、Server Event、Sentry、Search Console、Line OA 與備份/合規掃描狀態。
 - [x] 後台已建立發布凍結與回滾交接包，可匯出 `tfse_release_readiness_package`，彙整健康檢查、正式配置、驗收留痕、備份/遷移摘要、部署命令、回滾步驟與發布阻擋項。
 - [x] 後台已建立運維任務隊列，可匯出 `tfse_operations_task_queue`，按責任角色彙整上線配置、SEO、合規、資料來源、個資、驗收、備份、Line OA 與發布待辦。
@@ -108,7 +108,7 @@
 - [x] 後台已建立第 17 章上線驗收清單，可匯出業務、UI、合規、技術與 SEO 驗收快照，並標出 `manual_browser` 瀏覽器待驗項。
 - [x] 後台已建立外部配置驗證留痕，可保存並匯出 `tfse_external_verification_evidence`，記錄 GA4、Meta Pixel、Server Event、Sentry、Search Console、Line OA、後端 API 與法務複核證據。
 - [x] 後台已建立瀏覽器人工驗收留痕面板，可保存桌面/手機 viewport、結果、證據備註並匯出 `tfse_browser_acceptance_report`，回填上線驗收清單中的人工待驗項。
-- [x] 本機瀏覽器驗收證據已固化到 `assets/data/browser-acceptance-evidence.json`，覆蓋桌面/手機排版、免費健檢提交、聯絡頁低敏資料回報提交與 Admin 登入流程，供 `acceptance_audit.py`、Admin 驗收面板與瀏覽器驗收報告共享。
+- [x] 本機瀏覽器驗收證據已固化到 `assets/data/browser-acceptance-evidence.json`，覆蓋桌面/手機排版、免費財務健檢查詢提交、聯絡頁低敏資料回報提交與 Admin 登入流程，供 `acceptance_audit.py`、Admin 驗收面板與瀏覽器驗收報告共享。
 - [x] 瀏覽器煙測已驗證 Admin 可下載復盤報告、上線健康檢查、正式配置交接包、驗收清單、瀏覽器驗收留痕與廣告投流檢查 JSON。
 - [x] `tools/acceptance_audit.py` 可將專案計畫第 17/21 章拆成 ready、manual_browser、external_pending 與 not_applicable 狀態，供本機交付前核對。
 - [x] `tools/launch_cutover_audit.py` 可將「正式上線前仍需人工/外部完成」段落整理成 `pending_external_input`、`ready_for_external_execution`、`pending_human_review` 與 `pending_local_prep`，避免只盯著少數配置項而漏掉正式切換待辦。
@@ -136,7 +136,7 @@
 - [x] 後台已建立 owner 切站任務包，可匯出 `tfse_owner_cutover_bundle`，把正式配置、外部執行與 closeout 任務按 owner 聚合成可直接分派的執行包，並附上 owner 專屬 `site-config` patch template 與 `.env` 片段。
 - [x] 後台已建立上線日 run sheet，可匯出 `tfse_release_day_runsheet`，把 D-3 / D-2 / D-1 / Go-live / D+1 的 owner 任務壓成正式切站日作戰表，並附帶 owner 對應的 patch template 與 `.env` 片段。
 - [x] `tools/browser_acceptance_report.py` 可由 `manual_browser` 項產生瀏覽器驗收 JSON 或 Markdown 留痕模板。
-- [x] `tools/accessibility_audit.py` 可檢查 HTML 語系、圖片 alt、免費健檢表單欄位、蜜罐隱藏與表單提示 `aria-live`，避免套版內容破壞基礎可用性。
+- [x] `tools/accessibility_audit.py` 可檢查 HTML 語系、圖片 alt、免費財務健檢查詢表單欄位、蜜罐隱藏與表單提示 `aria-live`，避免套版內容破壞基礎可用性。
 - [x] `tools/navigation_consistency_audit.py` 可檢查 Header / 下拉選單文案一致性，以及子目錄頁面依 `<base href="../">` 解析後的站內連結與靜態資源是否存在。
 - [x] `tools/sclaw_comparison_audit.py --markdown` 可對照 `/Library/Github/SCLAW_fz` 的來源治理、搜尋 API、SEO、資料管線、後台工作台與匯出交接能力，確認 TFSE 已吸收需要的部分，且不直接搬入不相符的房地產資料模型。
 - [x] `tools/data_quality_audit.py` 可檢查分類、產品、文章、落地頁、來源、Line flows 與合規規則的 slug、數量、來源、日期、狀態與必要欄位。
@@ -183,18 +183,18 @@
 - [x] `tools/api_contract_audit.py` 可檢查正式 API 合約是否覆蓋公開端點、Admin RBAC、Turnstile、限流、表單欄位、隱私/Line 隊列與審計日誌。
 - [x] `tools/backend_schema_audit.py` 可檢查 `backend-schema.sql` 是否覆蓋正式資料表、敏感欄位、隱私同意、Line/個資隊列、審計與必要索引。
 - [x] `tools/performance_budget_audit.py` 可檢查關鍵頁直接引用 CSS/JS/圖片大小與全站大圖，避免在保留模板時無意加入過大資源。
-- [x] `tools/browser_acceptance_verify.mjs` 可啟動本機靜態伺服器與 Playwright，煙測關鍵頁、手機橫向溢出、桌面/手機文字裁切、移動選單開合、免費健檢提交、聯絡頁低敏資料回報提交、UTM、Admin 登入、CRM 可見與狀態更新審計。
-- [x] `tools/browser_acceptance_verify.mjs` 已加入正式 API 模式煙測，會臨時模擬 `backend.api_base_url`、`POST /api/leads`、`POST /api/public-feedback`、`GET /api/products`、`GET /api/articles`、`GET /api/institutions`、`GET /api/search`、`GET /api/admin/leads` 與 `PATCH /api/admin/leads/:id/status`，確認前台內容、免費健檢、聯絡頁資料回報與 Admin CRM 可從 localStorage/靜態 JSON 切到 API。
+- [x] `tools/browser_acceptance_verify.mjs` 可啟動本機靜態伺服器與 Playwright，煙測關鍵頁、手機橫向溢出、桌面/手機文字裁切、移動選單開合、免費財務健檢查詢提交、聯絡頁低敏資料回報提交、UTM、Admin 登入、CRM 可見與狀態更新審計。
+- [x] `tools/browser_acceptance_verify.mjs` 已加入正式 API 模式煙測，會臨時模擬 `backend.api_base_url`、`POST /api/leads`、`POST /api/public-feedback`、`GET /api/products`、`GET /api/articles`、`GET /api/institutions`、`GET /api/search`、`GET /api/admin/leads` 與 `PATCH /api/admin/leads/:id/status`，確認前台內容、免費財務健檢查詢、聯絡頁資料回報與 Admin CRM 可從 localStorage/靜態 JSON 切到 API。
 - [x] 已建立 `tools/mock_formal_api.py` 本機 mock formal API，可提供 `POST /api/leads`、`POST /api/events`、`POST /api/public-feedback`、`GET /api/products`、`GET /api/articles`、`GET /api/institutions`、`GET /api/search`、`GET /api/admin/leads`、`PATCH /api/admin/leads/:id/status`、`GET /api/admin/audit-logs` 與 Admin Auth session rehearsal，供前端在不改模板的前提下做真實 HTTP API rehearsal。
-- [x] 已建立 `backend/tfse_persistent_api.py` SQLite 持久化 MVP API，沿用正式 API 合約提供 `POST /api/leads`、`POST /api/events`、`POST /api/public-feedback`、內容查詢、Admin session、CRM 列表/狀態更新、`POST /api/admin/compliance/review`、`GET/PATCH /api/admin/privacy-requests` 與 `audit_logs`，可把免費健檢、後台 CRM、合規審核與個資履約從 localStorage 推進到可重啟保留的資料庫閉環。
+- [x] 已建立 `backend/tfse_persistent_api.py` SQLite 持久化 MVP API，沿用正式 API 合約提供 `POST /api/leads`、`POST /api/events`、`POST /api/public-feedback`、內容查詢、Admin session、CRM 列表/狀態更新、`POST /api/admin/compliance/review`、`GET/PATCH /api/admin/privacy-requests` 與 `audit_logs`，可把免費財務健檢查詢、後台 CRM、合規審核與個資履約從 localStorage 推進到可重啟保留的資料庫閉環。
 - [x] 持久化 MVP API 已補齊表單安全基線：`TFSE_TURNSTILE_ENABLED=true` 時呼叫 Cloudflare siteverify、保留蜜罐拒收、10 分鐘 IP/device 限流、24 小時同手機雜湊 + 同需求重複提交復用、高敏 payload 拒收、隱私同意必填與 `lead_duplicate_reuse` 審計。
-- [x] 已建立 `tools/persistent_api_smoke.py`，可自動啟動持久化 API 並驗證健康檢查、隱私未同意拒收、蜜罐拒收、高敏 payload 拒收、免費健檢落庫、重複提交復用、Admin 登入、CRM 可見、狀態更新、資料回報、合規審核、個資刪除履約與審計紀錄。
+- [x] 已建立 `tools/persistent_api_smoke.py`，可自動啟動持久化 API 並驗證健康檢查、隱私未同意拒收、蜜罐拒收、高敏 payload 拒收、免費財務健檢查詢落庫、重複提交復用、Admin 登入、CRM 可見、狀態更新、資料回報、合規審核、個資刪除履約與審計紀錄。
 - [x] 後台「本機備份與遷移包」已提供正式遷移包匯出，可打包 seed JSON、內容覆蓋、潛客、合規審核、審計、來源復核、個資請求、Line 分群與匯入順序，供正式後端導入前核對。
 - [x] 後台已建立正式資料導入驗收包，可匯出 `tfse_import_validation_package`，核對 seed 數量、sample_lead 排除、來源復核、個資請求、Line 分群、加密欄位與導入後抽查。
 - [x] 後台已建立正式備份與還原演練交接包，可匯出 `tfse_backup_restore_drill_plan`，列出每日備份、每週還原、RPO/RTO、證據欄位、抽查步驟與外部阻擋項；實際備份仍需正式環境完成。
 - [x] 後台已建立正式備份收據驗收包，可匯出 `tfse_backup_receipt_verification_package`，核對 backup_jobs、checksum、加密儲存、每週還原結果、RPO/RTO 與 audit_logs。
 - [x] 後台已建立資料保留/刪除月檢交接包，可匯出 `tfse_data_retention_purge_plan`，列出保留規則、匿名化/刪除候選、legal hold、證據欄位與正式後端阻擋項。
-- [x] `404.html` 與 `500.html` 已建立，並可導回資料庫、文章與免費健檢入口。
+- [x] `404.html` 與 `500.html` 已建立，並可導回資料庫、文章與免費財務健檢查詢入口。
 - [x] `_headers` 已提供靜態主機安全標頭、CSP 與快取策略；`.well-known/security.txt` 已提供標準安全聯絡資訊。
 - [x] `43.130.233.113` Nginx 已套用 TFSE 安全標頭與快取策略，公网 live check 已驗證首頁、SEO 資產、site-config、logo asset 與 `/api/health` 的 headers。
 - [x] `TFSE_TEMPLATE_MAPPING.md` 已建立模板頁面、區塊、資料、腳本、驗收與不重設 UI 的套用邊界，對應專案計畫 Phase 0。
@@ -306,8 +306,8 @@ python3 -m http.server 4173
 
 瀏覽器驗收重點：
 
-- 首頁 CTA 可進入資料庫與免費健檢。
+- 首頁 CTA 可進入資料庫與免費財務健檢查詢。
 - `service.html` 可搜尋、篩選並進入 `products/{slug}.html`。
 - `blog-grid.html` 與 `blog-classic.html` 可進入 `articles/{slug}.html`。
-- 免費健檢提交後，`admin.html` 登入後可看到線索。
+- 免費財務健檢查詢提交後，`admin.html` 登入後可看到線索。
 - 後台產品狀態、文章發布、合規摘要、事件復盤可操作。
