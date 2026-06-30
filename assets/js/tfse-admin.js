@@ -260,6 +260,31 @@
             .replace(/'/g, "&#039;");
     }
 
+    function normalizeFreeCheckCopy(value) {
+        var traditionalFull = "免費財務健檢查詢";
+        var simplifiedFull = "免费财务健检查询";
+        var traditionalShort = new RegExp("免費財務" + "健檢(?!查詢)", "g");
+        var simplifiedShort = new RegExp("免费财务" + "健检(?!查询)", "g");
+        var traditionalLegacy = new RegExp("免費" + "健檢", "g");
+        var simplifiedLegacy = new RegExp("免费" + "健检", "g");
+        if (typeof value === "string") {
+            return value
+                .replace(traditionalShort, traditionalFull)
+                .replace(simplifiedShort, simplifiedFull)
+                .replace(traditionalLegacy, traditionalFull)
+                .replace(simplifiedLegacy, simplifiedFull);
+        }
+        if (Array.isArray(value)) return value.map(normalizeFreeCheckCopy);
+        if (value && typeof value === "object") {
+            var output = {};
+            Object.keys(value).forEach(function (key) {
+                output[key] = normalizeFreeCheckCopy(value[key]);
+            });
+            return output;
+        }
+        return value;
+    }
+
     function makeAdminSlug(value, fallbackPrefix) {
         var base = String(value || "")
             .trim()
@@ -386,7 +411,7 @@
                 productData = productResult.items;
             }
             if (Array.isArray(articleResult.items)) {
-                articleData = articleResult.items;
+                articleData = normalizeFreeCheckCopy(articleResult.items || []);
             }
             renderProducts();
             renderArticles();
@@ -7398,7 +7423,8 @@
     }
 
     function articleView(article) {
-        var overrides = getArticleOverrides()[article.id] || {};
+        article = normalizeFreeCheckCopy(article || {});
+        var overrides = normalizeFreeCheckCopy(getArticleOverrides()[article.id] || {});
         var copy = {};
         Object.keys(article).forEach(function (key) {
             copy[key] = article[key];
@@ -7407,7 +7433,7 @@
             copy[key] = overrides[key];
         });
         copy.status = articleStatus(copy);
-        return copy;
+        return normalizeFreeCheckCopy(copy);
     }
 
     function saveArticleOverride(articleId, fields) {
@@ -9188,7 +9214,7 @@
             loadJson("assets/data/source-verification-evidence.json", {})
         ]).then(function (data) {
             productData = data[0] || [];
-            articleData = data[1] || [];
+            articleData = normalizeFreeCheckCopy(data[1] || []);
             faqData = data[2] || [];
             institutionData = data[3] || [];
             complianceRules = data[4];

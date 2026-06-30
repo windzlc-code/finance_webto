@@ -66,6 +66,31 @@
         return String(text || "").toLowerCase().indexOf(String(keyword || "").toLowerCase()) !== -1;
     }
 
+    function normalizeFreeCheckCopy(value) {
+        var traditionalFull = "免費財務健檢查詢";
+        var simplifiedFull = "免费财务健检查询";
+        var traditionalShort = new RegExp("免費財務" + "健檢(?!查詢)", "g");
+        var simplifiedShort = new RegExp("免费财务" + "健检(?!查询)", "g");
+        var traditionalLegacy = new RegExp("免費" + "健檢", "g");
+        var simplifiedLegacy = new RegExp("免费" + "健检", "g");
+        if (typeof value === "string") {
+            return value
+                .replace(traditionalShort, traditionalFull)
+                .replace(simplifiedShort, simplifiedFull)
+                .replace(traditionalLegacy, traditionalFull)
+                .replace(simplifiedLegacy, simplifiedFull);
+        }
+        if (Array.isArray(value)) return value.map(normalizeFreeCheckCopy);
+        if (value && typeof value === "object") {
+            var output = {};
+            Object.keys(value).forEach(function (key) {
+                output[key] = normalizeFreeCheckCopy(value[key]);
+            });
+            return output;
+        }
+        return value;
+    }
+
     function filterProducts(items, params) {
         params = params || {};
         return (items || []).filter(function (item) {
@@ -91,7 +116,7 @@
 
     function filterArticles(items, params) {
         params = params || {};
-        return (items || []).filter(function (item) {
+        return (items || []).map(normalizeFreeCheckCopy).filter(function (item) {
             if (params.status && item.status !== params.status) return false;
             if (params.category && item.category !== params.category) return false;
             if (params.keyword) {
@@ -662,6 +687,7 @@
                 });
             }
             return requestJson(url + queryString(params), { method: "GET" }, timeoutMs(config)).then(function (data) {
+                if (data && data.items) data.items = normalizeFreeCheckCopy(data.items);
                 return Object.assign({ mode: "api" }, data);
             }).catch(function (error) {
                 reportApiFallback("GET /api/articles", error);

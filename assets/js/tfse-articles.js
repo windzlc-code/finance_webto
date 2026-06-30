@@ -48,6 +48,31 @@
             });
     }
 
+    function normalizeFreeCheckCopy(value) {
+        var traditionalFull = "免費財務健檢查詢";
+        var simplifiedFull = "免费财务健检查询";
+        var traditionalShort = new RegExp("免費財務" + "健檢(?!查詢)", "g");
+        var simplifiedShort = new RegExp("免费财务" + "健检(?!查询)", "g");
+        var traditionalLegacy = new RegExp("免費" + "健檢", "g");
+        var simplifiedLegacy = new RegExp("免费" + "健检", "g");
+        if (typeof value === "string") {
+            return value
+                .replace(traditionalShort, traditionalFull)
+                .replace(simplifiedShort, simplifiedFull)
+                .replace(traditionalLegacy, traditionalFull)
+                .replace(simplifiedLegacy, simplifiedFull);
+        }
+        if (Array.isArray(value)) return value.map(normalizeFreeCheckCopy);
+        if (value && typeof value === "object") {
+            var output = {};
+            Object.keys(value).forEach(function (key) {
+                output[key] = normalizeFreeCheckCopy(value[key]);
+            });
+            return output;
+        }
+        return value;
+    }
+
     function loadArticles() {
         if (!window.TFSEApi || !window.TFSEApi.listArticles) return loadJson("assets/data/articles.json", []);
         return window.TFSEApi.listArticles({ status: "published" }).then(function (result) {
@@ -340,8 +365,8 @@
         loadArticles(),
         loadJson("assets/data/faq.json", [])
     ]).then(function (data) {
-        articles = data[0] || [];
-        faqs = (data[1] || []).map(withFaqOverrides);
+        articles = normalizeFreeCheckCopy(data[0] || []);
+        faqs = normalizeFreeCheckCopy((data[1] || []).map(withFaqOverrides));
         renderAll();
         if (search) search.addEventListener("input", function () {
             renderGrid();

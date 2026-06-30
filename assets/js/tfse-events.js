@@ -266,6 +266,20 @@
         }
     }
 
+    function normalizeFreeCheckCopy(value) {
+        var traditionalFull = "免費財務健檢查詢";
+        var simplifiedFull = "免费财务健检查询";
+        var traditionalShort = new RegExp("免費財務" + "健檢(?!查詢)", "g");
+        var simplifiedShort = new RegExp("免费财务" + "健检(?!查询)", "g");
+        var traditionalLegacy = new RegExp("免費" + "健檢", "g");
+        var simplifiedLegacy = new RegExp("免费" + "健检", "g");
+        return String(value || "")
+            .replace(traditionalShort, traditionalFull)
+            .replace(simplifiedShort, simplifiedFull)
+            .replace(traditionalLegacy, traditionalFull)
+            .replace(simplifiedLegacy, simplifiedFull);
+    }
+
     var textOriginals = typeof WeakMap !== "undefined" ? new WeakMap() : null;
     var attrOriginals = typeof WeakMap !== "undefined" ? new WeakMap() : null;
     var i18nApplying = false;
@@ -397,6 +411,7 @@
     }
 
     function convertText(value, mode) {
+        value = normalizeFreeCheckCopy(value);
         if (mode === "zh-CN") return convertByMap(value, tradToSimpPhrases, tradToSimpChars);
         if (!simpToTradPhrases) simpToTradPhrases = reverseMap(tradToSimpPhrases);
         if (!simpToTradChars) simpToTradChars = reverseMap(tradToSimpChars);
@@ -412,8 +427,8 @@
 
     function applyI18nToTextNode(node, mode) {
         if (shouldSkipI18nNode(node)) return;
-        if (textOriginals && !textOriginals.has(node)) textOriginals.set(node, node.nodeValue);
-        var original = textOriginals ? textOriginals.get(node) : node.nodeValue;
+        if (textOriginals && !textOriginals.has(node)) textOriginals.set(node, normalizeFreeCheckCopy(node.nodeValue));
+        var original = textOriginals ? textOriginals.get(node) : normalizeFreeCheckCopy(node.nodeValue);
         node.nodeValue = mode === "zh-TW" ? original : convertText(original, "zh-CN");
     }
 
@@ -427,7 +442,7 @@
                 store = {};
                 if (attrOriginals) attrOriginals.set(element, store);
             }
-            if (!store[attr]) store[attr] = element.getAttribute(attr);
+            if (!store[attr]) store[attr] = normalizeFreeCheckCopy(element.getAttribute(attr));
             element.setAttribute(attr, mode === "zh-TW" ? store[attr] : convertText(store[attr], "zh-CN"));
         });
     }
@@ -697,10 +712,11 @@
     function installI18nObserver() {
         if (i18nObserver || typeof MutationObserver === "undefined") return;
         i18nObserver = new MutationObserver(function (records) {
-            if (i18nApplying || currentLanguageMode() !== "zh-CN") return;
+            if (i18nApplying) return;
+            var mode = currentLanguageMode();
             records.forEach(function (record) {
                 Array.prototype.forEach.call(record.addedNodes || [], function (node) {
-                    if (node.nodeType === 1 || node.nodeType === 3) walkI18n(node, "zh-CN");
+                    if (node.nodeType === 1 || node.nodeType === 3) walkI18n(node, mode);
                 });
             });
         });
