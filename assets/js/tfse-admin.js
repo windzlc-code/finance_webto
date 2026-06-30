@@ -300,7 +300,8 @@
     ];
     var adminWorkbenchState = {
         activeGroup: localStorage.getItem("tfse_admin_workbench_group") || "content",
-        activeModules: safeReadWorkbenchModules()
+        activeModules: safeReadWorkbenchModules(),
+        drawerOpen: false
     };
     var adminPassword = "admin123";
     var leadSourceMode = "localStorage";
@@ -475,6 +476,44 @@
         activateAdminWorkbenchGroup(counts[adminWorkbenchState.activeGroup] ? adminWorkbenchState.activeGroup : "content");
     }
 
+    function ensureAdminWorkbenchDrawerFrame() {
+        var section = document.querySelector(".tfse-admin-workbench-section");
+        if (!section || section.querySelector("[data-admin-workbench-close]")) return;
+        var closeButton = document.createElement("button");
+        closeButton.type = "button";
+        closeButton.className = "tfse-admin-workbench-close";
+        closeButton.setAttribute("data-admin-workbench-close", "");
+        closeButton.setAttribute("aria-label", "關閉後台模組");
+        closeButton.innerHTML = '<i class="fa fa-times" aria-hidden="true"></i>';
+        section.insertBefore(closeButton, section.firstChild);
+    }
+
+    function openAdminWorkbenchDrawer(groupKey) {
+        var group = groupByKey(groupKey || adminWorkbenchState.activeGroup);
+        ensureAdminWorkbenchDrawerFrame();
+        activateAdminWorkbenchGroup(group.key);
+        adminWorkbenchState.drawerOpen = true;
+        document.body.classList.add("tfse-admin-workbench-drawer-open");
+        var section = document.querySelector(".tfse-admin-workbench-section");
+        if (section) {
+            section.setAttribute("aria-modal", "true");
+            section.setAttribute("role", "dialog");
+            section.setAttribute("aria-label", group.label + "模組");
+        }
+        var drawerContainer = section && section.querySelector(".container");
+        if (drawerContainer) drawerContainer.scrollTop = 0;
+    }
+
+    function closeAdminWorkbenchDrawer() {
+        adminWorkbenchState.drawerOpen = false;
+        document.body.classList.remove("tfse-admin-workbench-drawer-open");
+        var section = document.querySelector(".tfse-admin-workbench-section");
+        if (!section) return;
+        section.removeAttribute("aria-modal");
+        section.removeAttribute("role");
+        section.removeAttribute("aria-label");
+    }
+
     function workbenchModuleLabel(row, index) {
         var titles = Array.prototype.slice.call(row.querySelectorAll("h5.title")).map(function (item) {
             return item.textContent.trim();
@@ -500,6 +539,24 @@
             var label = row.getAttribute("data-admin-workbench-module-label") || moduleKey;
             return "<button type=\"button\" class=\"" + active + "\" data-admin-workbench-module=\"" + escapeHtml(moduleKey) + "\" data-admin-workbench-module-group=\"" + escapeHtml(groupKey) + "\">" + escapeHtml(label) + "</button>";
         }).join("");
+    }
+
+    function visualRenderWorkbenchHub() {
+        return [
+            "<div class=\"tfse-visual-module-hub\" aria-label=\"後台功能模組\">",
+            "<div class=\"tfse-visual-module-hub-head\"><div><small>後台模組</small><strong>舊功能已收進抽屜，不再佔用頁面捲動</strong></div><span>按需開啟</span></div>",
+            "<div class=\"tfse-visual-module-hub-grid\">",
+            adminWorkbenchGroups.map(function (group) {
+                return [
+                    "<button type=\"button\" data-visual-workbench-open=\"" + escapeHtml(group.key) + "\">",
+                    "<i class=\"fa " + escapeHtml(group.icon) + "\" aria-hidden=\"true\"></i>",
+                    "<span><strong>" + escapeHtml(group.label) + "</strong><small>" + escapeHtml(group.description) + "</small></span>",
+                    "</button>"
+                ].join("");
+            }).join(""),
+            "</div>",
+            "</div>"
+        ].join("");
     }
 
     function normalizeFreeCheckCopy(value) {
@@ -8698,6 +8755,7 @@
             "<main class=\"tfse-visual-main\">",
             "<header class=\"tfse-visual-topbar\"><div><button type=\"button\" class=\"tfse-visual-menu\" data-visual-tab=\"dashboard\"><i class=\"fa fa-bars\"></i></button><h2>" + escapeHtml(pageTitles[visualConsoleState.tab] || "CRM 儀表板") + "</h2></div><div class=\"tfse-visual-userbar\"><span class=\"tfse-visual-bell\"><i class=\"fa fa-bell\"></i><b>" + notificationCount + "</b></span><span>TFSE 金融便民中心</span><strong>" + escapeHtml(roleLabel(currentRole())) + "</strong><button type=\"button\" data-visual-refresh><i class=\"fa fa-sync-alt\"></i> 更新資料</button></div></header>",
             "<section class=\"tfse-visual-metrics\">" + visualRenderMetricCards(payload.metrics) + "</section>",
+            visualRenderWorkbenchHub(),
             "<section class=\"tfse-visual-workgrid\">",
             visualRenderMainModule(payload, leads),
             "<aside class=\"tfse-visual-rightcol\">",
@@ -9554,6 +9612,11 @@
                 if (target) target.click();
                 return;
             }
+            var workbenchButton = event.target.closest("[data-visual-workbench-open]");
+            if (workbenchButton) {
+                openAdminWorkbenchDrawer(workbenchButton.getAttribute("data-visual-workbench-open"));
+                return;
+            }
             var visualRefresh = event.target.closest("[data-visual-refresh]");
             if (visualRefresh) {
                 if (refreshButton) refreshButton.click();
@@ -9662,7 +9725,15 @@
             } else {
                 showAllAdminWorkbenchGroups();
             }
+            return;
         }
+        var closeWorkbenchButton = event.target.closest("[data-admin-workbench-close]");
+        if (closeWorkbenchButton) {
+            closeAdminWorkbenchDrawer();
+        }
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && adminWorkbenchState.drawerOpen) closeAdminWorkbenchDrawer();
     });
     if (seedButton) seedButton.addEventListener("click", function () {
         addAudit("seed_leads_disabled", "後台已禁止產生測試資料。");
