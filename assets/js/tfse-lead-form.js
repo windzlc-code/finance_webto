@@ -331,16 +331,19 @@
         return "";
     }
 
-    function validatePhoneField(form, message) {
+    function validatePhoneField(form, message, options) {
+        options = options || {};
         var field = form && form.elements.phone_local;
         var hidden = form && form.elements.phone;
         if (!field) return true;
         var error = internationalPhoneError(form);
         field.setCustomValidity(error);
         if (error) {
-            setMessage(message, error, "error");
-            field.reportValidity();
-            field.focus();
+            if (!options.silent) {
+                setMessage(message, error, "error");
+                field.reportValidity();
+                field.focus();
+            }
             return false;
         }
         if (hidden) hidden.value = normalizeInternationalPhone(form);
@@ -391,6 +394,68 @@
         sync();
     }
 
+    function padDatePart(value) {
+        return String(value || "").padStart(2, "0");
+    }
+
+    function daysInMonth(year, month) {
+        if (!year || !month) return 31;
+        return new Date(Number(year), Number(month), 0).getDate();
+    }
+
+    function syncBirthDate(form) {
+        var picker = form.querySelector("[data-birth-picker]");
+        var hidden = form.elements.birth_date;
+        if (!picker || !hidden) return;
+        var year = picker.querySelector("[data-birth-year]");
+        var month = picker.querySelector("[data-birth-month]");
+        var day = picker.querySelector("[data-birth-day]");
+        hidden.value = year && month && day && year.value && month.value && day.value
+            ? year.value + "-" + padDatePart(month.value) + "-" + padDatePart(day.value)
+            : "";
+    }
+
+    function setupBirthDatePicker(form) {
+        var picker = form.querySelector("[data-birth-picker]");
+        if (!picker || picker.getAttribute("data-tfse-ready") === "true") return;
+        picker.setAttribute("data-tfse-ready", "true");
+        var year = picker.querySelector("[data-birth-year]");
+        var month = picker.querySelector("[data-birth-month]");
+        var day = picker.querySelector("[data-birth-day]");
+        if (!year || !month || !day) return;
+        var currentYear = new Date().getFullYear();
+        for (var y = currentYear - 18; y >= currentYear - 90; y -= 1) {
+            addOption(year, String(y), String(y) + " 年");
+        }
+        for (var m = 1; m <= 12; m += 1) {
+            addOption(month, String(m), String(m) + " 月");
+        }
+        function renderDays() {
+            var selectedDay = day.value;
+            var totalDays = daysInMonth(year.value, month.value);
+            resetSelect(day, "日");
+            for (var d = 1; d <= totalDays; d += 1) {
+                addOption(day, String(d), String(d) + " 日");
+            }
+            if (selectedDay && Number(selectedDay) <= totalDays) day.value = selectedDay;
+            syncPlaceholderField(day);
+            syncBirthDate(form);
+        }
+        year.addEventListener("change", function () {
+            renderDays();
+            syncPlaceholderField(year);
+        });
+        month.addEventListener("change", function () {
+            renderDays();
+            syncPlaceholderField(month);
+        });
+        day.addEventListener("change", function () {
+            syncPlaceholderField(day);
+            syncBirthDate(form);
+        });
+        renderDays();
+    }
+
     function choiceValue(form, name) {
         var select = form && form.querySelector("[data-custom-select=\"" + name + "\"]");
         var custom = form && form.querySelector("[data-custom-input=\"" + name + "\"]");
@@ -412,6 +477,27 @@
                 if (!isCustom) custom.value = "";
             };
             select.addEventListener("change", sync);
+            sync();
+        });
+    }
+
+    function syncPlaceholderField(field) {
+        if (!field) return;
+        var empty = !field.value;
+        field.classList.toggle("tfse-is-placeholder", empty);
+        field.classList.toggle("tfse-has-value", !empty);
+    }
+
+    function setupPlaceholderStates(form) {
+        Array.prototype.slice.call(form.querySelectorAll("select, input[type=\"date\"]")).forEach(function (field) {
+            var sync = function () {
+                syncPlaceholderField(field);
+            };
+            if (field.getAttribute("data-tfse-placeholder-ready") !== "true") {
+                field.setAttribute("data-tfse-placeholder-ready", "true");
+                field.addEventListener("change", sync);
+                field.addEventListener("input", sync);
+            }
             sync();
         });
     }
@@ -503,8 +589,183 @@
     function setupChoiceControls(form) {
         setupRegionPicker(form);
         setupPhonePicker(form);
+        setupBirthDatePicker(form);
         setupCustomSelects(form);
+        setupPlaceholderStates(form);
         syncRegionCountryFromPhone(form, true);
+    }
+
+    var formSteps = [
+        {
+            title: "基礎資料",
+            desc: "第 1 步 / 共 3 步：先留下稱呼、手機與主要需求。",
+            auto: true,
+            fields: ["display_name", "phone_country_code", "phone_local", "needs", "occupation_type"]
+        },
+        {
+            title: "補充狀況",
+            desc: "第 2 步 / 共 3 步：選填財務與工作狀況，方便整理查詢方向。",
+            auto: false,
+            fields: ["line_id", "birth_date", "region_picker", "current_job", "current_job_years", "current_job_months", "income_type", "monthly_income", "salary_method", "labor_insurance", "has_house", "has_car", "has_land", "recent_credit_report", "message", "message_detail"]
+        },
+        {
+            title: "確認送出",
+            desc: "第 3 步 / 共 3 步：確認資訊邊界與提醒方式後提交。",
+            auto: false,
+            fields: ["consent_privacy", "consent_line", "turnstile", "submit"]
+        }
+    ];
+
+    function fieldStepGroup(form, key) {
+        var field = null;
+        if (key === "region_picker") field = form.querySelector("[data-region-picker]");
+        else if (key === "message_detail") field = form.querySelector("[data-custom-input=\"message\"]");
+        else if (key === "turnstile") field = form.querySelector("[data-turnstile-field]");
+        else if (key === "submit") field = submitButton(form);
+        else field = form.elements[key] || form.querySelector("[name=\"" + key + "\"]");
+        return field ? field.closest("[class*=\"col-\"]") : null;
+    }
+
+    function stepFields(form, stepIndex) {
+        var groups = Array.prototype.slice.call(form.querySelectorAll("[data-tfse-step=\"" + stepIndex + "\"]"));
+        return groups.reduce(function (items, group) {
+            return items.concat(Array.prototype.slice.call(group.querySelectorAll("input, select, textarea")));
+        }, []).filter(function (field) {
+            return field.name !== "website" && field.type !== "hidden" && !field.disabled && !field.hidden;
+        });
+    }
+
+    function currentStepIndex(form) {
+        return Number(form.getAttribute("data-tfse-current-step") || "0");
+    }
+
+    function requiredStepValid(form, stepIndex) {
+        if (stepIndex === 0 && !validatePhoneField(form, document.querySelector(".form-messege"), { silent: true })) return false;
+        return stepFields(form, stepIndex).filter(function (field) {
+            return field.required;
+        }).every(function (field) {
+            return field.checkValidity();
+        });
+    }
+
+    function renderStepChrome(form) {
+        var area = form.closest(".contact-form-area");
+        var row = form.querySelector(".row");
+        if (!area || !row || area.querySelector("[data-tfse-step-header]")) return;
+        var header = document.createElement("div");
+        header.className = "tfse-form-step-header";
+        header.setAttribute("data-tfse-step-header", "");
+        header.innerHTML = [
+            "<div class=\"tfse-form-step-copy\">",
+                "<span data-tfse-step-kicker>第 1 步 / 共 3 步</span>",
+                "<h3 data-tfse-step-title>基礎資料</h3>",
+                "<p data-tfse-step-desc>先留下稱呼、手機與主要需求。</p>",
+            "</div>",
+            "<div class=\"tfse-form-step-dots\" aria-label=\"表單填寫進度\">",
+                formSteps.map(function (_, index) { return "<button type=\"button\" data-tfse-step-dot=\"" + index + "\" aria-label=\"前往第 " + (index + 1) + " 步\">" + (index + 1) + "</button>"; }).join(""),
+            "</div>"
+        ].join("");
+        form.insertBefore(header, row);
+        var controls = document.createElement("div");
+        controls.className = "tfse-form-step-controls";
+        controls.setAttribute("data-tfse-step-controls", "");
+        controls.innerHTML = [
+            "<button type=\"button\" class=\"tfse-step-prev\" data-tfse-step-prev>上一步</button>",
+            "<span data-tfse-step-hint>完成本步後會自動前往下一步</span>",
+            "<button type=\"button\" class=\"tfse-step-next\" data-tfse-step-next>下一步</button>"
+        ].join("");
+        row.parentNode.insertBefore(controls, row.nextSibling);
+        controls.querySelector("[data-tfse-step-prev]").addEventListener("click", function () {
+            setFormStep(form, Math.max(0, currentStepIndex(form) - 1), { manual: true });
+        });
+        controls.querySelector("[data-tfse-step-next]").addEventListener("click", function () {
+            var index = currentStepIndex(form);
+            if (!requiredStepValid(form, index)) {
+                var firstInvalid = stepFields(form, index).filter(function (field) { return field.required && !field.checkValidity(); })[0];
+                if (firstInvalid) firstInvalid.reportValidity();
+                return;
+            }
+            setFormStep(form, Math.min(formSteps.length - 1, index + 1), { manual: true });
+        });
+        Array.prototype.slice.call(header.querySelectorAll("[data-tfse-step-dot]")).forEach(function (button) {
+            button.addEventListener("click", function () {
+                var target = Number(button.getAttribute("data-tfse-step-dot"));
+                if (target <= currentStepIndex(form) || canReachStep(form, target)) setFormStep(form, target, { manual: true });
+            });
+        });
+    }
+
+    function canReachStep(form, target) {
+        for (var index = 0; index < target; index += 1) {
+            if (!requiredStepValid(form, index)) return false;
+        }
+        return true;
+    }
+
+    function assignFormSteps(form) {
+        if (form.getAttribute("data-tfse-steps-ready") === "true") return;
+        form.setAttribute("data-tfse-steps-ready", "true");
+        formSteps.forEach(function (step, stepIndex) {
+            step.fields.forEach(function (key) {
+                var group = fieldStepGroup(form, key);
+                if (group) group.setAttribute("data-tfse-step", String(stepIndex));
+            });
+        });
+        renderStepChrome(form);
+        setFormStep(form, 0);
+        Array.prototype.slice.call(form.querySelectorAll("input, select, textarea")).forEach(function (field) {
+            field.addEventListener("input", function () {
+                queueAutoStep(form);
+            });
+            field.addEventListener("change", function () {
+                queueAutoStep(form);
+            });
+        });
+    }
+
+    function queueAutoStep(form) {
+        if (form._tfseStepTimer) window.clearTimeout(form._tfseStepTimer);
+        form._tfseStepTimer = window.setTimeout(function () {
+            var index = currentStepIndex(form);
+            if (!formSteps[index] || !formSteps[index].auto || index >= formSteps.length - 1) return;
+            if (requiredStepValid(form, index)) setFormStep(form, index + 1);
+        }, 450);
+    }
+
+    function setFormStep(form, stepIndex) {
+        stepIndex = Math.max(0, Math.min(formSteps.length - 1, stepIndex));
+        form.setAttribute("data-tfse-current-step", String(stepIndex));
+        Array.prototype.slice.call(form.querySelectorAll("[data-tfse-step]")).forEach(function (group) {
+            group.classList.toggle("tfse-step-hidden", Number(group.getAttribute("data-tfse-step")) !== stepIndex);
+        });
+        var area = form.closest(".contact-form-area");
+        if (!area) return;
+        var step = formSteps[stepIndex];
+        var title = area.querySelector("[data-tfse-step-title]");
+        var desc = area.querySelector("[data-tfse-step-desc]");
+        var kicker = area.querySelector("[data-tfse-step-kicker]");
+        var hint = area.querySelector("[data-tfse-step-hint]");
+        var prev = area.querySelector("[data-tfse-step-prev]");
+        var next = area.querySelector("[data-tfse-step-next]");
+        if (title) title.textContent = step.title;
+        if (desc) desc.textContent = step.desc.replace(/^第 \d+ 步 \/ 共 \d+ 步：/, "");
+        if (kicker) kicker.textContent = "第 " + (stepIndex + 1) + " 步 / 共 " + formSteps.length + " 步";
+        if (hint) hint.textContent = step.auto ? "完成本步必填項後會自動前往下一步" : (stepIndex === formSteps.length - 1 ? "確認同意後即可提交" : "本步為選填，可直接下一步");
+        if (prev) prev.hidden = stepIndex === 0;
+        if (next) {
+            next.hidden = stepIndex === formSteps.length - 1;
+            next.textContent = stepIndex === formSteps.length - 2 ? "前往確認" : "下一步";
+        }
+        Array.prototype.slice.call(area.querySelectorAll("[data-tfse-step-dot]")).forEach(function (button) {
+            var index = Number(button.getAttribute("data-tfse-step-dot"));
+            button.classList.toggle("is-active", index === stepIndex);
+            button.classList.toggle("is-done", index < stepIndex);
+            button.disabled = index > stepIndex && !canReachStep(form, index);
+        });
+        var first = stepFields(form, stepIndex).filter(function (field) {
+            return field.type !== "checkbox" && field.type !== "hidden" && !field.disabled && !field.hidden;
+        })[0];
+        if (first && document.activeElement && form.contains(document.activeElement)) first.focus({ preventScroll: true });
     }
 
     function resetChoiceControls(form) {
@@ -521,6 +782,10 @@
             phoneCustomCode.required = false;
         }
         if (form.elements.phone) form.elements.phone.value = "";
+        if (form.elements.birth_date) form.elements.birth_date.value = "";
+        Array.prototype.slice.call(form.querySelectorAll("[data-birth-picker] select")).forEach(function (select) {
+            select.value = "";
+        });
         if (country) country.value = "";
         resetSelect(state, "先選國家");
         resetSelect(city, "先選州省");
@@ -538,6 +803,7 @@
             custom.hidden = true;
             custom.required = false;
         });
+        setupPlaceholderStates(form);
         syncRegionValue(form);
     }
 
@@ -695,6 +961,7 @@
         }
         setHiddenUtmFields(form);
         setupChoiceControls(form);
+        assignFormSteps(form);
         setupTurnstile(form, document.querySelector(".form-messege"));
         if (form.elements.phone_local) {
             form.elements.phone_local.addEventListener("input", function () {
@@ -722,6 +989,29 @@
         var message = document.querySelector(".form-messege");
         clearCooldownTimer();
         setHiddenUtmFields(form);
+
+        var firstBlockedStep = -1;
+        for (var stepIndex = 0; stepIndex < formSteps.length - 1; stepIndex += 1) {
+            if (!requiredStepValid(form, stepIndex)) {
+                firstBlockedStep = stepIndex;
+                break;
+            }
+        }
+        if (firstBlockedStep >= 0) {
+            setFormStep(form, firstBlockedStep);
+            var firstInvalidStepField = stepFields(form, firstBlockedStep).filter(function (field) { return field.required && !field.checkValidity(); })[0];
+            if (firstInvalidStepField) firstInvalidStepField.reportValidity();
+            setSubmitState(form, false);
+            setMessage(message, "請先完成前面步驟的必填欄位，再送出免費財務健檢查詢需求。", "error");
+            return;
+        }
+
+        if (currentStepIndex(form) < formSteps.length - 1) {
+            setFormStep(form, currentStepIndex(form) + 1);
+            setSubmitState(form, false);
+            setMessage(message, "已進入下一步，請確認資訊邊界與提醒方式後再提交。", "success");
+            return;
+        }
 
         if (!validatePhoneField(form, message)) {
             setSubmitState(form, false);
@@ -857,6 +1147,7 @@
 
                 form.reset();
                 resetChoiceControls(form);
+                setFormStep(form, 0);
                 resetTurnstile(form);
             });
         }).catch(function (error) {

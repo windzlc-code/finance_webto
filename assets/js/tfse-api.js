@@ -449,6 +449,44 @@
         });
     }
 
+    function updateLead(id, payload) {
+        payload = payload || {};
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/leads/" + encodeURIComponent(id));
+            if (!url) return localUpdateLead(id, payload);
+            return requestJson(url, {
+                method: "PATCH",
+                body: JSON.stringify(payload)
+            }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            }).catch(function (error) {
+                reportApiFallback("PATCH /api/admin/leads/:id", error);
+                return localUpdateLead(id, payload).then(function (data) {
+                    data.mode = "api_fallback_localStorage";
+                    data.error = error.message;
+                    return data;
+                });
+            });
+        });
+    }
+
+    function deleteLead(id) {
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/leads/" + encodeURIComponent(id));
+            if (!url) return localDeleteLead(id);
+            return requestJson(url, { method: "DELETE" }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            }).catch(function (error) {
+                reportApiFallback("DELETE /api/admin/leads/:id", error);
+                return localDeleteLead(id).then(function (data) {
+                    data.mode = "api_fallback_localStorage";
+                    data.error = error.message;
+                    return data;
+                });
+            });
+        });
+    }
+
     function adminListProducts(params) {
         params = params || {};
         return loadConfig().then(function (config) {
@@ -570,6 +608,30 @@
         });
         saveStoredLeads(leads);
         return Promise.resolve({ mode: "localStorage", lead: updatedLead });
+    }
+
+    function localUpdateLead(id, payload) {
+        var updatedLead = null;
+        var now = new Date().toISOString();
+        var leads = getStoredLeads().map(function (lead) {
+            if (lead.id !== id) return lead;
+            updatedLead = Object.assign({}, lead, payload || {}, { updated_at: now });
+            updatedLead.notes = (updatedLead.notes || []).concat(now + " 後台表單已更新");
+            return updatedLead;
+        });
+        saveStoredLeads(leads);
+        return Promise.resolve({ mode: "localStorage", lead: updatedLead });
+    }
+
+    function localDeleteLead(id) {
+        var removedLead = null;
+        var leads = getStoredLeads().filter(function (lead) {
+            if (lead.id !== id) return true;
+            removedLead = lead;
+            return false;
+        });
+        saveStoredLeads(leads);
+        return Promise.resolve({ mode: "localStorage", lead: removedLead, deleted: !!removedLead });
     }
 
     function loginAdmin(credentials) {
@@ -778,6 +840,8 @@
         submitPublicFeedback: submitPublicFeedback,
         listPublicFeedback: listPublicFeedback,
         listLeads: listLeads,
+        updateLead: updateLead,
+        deleteLead: deleteLead,
         updateLeadStatus: updateLeadStatus,
         loginAdmin: loginAdmin,
         getAdminSession: getAdminSession,

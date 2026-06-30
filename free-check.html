@@ -38,12 +38,12 @@
      -->
 
     <!-- Main Style CSS -->
-    <!-- <link rel="stylesheet" href="assets/css/style.css?v=20260630-form-profile-fields"> -->
+    <!-- <link rel="stylesheet" href="assets/css/style.css?v=20260630-birth-selects"> -->
 
     <!-- Use the minified version files listed below for better performance and remove the files listed above -->
     <link rel="stylesheet" href="assets/css/vendor/vendor.min.css">
     <link rel="stylesheet" href="assets/css/plugins/plugins.min.css">
-    <link rel="stylesheet" href="assets/css/style.css?v=20260630-form-profile-fields">
+    <link rel="stylesheet" href="assets/css/style.css?v=20260630-birth-selects">
     <link rel="alternate" type="application/rss+xml" title="TFSE金融便民中心 RSS" href="https://www.tfse-fcc.com/feed.xml">
     <script type="application/ld+json" id="tfse-structured-data">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.tfse-fcc.com/#organization","name":"TFSE金融便民中心","url":"https://www.tfse-fcc.com/","logo":"https://www.tfse-fcc.com/assets/images/logo/tfse-logo.png","description":"TFSE 僅彙整公開合法金融商品與法令資訊，非銀行、放款機構或貸款代辦單位。"},{"@type":"WebSite","@id":"https://www.tfse-fcc.com/#website","name":"TFSE金融便民中心","url":"https://www.tfse-fcc.com/","publisher":{"@id":"https://www.tfse-fcc.com/#organization"},"inLanguage":"zh-TW","potentialAction":{"@type":"SearchAction","target":"https://www.tfse-fcc.com/search.html?q={search_term_string}","query-input":"required name=search_term_string"}},{"@type":"WebPage","@id":"https://www.tfse-fcc.com/free-check.html#webpage","url":"https://www.tfse-fcc.com/free-check.html","name":"TFSE金融便民中心","isPartOf":{"@id":"https://www.tfse-fcc.com/#website"},"publisher":{"@id":"https://www.tfse-fcc.com/#organization"},"inLanguage":"zh-TW"},{"@type":"Service","@id":"https://www.tfse-fcc.com/free-check.html#free-check","name":"免費財務健檢查詢需求整理","provider":{"@id":"https://www.tfse-fcc.com/#organization"},"serviceType":"公開金融資訊整理與法令導引","areaServed":"TW","description":"免費財務健檢查詢僅整理需求與公開資訊查詢方向，不代辦貸款、不代收證件、不保證核貸。"}]}</script>
     <link rel="manifest" href="site.webmanifest">
@@ -247,7 +247,7 @@
                                     <div class="col-md-6 col-12 mb-4">
                                         <input type="text" placeholder="稱呼 *" name="display_name" required>
                                     </div>
-                                    <div class="col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4">
                                         <div class="tfse-phone-picker" data-phone-picker>
                                             <select name="phone_country_code" aria-label="手機國碼" required data-phone-country>
                                                 <option value="台灣" data-code="+886" selected>台灣 +886</option>
@@ -305,11 +305,22 @@
                                             <input type="hidden" name="phone">
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
                                         <input type="text" placeholder="Line ID（選填）" name="line_id">
                                     </div>
-                                    <div class="col-md-6 col-12 mb-4">
-                                        <input type="date" name="birth_date" aria-label="出生年月日">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
+                                        <div class="tfse-birth-picker" data-birth-picker aria-label="出生年月日">
+                                            <select aria-label="出生年" data-birth-year>
+                                                <option value="">出生年（選填）</option>
+                                            </select>
+                                            <select aria-label="出生月" data-birth-month>
+                                                <option value="">月</option>
+                                            </select>
+                                            <select aria-label="出生日" data-birth-day>
+                                                <option value="">日</option>
+                                            </select>
+                                            <input type="hidden" name="birth_date">
+                                        </div>
                                     </div>
                                     <div class="col-12 mb-4">
                                         <div class="tfse-region-picker" data-region-picker>
@@ -353,9 +364,9 @@
                                         </select>
                                         <input type="text" placeholder="請輸入自定義身份" data-custom-input="occupation_type" hidden>
                                     </div>
-                                    <div class="col-md-6 col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
                                         <select name="current_job" data-custom-select="current_job" aria-label="現職工作">
-                                            <option value="">選擇現職工作</option>
+                                            <option value="">現職工作（選填）</option>
                                             <option value="公司內勤 / 行政">公司內勤 / 行政</option>
                                             <option value="業務 / 銷售">業務 / 銷售</option>
                                             <option value="餐飲 / 服務業">餐飲 / 服務業</option>
@@ -369,10 +380,10 @@
                                         </select>
                                         <input type="text" placeholder="請輸入現職工作" data-custom-input="current_job" hidden>
                                     </div>
-                                    <div class="col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
                                         <div class="tfse-tenure-picker" aria-label="現職工作多久">
                                             <select name="current_job_years" aria-label="現職工作年數">
-                                                <option value="">現職年數</option>
+                                                <option value="">現職年數（選填）</option>
                                                 <option value="未滿 1 年">未滿 1 年</option>
                                                 <option value="1 年">1 年</option>
                                                 <option value="2 年">2 年</option>
@@ -383,7 +394,7 @@
                                                 <option value="10 年以上">10 年以上</option>
                                             </select>
                                             <select name="current_job_months" aria-label="現職工作月數">
-                                                <option value="">現職月數</option>
+                                                <option value="">月數</option>
                                                 <option value="0 個月">0 個月</option>
                                                 <option value="1 個月">1 個月</option>
                                                 <option value="2 個月">2 個月</option>
@@ -399,9 +410,9 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
                                         <select name="income_type" data-custom-select="income_type" aria-label="收入型態">
-                                            <option value="">選擇收入型態</option>
+                                            <option value="">收入型態（選填）</option>
                                             <option value="固定薪轉">固定薪轉</option>
                                             <option value="現金收入">現金收入</option>
                                             <option value="接案收入">接案收入</option>
@@ -413,9 +424,9 @@
                                         </select>
                                         <input type="text" placeholder="請輸入自定義收入型態" data-custom-input="income_type" hidden>
                                     </div>
-                                    <div class="col-md-6 col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
                                         <select name="monthly_income" data-custom-select="monthly_income" aria-label="現職月收入">
-                                            <option value="">選擇現職月收入</option>
+                                            <option value="">現職月收入（選填）</option>
                                             <option value="30,000 以下">30,000 以下</option>
                                             <option value="30,001-40,000">30,001-40,000</option>
                                             <option value="40,001-50,000">40,001-50,000</option>
@@ -426,49 +437,49 @@
                                         </select>
                                         <input type="text" placeholder="請輸入現職月收入 $" data-custom-input="monthly_income" inputmode="numeric" hidden>
                                     </div>
-                                    <div class="col-md-6 col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
                                         <select name="salary_method" aria-label="薪轉或領現金">
-                                            <option value="">薪轉或領現金</option>
+                                            <option value="">薪轉或領現金（選填）</option>
                                             <option value="薪轉">薪轉</option>
                                             <option value="領現金">領現金</option>
                                             <option value="薪轉 + 現金">薪轉 + 現金</option>
                                             <option value="其他">其他</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-6 col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
                                         <select name="labor_insurance" aria-label="現職公司有無投勞保">
-                                            <option value="">現職公司有無投勞保</option>
+                                            <option value="">現職公司有無投勞保（選填）</option>
                                             <option value="有投勞保">有投勞保</option>
                                             <option value="沒有投勞保">沒有投勞保</option>
                                             <option value="不確定">不確定</option>
                                             <option value="不適用">不適用</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4 col-12 mb-4">
+                                    <div class="col-md-4 col-12 mb-4 tfse-optional-field">
                                         <select name="has_house" aria-label="名下有房">
-                                            <option value="">名下有房？</option>
+                                            <option value="">名下有房？（選填）</option>
                                             <option value="有">有</option>
                                             <option value="沒有">沒有</option>
                                             <option value="共有 / 持分">共有 / 持分</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4 col-12 mb-4">
+                                    <div class="col-md-4 col-12 mb-4 tfse-optional-field">
                                         <select name="has_car" aria-label="名下有汽車">
-                                            <option value="">名下有汽車？</option>
+                                            <option value="">名下有汽車？（選填）</option>
                                             <option value="有">有</option>
                                             <option value="沒有">沒有</option>
                                             <option value="家人名下">家人名下</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4 col-12 mb-4">
+                                    <div class="col-md-4 col-12 mb-4 tfse-optional-field">
                                         <select name="has_land" aria-label="名下有土地">
-                                            <option value="">名下有土地？</option>
+                                            <option value="">名下有土地？（選填）</option>
                                             <option value="有">有</option>
                                             <option value="沒有">沒有</option>
                                             <option value="共有 / 持分">共有 / 持分</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-6 col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
                                         <select name="recent_credit_report" aria-label="一個月內申請聯徵">
                                             <option value="">一個月內有申請聯徵？（選填）</option>
                                             <option value="有">有</option>
@@ -476,7 +487,7 @@
                                             <option value="不確定">不確定</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-6 col-12 mb-4">
+                                    <div class="col-md-6 col-12 mb-4 tfse-optional-field">
                                         <select name="message" data-custom-select="message">
                                             <option value="">選擇目前困擾（選填）</option>
                                             <option value="想確認合法金融資訊來源">想確認合法金融資訊來源</option>
@@ -756,10 +767,10 @@
     <script src="assets/js/plugins/plugins.min.js"></script>
 
     <!-- Main Activation JS -->
-    <script src="assets/js/main.js"></script>
+    <script src="assets/js/main.js?v=20260630-birth-selects"></script>
     <script src="assets/js/tfse-api.js?v=20260630-api-submit-required"></script>
     <script src="assets/js/tfse-events.js"></script>
-    <script src="assets/js/tfse-lead-form.js?v=20260630-form-profile-fields"></script>
+    <script src="assets/js/tfse-lead-form.js?v=20260630-birth-selects"></script>
     <script src="assets/js/tfse-faq.js"></script>
     <script src="assets/js/tfse-search.js"></script>
 </body>

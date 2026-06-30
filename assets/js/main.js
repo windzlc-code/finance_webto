@@ -121,15 +121,18 @@
     /* ----------------------------
         Tilt Animation 
     -------------------------------*/
-    $('.js-tilt').tilt({
-        base: window,
-        reset: !0, 
-        scale: 1.04, 
-        reverse: !1, 
-        max: 15, 
-        perspective: 3e3, 
-        speed: 4e3
-    });
+    var canUseTilt = $.fn.tilt && !$body.hasClass('tfse-check-page') && !window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    if (canUseTilt) {
+        $('.js-tilt').tilt({
+            base: window,
+            reset: !0,
+            scale: 1.04,
+            reverse: !1,
+            max: 15,
+            perspective: 3e3,
+            speed: 4e3
+        });
+    }
 
     /* ----------------------------
         Portfolio Masonry Activation
