@@ -1,4 +1,7 @@
 @charset "UTF-8";
+html {
+  overflow-x: hidden;
+}
 /*-----------------------------------------------------------------------------------
 
     Template Name: Exomac – Corporate Business Bootstrap 5 Template
@@ -43685,6 +43688,7 @@ svg:not(:root) {
 
 .tfse-final-page {
   margin: 0;
+  overflow-x: hidden;
   background: #f6f9fd;
   color: #071b3a;
   font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;

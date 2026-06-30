@@ -315,7 +315,7 @@
         var localDigits = String(local || "").replace(/\D/g, "");
         if (!code || !localDigits) return "";
         code = "+" + String(code).replace(/\D/g, "");
-        return code + localDigits;
+        return code + " " + localDigits.replace(/(\d{3})(?=\d)/g, "$1-").replace(/-$/, "");
     }
 
     function internationalPhoneError(form) {

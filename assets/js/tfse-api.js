@@ -33,6 +33,10 @@
         return String(backendConfig(config).mode || "localStorage");
     }
 
+    function requiresApi(config) {
+        return backendMode(config).toLowerCase() === "api";
+    }
+
     function endpoint(config, path) {
         var base = apiBase(config);
         if (!base) return "";
@@ -357,7 +361,10 @@
     function submitLead(payload) {
         return loadConfig().then(function (config) {
             var url = endpoint(config, "/api/leads");
-            if (!url) return localSubmitLead(payload);
+            if (!url) {
+                if (requiresApi(config)) throw new Error("api_endpoint_not_configured");
+                return localSubmitLead(payload);
+            }
             return requestJson(url, {
                 method: "POST",
                 body: JSON.stringify(payload)
@@ -365,6 +372,7 @@
                 return Object.assign({ mode: "api" }, data);
             }).catch(function (error) {
                 reportApiFallback("POST /api/leads", error);
+                if (requiresApi(config)) throw error;
                 return localSubmitLead(payload).then(function (data) {
                     data.mode = "api_fallback_localStorage";
                     data.error = error.message;
