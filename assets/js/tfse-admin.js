@@ -4774,7 +4774,7 @@
         tasks.push(task("canonical_page", "首頁", "", "high", "品牌首頁與主要查詢入口"));
         tasks.push(task("canonical_page", "資料庫首頁", "database.html", "high", "金融商品資料庫入口"));
         tasks.push(task("canonical_page", "金融知識列表", "articles.html", "high", "SEO 內容中心入口"));
-        tasks.push(task("canonical_page", "免費財務健檢", "free-check.html", "high", "主要轉換入口，需確認 no sensitive data copy"));
+        tasks.push(task("canonical_page", "免費財務健檢查詢", "free-check.html", "high", "主要轉換入口，需確認 no sensitive data copy"));
         categories.slice(0, 12).forEach(function (slug) {
             tasks.push(task("category_alias", slug, slug + ".html", "medium", "分類入口與內鏈確認"));
         });

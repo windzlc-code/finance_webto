@@ -1,13 +1,13 @@
 [
   {
     "slug": "free-check",
-    "title": "不知道該查哪類金融資訊？先做免費財務健檢",
+    "title": "不知道該查哪類金融資訊？先做免費財務健檢查詢",
     "short_title": "免費財務健檢查詢",
     "pain": "需求很多、資訊分散時，先用低敏資料整理方向，再回到合法來源確認。",
     "category_slug": "credit-loan",
-    "need_label": "免費財務健檢",
+    "need_label": "免費財務健檢查詢",
     "product_categories": ["credit_loan", "mortgage", "debt_law"],
-    "article_keywords": ["免費財務健檢", "信貸", "房貸", "債務"],
+    "article_keywords": ["免費財務健檢查詢", "信貸", "房貸", "債務"],
     "faq": [
       ["免費財務健檢查詢會收證件嗎？", "不會。表單只收稱呼、手機、Line ID、地區、需求與身份類型等低敏資料。"],
       ["健檢結果是核貸結果嗎？", "不是。TFSE 僅提供公開資訊整理與查詢方向，不承諾任何金融結果。"]

@@ -187,7 +187,7 @@
             }
 
             if (!results.length) {
-                resultRoot.innerHTML = "<div class=\"col\"><p>找不到符合條件的資訊，可改用「房貸」「信貸」「債務」「防詐」等關鍵字，或先填寫免費財務健檢。</p><a class=\"btn btn-primary btn-hover-secondary mt-4\" href=\"free-check.html\">免費財務健檢查詢</a></div>";
+                resultRoot.innerHTML = "<div class=\"col\"><p>找不到符合條件的資訊，可改用「房貸」「信貸」「債務」「防詐」等關鍵字，或先填寫免費財務健檢查詢。</p><a class=\"btn btn-primary btn-hover-secondary mt-4\" href=\"free-check.html\">免費財務健檢查詢</a></div>";
                 return;
             }
 

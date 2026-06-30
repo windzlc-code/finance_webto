@@ -1,7 +1,7 @@
 {
   "name": "TFSE金融便民中心",
   "short_name": "TFSE",
-  "description": "TFSE 僅彙整公開合法金融商品與法令資訊，提供資料庫、金融知識與免費財務健檢需求整理。",
+  "description": "TFSE 僅彙整公開合法金融商品與法令資訊，提供資料庫、金融知識與免費財務健檢查詢需求整理。",
   "lang": "zh-TW",
   "dir": "ltr",
   "start_url": "index.html",

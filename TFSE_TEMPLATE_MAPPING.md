@@ -22,7 +22,7 @@
 | Blog list/grid/classic | `articles.html` | 金融知识内容中心和专栏列表 | `tfse-articles.js`, `articles.json` |
 | Blog detail | `articles/*.html` | 金融知识文章详情，底部导向资料库和免费财务健检查询 | `tfse-articles.js`, `articles.json` |
 | Product detail | `products/*.html` | 金融商品详情，显示来源、更新时间、相关资讯和健检 CTA | `tfse-products.js`, `products.json`, `articles.json`, `categories.json` |
-| Contact / Form | `free-check.html` | 免费财务健检表单、低敏资料收集、Line CTA、FAQ | `tfse-lead-form.js`, `tfse-line.js`, `tfse-faq.js`, `faq.json`, `line-flows.json` |
+| Contact / Form | `free-check.html` | 免费财务健检查询表单、低敏资料收集、Line CTA、FAQ | `tfse-lead-form.js`, `tfse-line.js`, `tfse-faq.js`, `faq.json`, `line-flows.json` |
 | Contact page | `contact.html` | 联络我们、个资删除/更正请求入口说明 | shared scripts |
 | Landing page | `lp.html`, `lp/*.html` | 8 个广告落地页，复用同一套模板区块、FAQ、UTM 与表单 | `tfse-landing-pages.js`, `landing-pages.json`, `tfse-lead-form.js` |
 | Search | `search.html` | 全站搜索结果页 | `tfse-search.js`, `products.json`, `articles.json`, `categories.json` |
@@ -51,7 +51,7 @@
 | Hero / Page title | 首页放 TFSE 品牌，内页放页面角色和 breadcrumb | `index.html`, page title sections |
 | Feature / Service cards | 改成金融分类、资料库条目、文章卡片或 CTA | `tfse-categories.js`, `tfse-products.js`, `tfse-articles.js` |
 | Tabs / Filters | 改成机构类型、需求类型、地区、复核状态和更新时间筛选 | `database.html`, `tfse-database.js` |
-| Contact form | 改成免费财务健检表单，记录低敏资料、UTM、隐私同意和 Line 同意 | `free-check.html`, `tfse-lead-form.js` |
+| Contact form | 改成免费财务健检查询表单，记录低敏资料、UTM、隐私同意和 Line 同意 | `free-check.html`, `tfse-lead-form.js` |
 | FAQ accordion | 改成合规 FAQ、分类 FAQ 和落地页 FAQ | `faq.json`, `landing-pages.json`, `tfse-faq.js` |
 | Blog cards/details | 改成金融知识文章中心和详情页 | `articles.json`, `tfse-articles.js` |
 | CTA / Newsletter | 改成免费财务健检查询、Line 承接、资料库导流 | `free-check.html`, `lp.html`, `blog-details.html` |

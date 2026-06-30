@@ -1,7 +1,7 @@
 {
   "welcome": [
     "歡迎加入 TFSE金融便民中心。",
-    "本中心提供公開金融資訊整理、免費財務健檢與法令資訊導引。",
+    "本中心提供公開金融資訊整理、免費財務健檢查詢與法令資訊導引。",
     "我們不代辦貸款、不代收證件、不保證核貸。",
     "請選擇您想了解的資訊類型："
   ],
@@ -57,7 +57,7 @@
       "free_check_href": "free-check.html?needs=debt_law&utm_source=line&utm_medium=oa_menu&utm_campaign=line_debt_law"
     },
     {
-      "label": "免費財務健檢",
+      "label": "免費財務健檢查詢",
       "tag": "form_submitted",
       "href": "free-check.html",
       "reply": "只留下低敏需求資料，取得分類與文章建議；不需上傳證件。",

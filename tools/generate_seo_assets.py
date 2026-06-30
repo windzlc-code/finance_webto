@@ -222,7 +222,7 @@ def base_structured_data(config, path):
         graph.append({
             "@type": "Service",
             "@id": page_url + "#free-check",
-            "name": "免費財務健檢需求整理",
+            "name": "免費財務健檢查詢需求整理",
             "provider": {"@id": org_id},
             "serviceType": "公開金融資訊整理與法令導引",
             "areaServed": "TW",

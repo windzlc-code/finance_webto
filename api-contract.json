@@ -54,7 +54,7 @@
     {
       "method": "POST",
       "path": "/api/leads",
-      "purpose": "提交免費財務健檢",
+      "purpose": "提交免費財務健檢查詢",
       "auth": "public + turnstile",
       "request": ["display_name", "phone", "line_id", "region", "needs", "occupation_type", "income_type", "message", "consent_privacy", "consent_line", "consent_version", "source_url", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "device_id", "website", "cf_turnstile_response"],
       "validation": ["no national id", "no bank account", "no card number", "privacy consent required", "line consent optional and separate", "website honeypot must be empty", "turnstile token required when enabled", "rate limit by IP + device_id", "deduplicate same phone + needs within 24 hours"],

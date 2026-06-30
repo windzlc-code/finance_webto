@@ -1540,7 +1540,7 @@ def verify_content_management():
     for marker in ("applyAdminOverrides", "tfse_product_overrides", "tfse_product_status"):
         if marker not in products_script:
             failures.append(f"tfse-products.js: missing override marker {marker}")
-    for marker in ("查看官方來源", "回到資料庫", "不確定是否適合？做免費財務健檢", "free-check.html"):
+    for marker in ("查看官方來源", "回到資料庫", "不確定是否適合？做免費財務健檢查詢", "free-check.html"):
         if marker not in products_script:
             failures.append(f"tfse-products.js: missing product detail CTA marker {marker}")
     for marker in ("assets/data/articles.json", "assets/data/categories.json", "renderRelatedProducts", "renderRelatedArticles", "renderProductFaq", "data-related-products", "data-related-product-articles", "data-product-faq-list"):

@@ -819,7 +819,7 @@
             var modeLabel = result && result.mode === "api" ? "正式 API 已接收" : "本機 MVP 已保存";
             loadConfig().then(function (config) {
                 var line = lineConfig(config);
-                var successHtml = "<p><strong>您的免費財務健檢需求已提交成功。</strong></p><p>狀態：" + modeLabel + "。TFSE 僅提供公開金融資訊整理與法令諮詢導引，不代辦貸款、不代收證件、不保證核貸。</p><p>推薦分類：" + renderLinks(recommendations.categories) + "</p><p>推薦文章：" + renderLinks(recommendations.articles) + "</p>";
+                var successHtml = "<p><strong>您的免費財務健檢查詢需求已提交成功。</strong></p><p>狀態：" + modeLabel + "。TFSE 僅提供公開金融資訊整理與法令諮詢導引，不代辦貸款、不代收證件、不保證核貸。</p><p>推薦分類：" + renderLinks(recommendations.categories) + "</p><p>推薦文章：" + renderLinks(recommendations.articles) + "</p>";
                 showLeadDialog({
                     title: "已提交成功",
                     body: successHtml,

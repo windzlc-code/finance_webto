@@ -24,7 +24,6 @@ CANONICAL_MENU_LABELS = {
 }
 RESIDUAL_MENU_LABELS = {
     "金融商品資料庫",
-    "免費財務健檢",
     "金融知識列表",
     "金融知識專欄",
     "金融知識詳情",

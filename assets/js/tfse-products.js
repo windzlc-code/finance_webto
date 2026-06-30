@@ -195,7 +195,7 @@
                 "<div class=\"content mb-5\" data-aos=\"fade-up\"><p>適用受眾：" + escapeHtml(product.audience) + "；服務地區：" + escapeHtml(product.region) + "。</p></div>",
                 "<div class=\"content mb-5\" data-aos=\"fade-up\"><p>TFSE 僅彙整公開合法金融商品與法令資訊，不代表任何金融機構，也不承諾額度、利率、速度或核貸結果。</p></div>",
                 "<div class=\"content mb-12\" data-aos=\"fade-up\"><p>資料來源與更新：請依來源政策回到官方或主管機關公開資訊確認最新條件。</p></div>",
-                "<div class=\"work-btn\"><a class=\"btn btn-primary btn-hover-secondary\" data-product-source href=\"" + escapeHtml(product.source_url || "source-policy.html") + "\">查看官方來源</a> <a class=\"btn btn-outline-secondary\" href=\"database.html\">回到資料庫</a> <a class=\"btn btn-primary btn-hover-secondary\" href=\"free-check.html\">不確定是否適合？做免費財務健檢</a></div>"
+                "<div class=\"work-btn\"><a class=\"btn btn-primary btn-hover-secondary\" data-product-source href=\"" + escapeHtml(product.source_url || "source-policy.html") + "\">查看官方來源</a> <a class=\"btn btn-outline-secondary\" href=\"database.html\">回到資料庫</a> <a class=\"btn btn-primary btn-hover-secondary\" href=\"free-check.html\">不確定是否適合？做免費財務健檢查詢</a></div>"
             ].join("");
         }
 

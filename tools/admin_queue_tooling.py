@@ -1639,7 +1639,7 @@ def seo_indexing_followup_queue_report():
         {"type": "canonical_page", "label": "首頁", "path": "index.html", "priority": "high", "reason": "品牌首頁與 canonical 主入口"},
         {"type": "canonical_page", "label": "資料庫首頁", "path": "database.html", "priority": "high", "reason": "金融商品資料庫入口"},
         {"type": "canonical_page", "label": "金融知識列表", "path": "articles.html", "priority": "high", "reason": "SEO 內容中心入口"},
-        {"type": "canonical_page", "label": "免費財務健檢", "path": "free-check.html", "priority": "high", "reason": "主要轉換入口，需確認 no sensitive data copy"},
+        {"type": "canonical_page", "label": "免費財務健檢查詢", "path": "free-check.html", "priority": "high", "reason": "主要轉換入口，需確認 no sensitive data copy"},
     ]
     for slug in categories[:12]:
         tasks.append({"type": "category_alias", "label": slug, "path": slug + ".html", "priority": "medium", "reason": "分類入口與內鏈確認"})
