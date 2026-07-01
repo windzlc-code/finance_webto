@@ -99,6 +99,7 @@ RELEASE_REQUIRED_COMMANDS = [
     "python3 tools/launch_handoff_manifest.py --markdown",
     "python3 tools/verify_static_site.py",
     "NODE_PATH=/path/to/node_modules node tools/browser_acceptance_verify.mjs",
+    "NODE_PATH=/path/to/node_modules node tools/bank_club_integration_smoke.mjs",
 ]
 
 

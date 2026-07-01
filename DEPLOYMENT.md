@@ -30,11 +30,12 @@ python3 tools/release_day_runsheet.py --markdown
 python3 tools/launch_handoff_manifest.py --markdown
 python3 tools/browser_acceptance_report.py --markdown
 NODE_PATH=/path/to/node_modules node tools/browser_acceptance_verify.mjs
+NODE_PATH=/path/to/node_modules node tools/bank_club_integration_smoke.mjs
 python3 tools/operations_runbook_audit.py
 python3 tools/verify_static_site.py
 ```
 
-2. 若本機沒有全域 Node/Playwright，可使用 Codex bundled runtime：`NODE_PATH=/Users/windzlc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules /Users/windzlc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node tools/browser_acceptance_verify.mjs`。
+2. 若本機沒有全域 Node/Playwright，可使用 Codex bundled runtime：`NODE_PATH=/Users/windzlc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules /Users/windzlc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node tools/browser_acceptance_verify.mjs`；Bank Club 合併鏈路則把最後的腳本路徑換成 `tools/bank_club_integration_smoke.mjs`。
 3. 推送前確認 `.github/workflows/tfse-acceptance.yml` 會在 GitHub Actions 執行同一組 Python 驗收、人工驗收報告生成與 Playwright 瀏覽器煙測。
 4. 啟動 `python3 -m http.server 4173`，依 `tools/browser_acceptance_report.py --markdown` 產出的項目完成桌面與手機人工視覺驗收；自動煙測已檢查桌面/手機文字裁切與移動選單開合，但仍不能取代正式人工截圖簽核。
 5. 確認 `sitemap.xml`、`feed.xml`、`robots.txt`、`404.html`、`500.html` 可訪問。
@@ -42,7 +43,7 @@ python3 tools/verify_static_site.py
 7. 執行 `python3 tools/generate_seo_assets.py`，重新產生全站 canonical、Open Graph URL、RSS alternate link、JSON-LD、manifest head 標記、`robots.txt`、`sitemap.xml` 與 `feed.xml`。
 8. 確認正式主機已套用 `_headers` 或等效安全標頭，並可訪問 `/.well-known/security.txt`。
 9. 再次執行驗收命令，確認產品、分類、落地頁與文章 slug 均存在。
-10. 部署後執行 `python3 tools/live_deployment_check.py --markdown`，確認正式主站、SEO 資產、`/.well-known/security.txt` 與 `/api/health` 可從公网訪問；若只剩 HTTPS timeout，將其作為雲安全組 / 防火牆外部阻擋項處理。
+10. 部署後執行 `python3 tools/live_deployment_check.py --markdown`，確認正式主站、Bank Club 前台、共用 Admin 入口、SEO 資產、`/.well-known/security.txt`、`/api/health`、Bank Club 線索 API options 與 Admin Bank Club API 未登入保護可從公网訪問；若只剩 HTTPS timeout，將其作為雲安全組 / 防火牆外部阻擋項處理。
 11. 若 HTTPS 仍 timeout，執行 `python3 tools/https_ingress_fix_package.py --markdown`，保存 TCP 22/80/443 可達性證據，並按 DNS、雲安全組、主機防火牆、反向代理、TLS 憑證與 `/api/health` 的順序排查。
 
 ## GitHub Pages
@@ -209,9 +210,10 @@ GA4 與 Meta Pixel 填入後，也可從 Admin 匯出 `tfse_analytics_debug_veri
 ```sh
 python3 tools/mock_formal_api.py --port 8788
 NODE_PATH=/path/to/node_modules node tools/browser_acceptance_verify.mjs --backend-base-url http://127.0.0.1:8788
+NODE_PATH=/path/to/node_modules node tools/bank_club_integration_smoke.mjs
 ```
 
-這條 rehearsal 會讓 `free-check.html` 與 `admin.html` 經由 `assets/js/tfse-api.js` 真實呼叫本機 HTTP API，而不是只在瀏覽器內攔截 request。它不能替代正式資料庫、Auth、CSRF、RBAC、備份與審計，但能先驗證前端 API 適配層與跨埠 JSON/CORS 邊界。
+這條 rehearsal 會讓 `free-check.html` 與 `admin.html` 經由 `assets/js/tfse-api.js` 真實呼叫本機 HTTP API，而不是只在瀏覽器內攔截 request。`tools/bank_club_integration_smoke.mjs` 會另外啟動臨時 SQLite API 與 `/tfse/api` 靜態代理，驗證 Bank Club 前台表單、共用 Admin 登入、Bank Club 線索讀取、狀態更新、雙站切換與手機無橫向溢出。它不能替代正式資料庫、Auth、CSRF、RBAC、備份與審計，但能先驗證前端 API 適配層與跨埠 JSON/CORS 邊界。
 
 需要重啟後保留資料或做小流量 staging 時，可使用專案內建的 SQLite 持久化 API：
 
@@ -226,15 +228,26 @@ python3 tools/persistent_api_smoke.py
 - app path：`/opt/tfse-api/current`
 - DB path：`/var/lib/tfse-api/tfse.sqlite3`
 - env file：`/etc/tfse-api.env`，權限為 root-only，不提交 secret
-- Nginx：僅在 `tfse-site` 中新增 `location ^~ /api/`，反代到 `127.0.0.1:8788`
-- public health：`http://www.tfse-fcc.com/api/health`
+- Nginx：在正式域名新增 `location ^~ /api/`，反代到 `127.0.0.1:8788`
+- 若網站掛在 `/tfse` 子路徑，需同時將 `location ^~ /tfse/api/` 反代到同一個 API 服務；目前 API 已兼容 `/api/*` 與 `/tfse/api/*`，可由 Nginx 保留或移除 `/tfse` prefix。
+- public health：`https://tfse.tfse-fcc.com/api/health`
 - security headers：`/etc/nginx/snippets/tfse-security-headers.conf` 已套用 CSP、X-Frame-Options、nosniff、Referrer-Policy 與 Permissions-Policy；HTTP 站點暫不加 `upgrade-insecure-requests`，避免 443 尚未放行時破壞可訪問性
 - cache headers：`/assets/` immutable、`site-config.json` no-store、`robots.txt` / `sitemap.xml` / `feed.xml` / `security.txt` 使用短期公開快取
 - backup timer：`tfse-api-backup.timer` 每日 03:15 觸發 `tfse-api-backup.service`
 - backup path：`/var/lib/tfse-api/backups/tfse-api-*.sqlite3.gz` 與同名 `.manifest.json`
 - restore drill：每次 backup 後自動執行隔離恢復抽查，核對 `PRAGMA integrity_check` 與 critical table row counts
 
-該服務已提供 `POST /api/leads`、`POST /api/public-feedback`、內容查詢、Admin Auth、CRM 狀態更新、合規審核、個資請求與 `audit_logs`。但目前 `site-config.json > backend.mode` 仍保持 `localStorage`，前台不會自動切到 API；要正式切換時需先解決 HTTPS 443 公網入站、填入正式 Line OA / Turnstile / 後端配置，再把 `backend.mode` 改為 `api` 並將 `backend.api_base_url` 設為正式 HTTPS 網址。
+該服務已提供 `POST /api/leads`、`POST /api/public-feedback`、內容查詢、Admin Auth、CRM 狀態更新、合規審核、個資請求與 `audit_logs`。合併 Bank Club 後，也提供 `POST /api/bank-club/leads`、`GET /api/admin/bank-club/leads` 與 `PATCH /api/admin/bank-club/leads/:id/status`，共用同一個 Admin session、CSRF 與 SQLite 資料庫。`/bank-club/index.html` 為主站前台入口，`admin.html` 會以多站點切換顯示 TFSE 與 Bank Club 兩個管理區。
+
+目前 `site-config.json > backend.mode` 已設為 `api`，`backend.api_base_url` 為 `https://tfse.tfse-fcc.com`。如果正式站使用子路徑部署，可改為 `/tfse`，但必須同步配置 `/tfse/api/` 反代。正式切換時需先解決 HTTPS 443 公網入站、填入正式 Line OA / Turnstile / 後端配置，並確認以下 URL 均可訪問：
+
+- `https://tfse.tfse-fcc.com/api/health`
+- `https://tfse.tfse-fcc.com/api/leads`
+- `https://tfse.tfse-fcc.com/api/bank-club/leads`
+- `https://tfse.tfse-fcc.com/api/admin/auth/login`
+- `https://tfse.tfse-fcc.com/api/admin/leads`
+- `https://tfse.tfse-fcc.com/api/admin/bank-club/leads`
+- 子路徑部署時，另驗 `/tfse/api/health` 與 `/tfse/api/bank-club/leads`
 
 前端已提供 `assets/js/tfse-api.js` API 適配層。正式後端上線時，在 `site-config.json` 填入：
 
@@ -251,7 +264,9 @@ python3 tools/persistent_api_smoke.py
 填入後：
 
 - 免費財務健檢查詢會優先 POST `backend.api_base_url + /api/leads`，payload 會包含本機匿名 `device_id`，供正式後端搭配 IP 做限流與重複提交識別。
+- Bank Club 主站諮詢表單會優先 POST `backend.api_base_url + /api/bank-club/leads`，API 不可用時才暫存瀏覽器 localStorage。
 - Admin CRM 會優先 GET `backend.api_base_url + /api/admin/leads`。
+- Admin 的 Bank Club 管理區會優先 GET `backend.api_base_url + /api/admin/bank-club/leads`，並以 `PATCH /api/admin/bank-club/leads/:id/status` 更新狀態。
 - Admin 狀態更新會優先 PATCH `backend.api_base_url + /api/admin/leads/:id/status`。
 - API 不可用時會記錄 `api_fallback` 錯誤摘要，並暫時 fallback 到本機 MVP，避免前台表單完全失效。
 - 正式後端必須驗證 `cf_turnstile_response`、蜜罐欄位、IP + `device_id` 限流與 24 小時重複提交，不能只信任前端。

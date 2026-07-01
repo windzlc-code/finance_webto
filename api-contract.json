@@ -62,6 +62,15 @@
     },
     {
       "method": "POST",
+      "path": "/api/bank-club/leads",
+      "purpose": "Bank Club 主站諮詢表單提交，共用 TFSE 後台與資料庫",
+      "auth": "public",
+      "request": ["id", "display_name", "phone", "line_id", "loan_type", "message", "source_page", "specialist", "site_key"],
+      "validation": ["site_key fixed to bank_club", "display_name required", "phone required", "no national id", "no bank account", "no card number", "no password", "rate limit by IP + device_id before formal launch"],
+      "response": ["id", "status", "lead", "audit_log"]
+    },
+    {
+      "method": "POST",
       "path": "/api/events",
       "purpose": "前台事件追蹤",
       "auth": "public",
@@ -140,6 +149,14 @@
     },
     {
       "method": "GET",
+      "path": "/api/admin/bank-club/leads",
+      "purpose": "Bank Club 主站線索列表，與 TFSE 後台共用 Admin session",
+      "auth": "admin:super_admin|consultant|viewer",
+      "query": ["status", "keyword", "page"],
+      "response": ["items", "total"]
+    },
+    {
+      "method": "GET",
       "path": "/api/admin/leads/:id",
       "purpose": "潛客詳情",
       "auth": "admin:super_admin|consultant|viewer",
@@ -151,6 +168,14 @@
       "purpose": "更新潛客狀態、備註、負責角色與下次跟進",
       "auth": "admin:super_admin|consultant",
       "request": ["status", "note", "assigned_to", "follow_up_priority", "next_follow_up_at", "contact_log"],
+      "response": ["lead", "audit_log"]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/bank-club/leads/:id/status",
+      "purpose": "更新 Bank Club 主站線索狀態並寫入共用 audit_logs",
+      "auth": "admin:super_admin|consultant",
+      "request": ["status"],
       "response": ["lead", "audit_log"]
     },
     {

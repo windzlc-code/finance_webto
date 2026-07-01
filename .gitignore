@@ -2,3 +2,16 @@
 **/.DS_Store
 data/*.sqlite3
 data/*.sqlite3-*
+
+# Imported Next.js main-site workspace
+bank-club-site/node_modules/
+bank-club-site/.next/
+bank-club-site/.data/
+bank-club-site/artifacts/
+bank-club-site/out/
+bank-club-site/build/
+bank-club-site/.vercel/
+bank-club-site/.env*
+!bank-club-site/.env.example
+bank-club-site/*.tsbuildinfo
+bank-club-site/next-env.d.ts

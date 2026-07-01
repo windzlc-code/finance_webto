@@ -1,6 +1,6 @@
 {
   "site_name": "TFSE金融便民中心",
-  "base_url": "https://www.tfse-fcc.com/tfse",
+  "base_url": "https://tfse.tfse-fcc.com",
   "og_image": "assets/images/logo/tfse-logo.png",
   "analytics": {
     "ga4_measurement_id": "",
@@ -13,7 +13,7 @@
     "google_site_verification": ""
   },
   "backend": {
-    "api_base_url": "/tfse",
+    "api_base_url": "https://tfse.tfse-fcc.com",
     "mode": "api",
     "timeout_ms": 8000
   },

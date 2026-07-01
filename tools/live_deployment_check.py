@@ -11,12 +11,12 @@ from datetime import datetime, timezone
 from urllib.parse import urljoin, urlparse
 
 
-DEFAULT_BASE_URL = "http://www.tfse-fcc.com/"
-DEFAULT_HTTPS_URL = "https://www.tfse-fcc.com/"
+DEFAULT_BASE_URL = "http://tfse.tfse-fcc.com/"
+DEFAULT_HTTPS_URL = "https://tfse.tfse-fcc.com/"
 
 
-def fetch(url: str, timeout: float) -> dict:
-    request = urllib.request.Request(url, headers={"User-Agent": "tfse-live-deployment-check/1.0"})
+def fetch(url: str, timeout: float, method: str = "GET") -> dict:
+    request = urllib.request.Request(url, headers={"User-Agent": "tfse-live-deployment-check/1.0"}, method=method)
     try:
         context = ssl._create_unverified_context() if url.startswith("https://") else None
         with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
@@ -31,7 +31,8 @@ def fetch(url: str, timeout: float) -> dict:
                 "error": "",
             }
     except urllib.error.HTTPError as exc:
-        return {"ok": False, "status": exc.code, "content_type": exc.headers.get("Content-Type", ""), "headers": {key.lower(): value for key, value in exc.headers.items()}, "body": "", "sample": "", "error": str(exc)}
+        body = exc.read(4096).decode("utf-8", errors="replace")
+        return {"ok": False, "status": exc.code, "content_type": exc.headers.get("Content-Type", ""), "headers": {key.lower(): value for key, value in exc.headers.items()}, "body": body, "sample": body[:240], "error": str(exc)}
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "status": 0, "content_type": "", "headers": {}, "body": "", "sample": "", "error": f"{type(exc).__name__}: {exc}"}
 
@@ -72,7 +73,37 @@ def check_json_api(base_url: str, timeout: float) -> dict:
         "status": result["status"],
         "service": payload.get("service", ""),
         "security_headers": security_header_status(result.get("headers", {})),
-        "counts": {key: payload.get(key) for key in ("leads", "audit_logs", "events", "public_feedback", "compliance_reviews", "privacy_requests")},
+        "counts": {key: payload.get(key) for key in ("leads", "audit_logs", "events", "public_feedback", "compliance_reviews", "privacy_requests", "bank_club_leads")},
+        "error": result["error"],
+    }
+
+
+def check_api_options(base_url: str, path: str, timeout: float) -> dict:
+    url = urljoin(normalize_base(base_url), path.lstrip("/"))
+    result = fetch(url, timeout, method="OPTIONS")
+    methods = result.get("headers", {}).get("access-control-allow-methods", "")
+    ok = bool(result["status"] == 204 and "POST" in methods and "OPTIONS" in methods)
+    return {
+        "name": path.strip("/").replace("/", "_") + "_options",
+        "url": url,
+        "ok": ok,
+        "status": result["status"],
+        "content_type": result["content_type"],
+        "allowed_methods": methods,
+        "error": result["error"],
+    }
+
+
+def check_api_auth_required(base_url: str, path: str, timeout: float) -> dict:
+    url = urljoin(normalize_base(base_url), path.lstrip("/"))
+    result = fetch(url, timeout)
+    ok = bool(result["status"] == 401 and "unauthorized" in result.get("body", ""))
+    return {
+        "name": path.strip("/").replace("/", "_") + "_auth",
+        "url": url,
+        "ok": ok,
+        "status": result["status"],
+        "content_type": result["content_type"],
         "error": result["error"],
     }
 
@@ -111,7 +142,11 @@ def build_report(base_url: str, https_url: str, timeout: float) -> dict:
         check_static_url(base_url, "/.well-known/security.txt", timeout, "Contact:", "max-age=86400"),
         check_static_url(base_url, "/site-config.json", timeout, '"base_url"', "no-store"),
         check_static_url(base_url, "/assets/images/logo/tfse-logo.png", timeout, "", "immutable"),
+        check_static_url(base_url, "/bank-club/index.html", timeout, "Bank Club"),
+        check_static_url(base_url, "/admin.html", timeout, "Bank Club"),
         check_json_api(base_url, timeout),
+        check_api_options(base_url, "/api/bank-club/leads", timeout),
+        check_api_auth_required(base_url, "/api/admin/bank-club/leads", timeout),
     ]
     https_check = check_static_url(https_url, "/", timeout, "TFSE")
     https_check["name"] = "https_home"
@@ -162,6 +197,10 @@ def render_markdown(report: dict) -> str:
         cache = item.get("cache_control", "")
         cache_label = f"; cache={cache}" if cache else ""
         detail = item.get("error") or item.get("service") or item.get("content_type") or ""
+        if item.get("allowed_methods"):
+            detail = f"{detail}; methods={item['allowed_methods']}".strip("; ")
+        if item.get("counts"):
+            detail = f"{detail}; counts={json.dumps(item['counts'], ensure_ascii=False)}".strip("; ")
         if item.get("status"):
             detail = f"{detail}; {security_label}{cache_label}".strip("; ")
         lines.append(f"| {item['name']} | {item['url']} | {item['ok']} | {item['status']} | {detail} |")

@@ -1,0 +1,43 @@
+{
+  "name": "bank-club-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "visual:smoke": "node scripts/visual-smoke.mjs",
+    "crm:smoke": "node scripts/crm-smoke.mjs",
+    "backup:smoke": "node scripts/backup-smoke.mjs",
+    "social:smoke": "node scripts/social-smoke.mjs",
+    "notification:smoke": "node scripts/notification-smoke.mjs",
+    "tracking:smoke": "node scripts/tracking-smoke.mjs",
+    "search:smoke": "node scripts/search-smoke.mjs",
+    "nav:smoke": "node scripts/nav-smoke.mjs",
+    "twofactor:smoke": "node scripts/twofactor-smoke.mjs",
+    "roles:smoke": "node scripts/roles-smoke.mjs",
+    "launch:smoke": "node scripts/launch-smoke.mjs",
+    "files:smoke": "node scripts/files-smoke.mjs",
+    "articles:smoke": "node scripts/articles-smoke.mjs",
+    "form:smoke": "node scripts/form-smoke.mjs",
+    "admin-deeplink:smoke": "node scripts/admin-deeplink-smoke.mjs",
+    "admin-ui:smoke": "node scripts/admin-ui-smoke.mjs"
+  },
+  "dependencies": {
+    "next": "16.2.9",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

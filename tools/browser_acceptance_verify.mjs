@@ -247,6 +247,18 @@ function makeServer(root) {
   });
 }
 
+async function routeSiteConfig(context, backend) {
+  await context.route("**/site-config.json", async (route) => {
+    const config = JSON.parse(readFileSync(join(ROOT, "site-config.json"), "utf8"));
+    config.backend = Object.assign({}, config.backend || {}, backend || {});
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json; charset=utf-8",
+      body: JSON.stringify(config)
+    });
+  });
+}
+
 async function listen(server, startPort) {
   for (let port = startPort; port < startPort + 20; port += 1) {
     try {
@@ -324,9 +336,40 @@ async function visible(page, selector) {
 }
 
 async function fillCurrentLeadForm(page, values) {
+  async function stepIndex() {
+    return Number((await page.locator("#contact-form").getAttribute("data-tfse-current-step")) || "0");
+  }
+  async function goToStep(targetIndex) {
+    for (let attempts = 0; attempts < 6; attempts += 1) {
+      const current = await stepIndex();
+      if (current === targetIndex) return;
+      if (current < targetIndex) {
+        await page.click("#contact-form [data-tfse-step-next]");
+      } else {
+        await page.click("#contact-form [data-tfse-step-prev]");
+      }
+      await page.waitForFunction(
+        ([target, previous]) => {
+          const form = document.querySelector("#contact-form");
+          const currentStep = Number(form && form.getAttribute("data-tfse-current-step") || "0");
+          return currentStep === target || currentStep !== previous;
+        },
+        [targetIndex, current],
+        { timeout: 5000 }
+      );
+    }
+    throw new Error(`Unable to move lead form to step ${targetIndex}`);
+  }
+
+  await page.waitForFunction(() => document.querySelector("#contact-form") && document.querySelector("#contact-form").getAttribute("data-tfse-steps-ready") === "true");
+  await goToStep(0);
   await page.fill('#contact-form input[name="display_name"]', values.display_name);
   await page.selectOption('#contact-form [data-phone-country]', values.phone_country || "台灣");
   await page.fill('#contact-form [data-phone-local]', values.phone_local);
+  await page.selectOption('#contact-form select[name="needs"]', values.needs || "銀行信貸資訊查詢");
+  await page.selectOption('#contact-form select[name="occupation_type"]', values.occupation_type || "上班族");
+
+  await goToStep(1);
   await page.fill('#contact-form input[name="line_id"]', values.line_id || "");
 
   await page.waitForFunction(() => !!document.querySelector('#contact-form [data-region-country] option[value="台灣"]'));
@@ -335,11 +378,10 @@ async function fillCurrentLeadForm(page, values) {
   await page.selectOption('#contact-form [data-region-state]', values.region_state || "北部");
   await page.waitForFunction((city) => !!document.querySelector(`#contact-form [data-region-city] option[value="${city}"]`), values.region_city || "台北市");
   await page.selectOption('#contact-form [data-region-city]', values.region_city || "台北市");
-
-  await page.selectOption('#contact-form select[name="needs"]', values.needs || "銀行信貸資訊查詢");
-  await page.selectOption('#contact-form select[name="occupation_type"]', values.occupation_type || "上班族");
   await page.selectOption('#contact-form select[name="income_type"]', values.income_type || "固定薪轉");
   await page.selectOption('#contact-form select[name="message"]', values.message_option || "想確認合法金融資訊來源");
+
+  await goToStep(2);
   await page.check('#contact-form input[name="consent_privacy"]');
   await page.check('#contact-form input[name="consent_line"]');
 }
@@ -611,6 +653,11 @@ async function smokeAdminShell(browser, baseUrl, results) {
 
 async function smokeLeadAndAdmin(browser, baseUrl, results, adminRecordCollector) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  await routeSiteConfig(context, {
+    api_base_url: "",
+    mode: "localStorage",
+    timeout_ms: 8000
+  });
   const page = await context.newPage();
   await gotoPage(page, baseUrl, "/free-check.html?utm_source=qa&utm_medium=paid_social&utm_campaign=manual");
   const finalLeadForm = await page.evaluate(() => {
@@ -1404,18 +1451,10 @@ async function smokeFormalApiMode(browser, baseUrl, results) {
   let initialLiveLeadCount = 0;
   let initialLivePublicFeedbackCount = 0;
 
-  await context.route("**/site-config.json", async (route) => {
-    const config = JSON.parse(readFileSync(join(ROOT, "site-config.json"), "utf8"));
-    config.backend = {
-      api_base_url: liveBackendBaseUrl || baseUrl,
-      mode: "api",
-      timeout_ms: 8000
-    };
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json; charset=utf-8",
-      body: JSON.stringify(config)
-    });
+  await routeSiteConfig(context, {
+    api_base_url: liveBackendBaseUrl || baseUrl,
+    mode: "api",
+    timeout_ms: 8000
   });
 
   if (!liveBackendBaseUrl) {

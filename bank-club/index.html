@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>銀行俱樂部｜信用貸 / 房屋貸 / 企業貸免費評估</title>
+    <meta name="description" content="銀行俱樂部提供信用貸款、房屋貸款與企業貸款諮詢，協助整理資格、文件清單、申辦流程與 LINE 一對一免費評估。">
+    <link rel="shortcut icon" type="image/x-icon" href="../assets/images/favicon.png">
+    <link rel="stylesheet" href="../assets/css/vendor/vendor.min.css">
+    <link rel="stylesheet" href="../assets/css/plugins/plugins.min.css">
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260702-bank-club-static">
+</head>
+<body class="bank-club-page">
+    <header class="bank-site-header">
+        <a class="bank-brand" href="index.html" data-bank-track="nav_home">
+            <img src="../assets/images/bank-club/bank_club_logo.png" alt="銀行俱樂部">
+            <span><strong>銀行俱樂部</strong><small>銀行專員一對一免費評估</small></span>
+        </a>
+        <nav class="bank-nav" aria-label="Bank Club 主選單">
+            <a href="#services" data-bank-track="nav_services">服務</a>
+            <a href="#process" data-bank-track="nav_process">流程</a>
+            <a href="#content" data-bank-track="nav_content">內容</a>
+            <a href="#consultation" data-bank-track="nav_consultation">諮詢</a>
+            <a href="../index.html" data-bank-track="nav_tfse">TFSE 金融便民中心</a>
+            <a href="../admin.html" data-bank-track="nav_admin">共用後台</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="bank-hero">
+            <div class="bank-hero-media" aria-hidden="true"></div>
+            <div class="bank-hero-content">
+                <span class="bank-eyebrow">Bank Club</span>
+                <h1>信用貸 / 房屋貸 / 企業貸免費評估</h1>
+                <p>一對一銀行專員協助整理資格、文件與申辦流程。本站不保證核貸、額度、利率或撥款結果，實際條件以銀行審核與契約揭露為準。</p>
+                <div class="bank-hero-actions">
+                    <a class="bank-primary-btn" href="#consultation" data-bank-track="hero_consultation">立即免費諮詢</a>
+                    <a class="bank-secondary-btn" href="#process" data-bank-track="hero_process">查看申辦流程</a>
+                    <a class="bank-secondary-btn" href="../index.html" data-bank-track="hero_tfse">前往 TFSE</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="bank-contact-strip" id="contact">
+            <div>
+                <strong><span data-bank-setting="specialistName"></span>｜<span data-bank-setting="specialistTitle"></span></strong>
+                <span>行動 <span data-bank-setting="mobile"></span></span>
+                <span>Email <span data-bank-setting="email"></span></span>
+            </div>
+            <img data-bank-line-qr src="../assets/images/bank-club/bank_club_line_qr.png" alt="Bank Club LINE QR Code">
+        </section>
+
+        <section class="bank-section" id="services">
+            <div class="bank-section-heading">
+                <span>Services</span>
+                <h2>三大貸款服務</h2>
+                <p>把主站核心服務整理成獨立前台，與 TFSE 子站互相跳轉，但在同一個後台中分站管理。</p>
+            </div>
+            <div class="bank-card-grid" data-bank-services></div>
+        </section>
+
+        <section class="bank-section bank-process" id="process">
+            <div class="bank-section-heading">
+                <span>Flow</span>
+                <h2>簡化申辦流程</h2>
+                <p>從需求送出到銀行審核，後台會以 Bank Club 站點維度追蹤線索與事件。</p>
+            </div>
+            <ol data-bank-process></ol>
+        </section>
+
+        <section class="bank-section" id="content">
+            <div class="bank-section-heading">
+                <span>Content</span>
+                <h2>主站內容與文件</h2>
+                <p>文章與文件資源已抽成資料，後續可逐步接入正式 API 或資料庫。</p>
+            </div>
+            <div class="bank-two-col">
+                <div>
+                    <h3>文章內容</h3>
+                    <div class="bank-content-list" data-bank-articles></div>
+                </div>
+                <div>
+                    <h3>文件資源</h3>
+                    <div class="bank-content-list" data-bank-files></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bank-section bank-consultation" id="consultation">
+            <div class="bank-section-heading">
+                <span>Consultation</span>
+                <h2>免費諮詢表單</h2>
+                <p>送出後會寫入共用後台的 Bank Club 線索列表，與 TFSE 線索分開管理。</p>
+            </div>
+            <form class="bank-form" data-bank-lead-form>
+                <label>稱呼<input name="display_name" required placeholder="例如：王先生"></label>
+                <label>手機<input name="phone" required placeholder="例如：09xx xxx xxx"></label>
+                <label>LINE ID<input name="line_id" placeholder="可選填"></label>
+                <label>需求類型<select name="loan_type"><option value="credit">信用貸款</option><option value="house">房屋貸款</option><option value="business">企業貸款</option><option value="unknown">尚不確定</option></select></label>
+                <label class="bank-full">需求備註<textarea name="message" rows="4" placeholder="請簡述需求，請勿填寫身分證字號、帳戶、卡號或密碼。"></textarea></label>
+                <button type="submit">送出到共用後台</button>
+                <p data-bank-form-message></p>
+            </form>
+        </section>
+    </main>
+
+    <footer class="bank-footer">
+        <p>銀行俱樂部與 TFSE 金融便民中心目前為不同前台，共用当前後台分站管理。</p>
+        <a href="../index.html">TFSE 首頁</a>
+        <a href="../admin.html">共用後台</a>
+    </footer>
+
+    <script src="../assets/js/bank-club-site.js?v=20260702-bank-club-static"></script>
+</body>
+</html>

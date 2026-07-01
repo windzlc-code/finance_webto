@@ -31,6 +31,12 @@ REQUIRED_FILES = (
     "assets/data/line-flows.json",
     "assets/data/browser-acceptance-evidence.json",
     "assets/data/admin-record-seeds.json",
+    "assets/data/bank-club.json",
+    "assets/images/bank-club/bank_club_line_qr.png",
+    "assets/images/bank-club/bank_club_logo.png",
+    "assets/images/bank-club/home_hero_office.jpg",
+    "assets/js/bank-club-admin.js",
+    "assets/js/bank-club-site.js",
     "assets/js/tfse-api.js",
     "assets/js/tfse-faq.js",
     "assets/js/tfse-home-query.js",
@@ -46,6 +52,7 @@ REQUIRED_FILES = (
     "debt-law.html",
     "insurance-finance.html",
     "anti-fraud.html",
+    "bank-club/index.html",
     "feed.xml",
     "favicon.ico",
     "free-check.html",
@@ -69,6 +76,8 @@ REQUIRED_FILES = (
     "tools/backend_schema_audit.py",
     "tools/browser_acceptance_report.py",
     "tools/browser_acceptance_verify.mjs",
+    "tools/bank_club_deployment_manifest.py",
+    "tools/bank_club_integration_smoke.mjs",
     "tools/checklist_artifact_coverage_audit.py",
     "tools/content_api_cutover_package.py",
     "tools/crm_capability_audit.py",
@@ -268,7 +277,7 @@ def base_url():
 
 def verify_data():
     failures = []
-    for name in ("products.json", "articles.json", "categories.json", "landing-pages.json", "faq.json", "compliance-rules.json", "institutions.json", "line-flows.json", "browser-acceptance-evidence.json", "source-verification-evidence.json", "admin-record-seeds.json"):
+    for name in ("products.json", "articles.json", "categories.json", "landing-pages.json", "faq.json", "compliance-rules.json", "institutions.json", "line-flows.json", "bank-club.json", "browser-acceptance-evidence.json", "source-verification-evidence.json", "admin-record-seeds.json"):
         try:
             json.loads((ROOT / "assets" / "data" / name).read_text())
         except Exception as error:
@@ -282,13 +291,16 @@ def verify_data():
             ("GET", "/api/articles"),
             ("GET", "/api/articles/:slug"),
             ("POST", "/api/leads"),
+            ("POST", "/api/bank-club/leads"),
             ("POST", "/api/events"),
             ("GET", "/api/search"),
             ("POST", "/api/admin/auth/login"),
             ("GET", "/api/admin/auth/session"),
             ("POST", "/api/admin/auth/logout"),
             ("GET", "/api/admin/leads"),
+            ("GET", "/api/admin/bank-club/leads"),
             ("PATCH", "/api/admin/leads/:id/status"),
+            ("PATCH", "/api/admin/bank-club/leads/:id/status"),
             ("GET", "/api/admin/leads/follow-ups"),
             ("POST", "/api/admin/compliance/review"),
             ("GET", "/api/admin/audit-logs"),

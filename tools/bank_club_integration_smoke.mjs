@@ -1,0 +1,339 @@
+#!/usr/bin/env node
+import { createServer, request as httpRequest } from "node:http";
+import { spawn } from "node:child_process";
+import { createReadStream, existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { extname, join, normalize, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+let chromium;
+try {
+  ({ chromium } = require("playwright"));
+} catch (error) {
+  console.error("Cannot load Playwright. Set NODE_PATH to bundled node_modules or install playwright.");
+  console.error(String(error && error.message ? error.message : error));
+  process.exit(2);
+}
+
+const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
+const ADMIN_PASSWORD = "admin123";
+const MIME_TYPES = {
+  ".css": "text/css; charset=utf-8",
+  ".gif": "image/gif",
+  ".html": "text/html; charset=utf-8",
+  ".ico": "image/x-icon",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".txt": "text/plain; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
+  ".xml": "application/xml; charset=utf-8",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2"
+};
+
+function ok(label, detail = "") {
+  return { label, status: "passed", detail };
+}
+
+function fail(label, detail) {
+  return { label, status: "failed", detail };
+}
+
+async function listen(server, startPort) {
+  for (let port = startPort; port < startPort + 50; port += 1) {
+    try {
+      await new Promise((resolveListen, rejectListen) => {
+        server.once("error", rejectListen);
+        server.listen(port, "127.0.0.1", () => {
+          server.off("error", rejectListen);
+          resolveListen();
+        });
+      });
+      return port;
+    } catch (error) {
+      server.removeAllListeners("error");
+      if (!error || error.code !== "EADDRINUSE") throw error;
+    }
+  }
+  throw new Error("No free local port available");
+}
+
+async function closeServer(server) {
+  await new Promise((resolveClose) => server.close(resolveClose));
+}
+
+function wait(ms) {
+  return new Promise((resolveWait) => setTimeout(resolveWait, ms));
+}
+
+async function waitForApi(url, timeoutMs = 8000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) return;
+    } catch (error) {
+      // Keep polling until the spawned API opens its socket.
+    }
+    await wait(200);
+  }
+  throw new Error(`API did not become ready: ${url}`);
+}
+
+function proxyToApi(clientRequest, clientResponse, apiPort) {
+  const upstream = httpRequest({
+    hostname: "127.0.0.1",
+    port: apiPort,
+    method: clientRequest.method,
+    path: clientRequest.url,
+    headers: clientRequest.headers
+  }, (upstreamResponse) => {
+    clientResponse.writeHead(upstreamResponse.statusCode || 502, upstreamResponse.headers);
+    upstreamResponse.pipe(clientResponse);
+  });
+  upstream.on("error", (error) => {
+    clientResponse.writeHead(502, { "content-type": "application/json; charset=utf-8" });
+    clientResponse.end(JSON.stringify({ error: "api_proxy_failed", detail: error.message }));
+  });
+  clientRequest.pipe(upstream);
+}
+
+function makeStaticProxyServer(root, apiPort) {
+  return createServer((request, response) => {
+    const requestUrl = new URL(request.url || "/", "http://127.0.0.1");
+    if (requestUrl.pathname.startsWith("/tfse/api/") || requestUrl.pathname === "/tfse/api") {
+      proxyToApi(request, response, apiPort);
+      return;
+    }
+    if (requestUrl.pathname === "/site-config.json") {
+      const config = JSON.parse(readFileSync(join(root, "site-config.json"), "utf8"));
+      config.backend = Object.assign({}, config.backend || {}, {
+        api_base_url: "/tfse",
+        mode: "api",
+        timeout_ms: 8000
+      });
+      response.writeHead(200, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
+      response.end(JSON.stringify(config));
+      return;
+    }
+
+    let pathname = decodeURIComponent(requestUrl.pathname);
+    if (pathname === "/") pathname = "/index.html";
+    const target = normalize(join(root, pathname));
+    if (!target.startsWith(root) || !existsSync(target) || !statSync(target).isFile()) {
+      response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+      response.end("Not found");
+      return;
+    }
+    response.writeHead(200, { "content-type": MIME_TYPES[extname(target).toLowerCase()] || "application/octet-stream" });
+    createReadStream(target).pipe(response);
+  });
+}
+
+async function runBrowserChecks(baseUrl) {
+  const browser = await chromium.launch();
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  const page = await context.newPage();
+  const results = [];
+  const unexpectedResponses = [];
+  const unexpectedErrors = [];
+
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      const url = response.url();
+      const allowedPreLogin =
+        response.status() === 401 &&
+        (url.includes("/tfse/api/admin/auth/session") ||
+          url.includes("/tfse/api/admin/leads") ||
+          url.includes("/tfse/api/admin/bank-club/leads"));
+      if (!allowedPreLogin) unexpectedResponses.push(`${response.status()} ${url}`);
+    }
+  });
+  page.on("pageerror", (error) => unexpectedErrors.push(error.message));
+
+  try {
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: "networkidle" });
+    const bankLink = page.locator('a[href="bank-club/index.html"]').first();
+    await bankLink.waitFor({ timeout: 8000 });
+    results.push(ok("TFSE homepage links to Bank Club"));
+    await bankLink.click();
+    await page.waitForURL(/\/bank-club\/index\.html/, { timeout: 8000 });
+    await page.locator("[data-bank-services] .bank-card").first().waitFor({ timeout: 8000 });
+    results.push(ok("Bank Club frontend opens and renders services"));
+
+    const uniqueName = `API客戶${Date.now()}`;
+    const bankApiDiagnostics = await page.evaluate(async () => {
+      const configResponse = await fetch("../site-config.json", { cache: "no-store" });
+      const configText = await configResponse.text();
+      let config = {};
+      try {
+        config = JSON.parse(configText);
+      } catch (error) {
+        config = { parse_error: error.message, text: configText.slice(0, 120) };
+      }
+      const base = String(config && config.backend && config.backend.api_base_url || "").replace(/\/$/, "");
+      let health = { url: base ? base + "/api/health" : "", ok: false, status: 0 };
+      if (health.url) {
+        try {
+          const healthResponse = await fetch(health.url, { cache: "no-store" });
+          health = { url: health.url, ok: healthResponse.ok, status: healthResponse.status };
+        } catch (error) {
+          health = { url: health.url, ok: false, status: 0, error: error.message };
+        }
+      }
+      return {
+        config_status: configResponse.status,
+        api_base_url: base,
+        health
+      };
+    }).catch((error) => ({ error: error.message }));
+    await page.fill('[name="display_name"]', uniqueName);
+    await page.fill('[name="phone"]', "0912345678");
+    await page.selectOption('[name="loan_type"]', "house");
+    await page.fill('[name="message"]', "Bank Club shared admin smoke");
+    await page.evaluate(() => localStorage.removeItem("bank_club_leads"));
+    await page.click('[data-bank-lead-form] button[type="submit"]');
+    await page.locator("[data-bank-form-message]").filter({ hasText: "共用後台" }).waitFor({ timeout: 8000 });
+    const localFallbackCount = await page.evaluate(() => {
+      try {
+        return JSON.parse(localStorage.getItem("bank_club_leads") || "[]").length;
+      } catch (error) {
+        return -1;
+      }
+    });
+    if (localFallbackCount !== 0) {
+      const formMessage = await page.locator("[data-bank-form-message]").textContent().catch(() => "");
+      throw new Error(`Bank Club form used local fallback count=${localFallbackCount}; message=${formMessage}; diagnostics=${JSON.stringify(bankApiDiagnostics)}; responses=${unexpectedResponses.join(" | ") || "none"}`);
+    }
+    results.push(ok("Bank Club form posts to shared API"));
+
+    await page.goto(`${baseUrl}/admin.html`, { waitUntil: "networkidle" });
+    await page.fill("[data-admin-password]", ADMIN_PASSWORD);
+    await page.selectOption("[data-admin-role]", "super_admin");
+    await page.click("[data-admin-login]");
+    await page.locator("[data-admin-protected]").first().waitFor({ state: "visible", timeout: 10000 });
+    await page.locator("[data-bank-club-admin]").filter({ hasText: "資料來源：api" }).waitFor({ timeout: 10000 });
+    await page.locator("[data-bank-club-admin]").filter({ hasText: uniqueName }).waitFor({ timeout: 10000 });
+    results.push(ok("Shared admin login shows Bank Club API leads"));
+
+    await page.locator('[data-bank-lead-status]').first().click();
+    await page.locator("[data-bank-club-admin]").filter({ hasText: "已聯繫" }).waitFor({ timeout: 10000 });
+    results.push(ok("Bank Club lead status updates through shared admin"));
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.click("[data-bank-export]")
+    ]);
+    const downloadPath = await download.path();
+    if (!downloadPath) throw new Error("Bank Club admin export download path unavailable");
+    const exported = JSON.parse((await import("node:fs")).readFileSync(downloadPath, "utf8"));
+    const exportedLead = (exported.leads || []).find((lead) => lead.display_name === uniqueName);
+    if (!exportedLead || exported.source_mode !== "api") {
+      throw new Error("Bank Club admin export did not include current API lead data");
+    }
+    results.push(ok("Bank Club admin export includes API leads"));
+
+    await page.locator('.tfse-site-switcher a[href="#tfse-admin-workspace"]').waitFor({ timeout: 8000 });
+    await page.locator('.tfse-site-switcher a[href="#bank-club-admin-workspace"]').waitFor({ timeout: 8000 });
+    await page.locator('.tfse-site-switcher a[href="index.html"]').waitFor({ timeout: 8000 });
+    await page.locator('.tfse-site-switcher a[href="bank-club/index.html"]').waitFor({ timeout: 8000 });
+    results.push(ok("Admin site switcher exposes both sites"));
+
+    const adminFrontendLink = page.locator('.bank-admin-actions a[href="bank-club/index.html"]').first();
+    await adminFrontendLink.waitFor({ timeout: 8000 });
+    const [popup] = await Promise.all([
+      context.waitForEvent("page"),
+      adminFrontendLink.click()
+    ]);
+    await popup.waitForLoadState("networkidle");
+    if (!/\/bank-club\/index\.html$/.test(new URL(popup.url()).pathname)) {
+      throw new Error(`Admin Bank Club link opened unexpected URL: ${popup.url()}`);
+    }
+    await popup.close();
+    results.push(ok("Admin opens Bank Club frontend"));
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${baseUrl}/bank-club/index.html`, { waitUntil: "networkidle" });
+    const overflow = await page.evaluate(() => ({
+      width: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth
+    }));
+    if (overflow.scrollWidth > overflow.width + 2) {
+      throw new Error(`Bank Club mobile overflow ${overflow.scrollWidth} > ${overflow.width}`);
+    }
+    results.push(ok("Bank Club mobile layout has no horizontal overflow"));
+
+    if (unexpectedResponses.length) {
+      results.push(fail("No unexpected HTTP failures", unexpectedResponses.slice(0, 12).join("\n")));
+    } else {
+      results.push(ok("No unexpected HTTP failures"));
+    }
+    if (unexpectedErrors.length) {
+      results.push(fail("No browser runtime errors", unexpectedErrors.slice(0, 12).join("\n")));
+    } else {
+      results.push(ok("No browser runtime errors"));
+    }
+  } catch (error) {
+    results.push(fail("Bank Club integrated journey", error.stack || error.message));
+  } finally {
+    await browser.close();
+  }
+  return results;
+}
+
+async function main() {
+  const tempDir = mkdtempSync(join(tmpdir(), "tfse-bank-club-smoke-"));
+  const dbPath = join(tempDir, "tfse.sqlite3");
+  const apiPort = 8791 + Math.floor(Math.random() * 200);
+  const api = spawn("python3", [
+    join(ROOT, "backend", "tfse_persistent_api.py"),
+    "--host", "127.0.0.1",
+    "--port", String(apiPort),
+    "--db", dbPath
+  ], {
+    cwd: ROOT,
+    env: { ...process.env, TFSE_ADMIN_PASSWORD: ADMIN_PASSWORD },
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  const apiLogs = [];
+  api.stdout.on("data", (chunk) => apiLogs.push(String(chunk)));
+  api.stderr.on("data", (chunk) => apiLogs.push(String(chunk)));
+
+  let server;
+  let browserResults = [];
+  try {
+    await waitForApi(`http://127.0.0.1:${apiPort}/tfse/api/health`);
+    server = makeStaticProxyServer(ROOT, apiPort);
+    const staticPort = await listen(server, 4176);
+    browserResults = await runBrowserChecks(`http://127.0.0.1:${staticPort}`);
+  } finally {
+    if (server) await closeServer(server);
+    api.kill();
+    await new Promise((resolveExit) => api.once("exit", resolveExit));
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+
+  const failed = browserResults.filter((item) => item.status === "failed");
+  console.log(JSON.stringify({
+    format: "tfse_bank_club_integration_smoke",
+    generated_at: new Date().toISOString(),
+    passed_count: browserResults.length - failed.length,
+    failed_count: failed.length,
+    results: browserResults,
+    api_log_tail: apiLogs.join("").split("\n").filter(Boolean).slice(-10)
+  }, null, 2));
+  return failed.length ? 1 : 0;
+}
+
+main().then((code) => {
+  process.exitCode = code;
+}).catch((error) => {
+  console.error(error && error.stack ? error.stack : String(error));
+  process.exitCode = 1;
+});

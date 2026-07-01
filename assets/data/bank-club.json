@@ -1,0 +1,104 @@
+{
+  "site": {
+    "key": "bank_club",
+    "name": "銀行俱樂部",
+    "tagline": "銀行專員一對一，信貸 / 房貸 / 企業貸免費評估",
+    "description": "銀行俱樂部提供信用貸款、房屋貸款與企業貸款諮詢，協助整理資格、文件清單、申辦流程與 LINE 一對一免費評估。",
+    "tfseUrl": "../index.html",
+    "bankClubUrl": "index.html",
+    "logo": "../assets/images/bank-club/bank_club_logo.png",
+    "heroImage": "../assets/images/bank-club/home_hero_office.jpg",
+    "lineQr": "../assets/images/bank-club/bank_club_line_qr.png"
+  },
+  "settings": {
+    "companyName": "國泰人壽保險股份有限公司",
+    "officeName": "永和通訊處",
+    "specialistName": "梁淵欽",
+    "specialistTitle": "放款經理人",
+    "address": "235 新北市中和區景安路 50 號 12 樓",
+    "phone": "02 2243 7127",
+    "fax": "02 2928 7804",
+    "mobile": "0972 727 690",
+    "email": "yuanchin.liang@gmail.com",
+    "lineUrl": "#contact",
+    "fbGroupUrl": "https://www.facebook.com/share/g/1DzfRZ8fPw/?mibextid=wwXIfr",
+    "officialApplyUrl": "https://www.feib.com.tw/"
+  },
+  "services": [
+    {
+      "key": "credit",
+      "title": "信用貸款",
+      "subtitle": "彈性資金運用",
+      "description": "上班族、自營業主文件準備、網路申辦提醒與資金用途風險提示。",
+      "anchor": "#credit"
+    },
+    {
+      "key": "house",
+      "title": "房屋貸款",
+      "subtitle": "房屋購置與資金規劃",
+      "description": "購屋、增貸、轉增貸、二胎房貸流程與試算工具。",
+      "anchor": "#house"
+    },
+    {
+      "key": "business",
+      "title": "企業貸款",
+      "subtitle": "營運週轉與資金支持",
+      "description": "企業主營運週轉、報稅與流水文件整理、審核重點提醒。",
+      "anchor": "#business"
+    }
+  ],
+  "processSteps": ["填寫需求", "專員初審", "準備文件", "銀行審核", "結果跟進"],
+  "articles": [
+    {
+      "id": "article-credit-fields",
+      "title": "信貸網路申請欄位填寫教學",
+      "category": "信用貸款",
+      "excerpt": "申請金額、年限、案件來源與適用方案應依真實需求與專員確認結果填寫。",
+      "status": "published"
+    },
+    {
+      "id": "article-loan-purpose-risk",
+      "title": "資金用途與高風險用途提醒",
+      "category": "風險提醒",
+      "excerpt": "資金用途必須依本人真實需求、銀行官方頁面、最新規則與個案審核結果填寫。",
+      "status": "published"
+    },
+    {
+      "id": "article-documents",
+      "title": "貸款文件準備清單",
+      "category": "文件準備",
+      "excerpt": "整理身分證、薪轉、報稅資料與企業營運資料的準備邊界。",
+      "status": "published"
+    },
+    {
+      "id": "article-house-refinance",
+      "title": "房屋增貸、轉增貸與二胎房貸差異",
+      "category": "房屋貸款",
+      "excerpt": "用簡單方式整理房屋貸款常見需求、流程與申辦注意事項。",
+      "status": "published"
+    }
+  ],
+  "files": [
+    {
+      "id": "file-credit",
+      "title": "信貸文件準備提醒",
+      "type": "credit_docs",
+      "visibility": "public",
+      "description": "身分證正反面、財力證明與 LINE 補件邊界。"
+    },
+    {
+      "id": "file-house",
+      "title": "房貸文件準備提醒",
+      "type": "house_docs",
+      "visibility": "public",
+      "description": "房屋貸款、增貸、轉增貸與二胎房貸資料準備。"
+    },
+    {
+      "id": "file-business",
+      "title": "企業貸款資料提醒",
+      "type": "business_docs",
+      "visibility": "public",
+      "description": "營業登記、報稅資料、流水與營運週轉需求整理。"
+    }
+  ]
+}

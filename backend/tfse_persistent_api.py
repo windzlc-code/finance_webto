@@ -29,6 +29,7 @@ PRODUCT_DETAIL_RE = re.compile(r"^/api/products/([^/]+)$")
 ARTICLE_DETAIL_RE = re.compile(r"^/api/articles/([^/]+)$")
 ADMIN_PRODUCT_RE = re.compile(r"^/api/admin/products/([^/]+)$")
 ADMIN_ARTICLE_RE = re.compile(r"^/api/admin/articles/([^/]+)$")
+BANK_CLUB_LEAD_STATUS_RE = re.compile(r"^/api/admin/bank-club/leads/([^/]+)/status$")
 SENSITIVE_PATTERNS = [
     re.compile(r"\b[A-Z][12]\d{8}\b", re.I),
     re.compile(r"\b\d{12,19}\b"),
@@ -67,6 +68,15 @@ def redact_sensitive_text(value: object) -> str:
     for pattern in SENSITIVE_PATTERNS:
         text = pattern.sub("[redacted]", text)
     return text
+
+
+def normalize_api_path(path: str) -> str:
+    """Accept API requests with or without the deployed /tfse site prefix."""
+    if path == "/tfse":
+        return "/"
+    if path.startswith("/tfse/"):
+        return path[len("/tfse") :]
+    return path
 
 
 def phone_last3(phone: str) -> str:
@@ -292,6 +302,20 @@ class Store:
                 );
                 CREATE INDEX IF NOT EXISTS idx_lead_forms_status_updated ON lead_forms(status, updated_at DESC);
                 CREATE INDEX IF NOT EXISTS idx_lead_forms_phone_hash ON lead_forms(phone_hash);
+                CREATE TABLE IF NOT EXISTS bank_club_leads (
+                    id TEXT PRIMARY KEY,
+                    display_name TEXT NOT NULL,
+                    phone TEXT NOT NULL DEFAULT '',
+                    line_id TEXT NOT NULL DEFAULT '',
+                    loan_type TEXT NOT NULL DEFAULT 'unknown',
+                    message TEXT NOT NULL DEFAULT '',
+                    status TEXT NOT NULL DEFAULT 'new',
+                    source_page TEXT NOT NULL DEFAULT '',
+                    payload_json TEXT NOT NULL DEFAULT '{}',
+                    submitted_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_bank_club_leads_status_updated ON bank_club_leads(status, updated_at DESC);
                 CREATE TABLE IF NOT EXISTS audit_logs (
                     id TEXT PRIMARY KEY,
                     action TEXT NOT NULL,
@@ -527,6 +551,74 @@ class Store:
             updated = conn.execute("SELECT * FROM lead_forms WHERE id = ?", (lead_id,)).fetchone()
         audit = self.audit("lead_status_update", lead_id, str(payload.get("status") or ""), actor_role)
         return {"lead": public_lead(updated), "audit_log": audit}
+
+    def create_bank_club_lead(self, payload: dict) -> dict:
+        if payload.get("website"):
+            raise ValueError("honeypot_rejected")
+        if has_high_risk_text(payload):
+            raise ValueError("high_risk_sensitive_payload")
+        lead_id = str(payload.get("id") or "bank_lead_" + secrets.token_hex(8))
+        submitted_at = str(payload.get("submitted_at") or now_iso())
+        clean_payload = dict(payload)
+        clean_payload["site_key"] = "bank_club"
+        clean_payload["id"] = lead_id
+        clean_payload["submitted_at"] = submitted_at
+        with self.conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO bank_club_leads(
+                    id, display_name, phone, line_id, loan_type, message, status,
+                    source_page, payload_json, submitted_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    lead_id,
+                    str(payload.get("display_name") or payload.get("name") or "未具名")[:120],
+                    str(payload.get("phone") or "")[:80],
+                    str(payload.get("line_id") or "")[:120],
+                    str(payload.get("loan_type") or "unknown")[:80],
+                    redact_sensitive_text(payload.get("message") or "")[:1000],
+                    str(payload.get("status") or "new")[:80],
+                    str(payload.get("source_page") or "bank-club/index.html")[:300],
+                    json.dumps(clean_payload, ensure_ascii=False),
+                    submitted_at,
+                    now_iso(),
+                ),
+            )
+        audit = self.audit("bank_club_lead_submit", lead_id, "persistent api accepted Bank Club lead")
+        return {"id": lead_id, "status": clean_payload.get("status", "new"), "lead": clean_payload, "audit_log": audit}
+
+    def list_bank_club_leads(self) -> list[dict]:
+        with self.conn() as conn:
+            rows = conn.execute("SELECT * FROM bank_club_leads ORDER BY submitted_at DESC, updated_at DESC").fetchall()
+        output = []
+        for row in rows:
+            item = dict(row)
+            payload = json.loads(item.pop("payload_json") or "{}")
+            payload.update(item)
+            payload["site_key"] = "bank_club"
+            output.append(payload)
+        return output
+
+    def update_bank_club_lead_status(self, lead_id: str, payload: dict, actor_role: str) -> dict | None:
+        with self.conn() as conn:
+            row = conn.execute("SELECT * FROM bank_club_leads WHERE id = ?", (lead_id,)).fetchone()
+            if not row:
+                return None
+            source_payload = json.loads(row["payload_json"] or "{}")
+            source_payload["status"] = str(payload.get("status") or row["status"] or "new")[:80]
+            source_payload["admin_note"] = redact_sensitive_text(payload.get("note") or source_payload.get("admin_note") or "")[:500]
+            source_payload["updated_at"] = now_iso()
+            conn.execute(
+                """
+                UPDATE bank_club_leads
+                SET status = ?, payload_json = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (source_payload["status"], json.dumps(source_payload, ensure_ascii=False), source_payload["updated_at"], lead_id),
+            )
+        audit = self.audit("bank_club_lead_status_update", lead_id, str(payload.get("status") or ""), actor_role)
+        return {"lead": next((lead for lead in self.list_bank_club_leads() if lead.get("id") == lead_id), None), "audit_log": audit}
 
     def list_privacy_requests(self) -> list[dict]:
         with self.conn() as conn:
@@ -814,6 +906,7 @@ class Store:
                 "privacy_requests": conn.execute("SELECT COUNT(1) FROM privacy_request_tasks").fetchone()[0],
                 "content_products": conn.execute("SELECT COUNT(1) FROM content_records WHERE item_type = 'product'").fetchone()[0],
                 "content_articles": conn.execute("SELECT COUNT(1) FROM content_records WHERE item_type = 'article'").fetchone()[0],
+                "bank_club_leads": conn.execute("SELECT COUNT(1) FROM bank_club_leads").fetchone()[0],
             }
         return {"ok": True, "service": "tfse_persistent_api", "db_path": str(self.db_path), "generated_at": now_iso(), **counts}
 
@@ -905,14 +998,14 @@ class Handler(BaseHTTPRequestHandler):
         self._set_headers(status=204, content_type="text/plain; charset=utf-8")
 
     def do_HEAD(self) -> None:
-        path = urlparse(self.path).path
+        path = normalize_api_path(urlparse(self.path).path)
         if path in {"/health", "/api/health"}:
             self._set_headers(status=200)
             return
         self._set_headers(status=404)
 
     def do_GET(self) -> None:
-        path = urlparse(self.path).path
+        path = normalize_api_path(urlparse(self.path).path)
         query = parse_qs(urlparse(self.path).query)
         if path in {"/health", "/api/health"}:
             self._write_json(self.store.health())
@@ -982,10 +1075,16 @@ class Handler(BaseHTTPRequestHandler):
             items = self.store.list_public_feedback()
             self._write_json({"items": items, "total": len(items)})
             return
+        if path == "/api/admin/bank-club/leads":
+            if not self._require_admin():
+                return
+            items = self.store.list_bank_club_leads()
+            self._write_json({"items": items, "total": len(items)})
+            return
         self._write_json({"error": "not_found", "path": path}, status=404)
 
     def do_POST(self) -> None:
-        path = urlparse(self.path).path
+        path = normalize_api_path(urlparse(self.path).path)
         try:
             payload = self._read_json()
             if path == "/api/leads":
@@ -996,6 +1095,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path == "/api/public-feedback":
                 self._write_json(self.store.add_feedback(payload))
+                return
+            if path == "/api/bank-club/leads":
+                self._write_json(self.store.create_bank_club_lead(payload))
                 return
             if path == "/api/admin/auth/login":
                 role = str(payload.get("role") or "viewer")
@@ -1061,12 +1163,13 @@ class Handler(BaseHTTPRequestHandler):
             self._write_json({"error": "internal_error", "detail": type(exc).__name__}, status=500)
 
     def do_PATCH(self) -> None:
-        path = urlparse(self.path).path
+        path = normalize_api_path(urlparse(self.path).path)
         match = LEAD_STATUS_RE.match(path)
         privacy_match = PRIVACY_REQUEST_RE.match(path)
         product_match = ADMIN_PRODUCT_RE.match(path)
         article_match = ADMIN_ARTICLE_RE.match(path)
-        if not match and not privacy_match and not product_match and not article_match:
+        bank_club_match = BANK_CLUB_LEAD_STATUS_RE.match(path)
+        if not match and not privacy_match and not product_match and not article_match and not bank_club_match:
             self._write_json({"error": "not_found", "path": path}, status=404)
             return
         admin = self._require_admin()
@@ -1079,6 +1182,10 @@ class Handler(BaseHTTPRequestHandler):
         if match:
             updated = self.store.update_lead_status(match.group(1), payload, role)
             self._write_json(updated or {"error": "lead_not_found", "id": match.group(1)}, status=200 if updated else 404)
+            return
+        if bank_club_match:
+            updated = self.store.update_bank_club_lead_status(bank_club_match.group(1), payload, role)
+            self._write_json(updated or {"error": "bank_club_lead_not_found", "id": bank_club_match.group(1)}, status=200 if updated else 404)
             return
         if product_match:
             self._write_json(self.store.upsert_content("product", payload, role, product_match.group(1)))

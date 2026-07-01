@@ -1,5 +1,5 @@
 Contact: mailto:info@tfse.tw
 Preferred-Languages: zh-TW, en
-Canonical: https://www.tfse-fcc.com/.well-known/security.txt
-Policy: https://www.tfse-fcc.com/source-policy.html
+Canonical: https://tfse.tfse-fcc.com/.well-known/security.txt
+Policy: https://tfse.tfse-fcc.com/source-policy.html
 Expires: 2027-06-28T00:00:00Z
