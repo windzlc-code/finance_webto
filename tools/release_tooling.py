@@ -98,6 +98,8 @@ RELEASE_REQUIRED_COMMANDS = [
     "python3 tools/incident_response_package.py --markdown",
     "python3 tools/launch_handoff_manifest.py --markdown",
     "python3 tools/verify_static_site.py",
+    "python3 tools/bank_club_deployment_manifest.py --markdown",
+    "python3 tools/container_topology_check.py --markdown",
     "NODE_PATH=/path/to/node_modules node tools/browser_acceptance_verify.mjs",
     "NODE_PATH=/path/to/node_modules node tools/bank_club_integration_smoke.mjs",
 ]

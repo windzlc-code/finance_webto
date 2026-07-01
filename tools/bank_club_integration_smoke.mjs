@@ -125,7 +125,10 @@ function makeStaticProxyServer(root, apiPort) {
 
     let pathname = decodeURIComponent(requestUrl.pathname);
     if (pathname === "/") pathname = "/index.html";
-    const target = normalize(join(root, pathname));
+    let target = normalize(join(root, pathname));
+    if (target.startsWith(root) && existsSync(target) && statSync(target).isDirectory()) {
+      target = normalize(join(target, "index.html"));
+    }
     if (!target.startsWith(root) || !existsSync(target) || !statSync(target).isFile()) {
       response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
       response.end("Not found");
@@ -159,11 +162,11 @@ async function runBrowserChecks(baseUrl) {
 
   try {
     await page.goto(`${baseUrl}/index.html`, { waitUntil: "networkidle" });
-    const bankLink = page.locator('a[href="bank-club/index.html"]').first();
+    const bankLink = page.locator('a[href="bank-club/"]').first();
     await bankLink.waitFor({ timeout: 8000 });
     results.push(ok("TFSE homepage links to Bank Club"));
     await bankLink.click();
-    await page.waitForURL(/\/bank-club\/index\.html/, { timeout: 8000 });
+    await page.waitForURL(/\/bank-club\/(?:index\.html)?$/, { timeout: 8000 });
     await page.locator("[data-bank-services] .bank-card").first().waitFor({ timeout: 8000 });
     results.push(ok("Bank Club frontend opens and renders services"));
 
@@ -239,20 +242,22 @@ async function runBrowserChecks(baseUrl) {
     }
     results.push(ok("Bank Club admin export includes API leads"));
 
-    await page.locator('.tfse-site-switcher a[href="#tfse-admin-workspace"]').waitFor({ timeout: 8000 });
-    await page.locator('.tfse-site-switcher a[href="#bank-club-admin-workspace"]').waitFor({ timeout: 8000 });
-    await page.locator('.tfse-site-switcher a[href="index.html"]').waitFor({ timeout: 8000 });
-    await page.locator('.tfse-site-switcher a[href="bank-club/index.html"]').waitFor({ timeout: 8000 });
-    results.push(ok("Admin site switcher exposes both sites"));
+    const switcherCount = await page.locator(".tfse-site-switcher").count();
+    if (switcherCount !== 0) {
+      throw new Error("single admin should not render legacy site switcher");
+    }
+    await page.locator("[data-bank-club-admin]").filter({ hasText: "金融站後台模組" }).waitFor({ timeout: 8000 });
+    await page.locator("[data-admin-visual-console]").waitFor({ timeout: 8000 });
+    results.push(ok("Single shared admin includes Bank Club module"));
 
-    const adminFrontendLink = page.locator('.bank-admin-actions a[href="bank-club/index.html"]').first();
+    const adminFrontendLink = page.locator('.bank-admin-actions a[href="bank-club/"]').first();
     await adminFrontendLink.waitFor({ timeout: 8000 });
     const [popup] = await Promise.all([
       context.waitForEvent("page"),
       adminFrontendLink.click()
     ]);
     await popup.waitForLoadState("networkidle");
-    if (!/\/bank-club\/index\.html$/.test(new URL(popup.url()).pathname)) {
+    if (!/\/bank-club\/(?:index\.html)?$/.test(new URL(popup.url()).pathname)) {
       throw new Error(`Admin Bank Club link opened unexpected URL: ${popup.url()}`);
     }
     await popup.close();

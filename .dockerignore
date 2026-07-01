@@ -1,0 +1,12 @@
+.git
+.DS_Store
+**/.DS_Store
+node_modules
+**/node_modules
+.next
+**/.next
+out
+coverage
+*.log
+data/*.sqlite3
+data/*.sqlite3-*

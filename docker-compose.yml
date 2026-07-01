@@ -1,0 +1,46 @@
+services:
+  finance:
+    container_name: finance
+    build:
+      context: .
+      dockerfile: docker/finance.Dockerfile
+    restart: unless-stopped
+
+  bankclub:
+    container_name: bankclub
+    build:
+      context: .
+      dockerfile: docker/bankclub.Dockerfile
+    environment:
+      BANKCLUB_BASE_PATH: /bankclub
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:8080/bankclub
+    restart: unless-stopped
+
+  backadmin:
+    container_name: backadmin
+    build:
+      context: .
+      dockerfile: docker/backadmin.Dockerfile
+    environment:
+      TFSE_ADMIN_PASSWORD: ${TFSE_ADMIN_PASSWORD:-admin123}
+      TFSE_DB_PATH: /data/tfse.sqlite3
+      BACKADMIN_STATIC_ROOT: /app
+    volumes:
+      - backadmin-data:/data
+    restart: unless-stopped
+
+  gateway:
+    container_name: gateway
+    image: nginx:1.27-alpine
+    depends_on:
+      - finance
+      - bankclub
+      - backadmin
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/gateway.nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+volumes:
+  backadmin-data:

@@ -26,6 +26,7 @@ const nav = [
   { label: "常見QA", href: "/qa" },
   { label: "免費諮詢預約", href: "/consultation" },
   { label: "FB 銀行俱樂部社團", href: "/facebook" },
+  { label: "TFSE 金融站", href: "/index.html" },
 ];
 
 export function Header({ settings }: { settings: SiteSettings }) {
@@ -116,7 +117,7 @@ export function Footer({
             <Link href="/risk">風險聲明</Link>
             <Link href="/terms">免責 / 服務條款</Link>
             <Link href="/site-map">網站地圖</Link>
-            <Link href="/admin">後台管理</Link>
+            <a href="/admin/">後台管理</a>
           </div>
         </>
       ) : null}

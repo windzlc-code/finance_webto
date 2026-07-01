@@ -134,3 +134,9 @@ jobs:
 
       - name: Bank Club shared admin smoke test
         run: node tools/bank_club_integration_smoke.mjs
+
+      - name: Bank Club deployment manifest
+        run: python3 tools/bank_club_deployment_manifest.py --markdown
+
+      - name: Container topology check
+        run: python3 tools/container_topology_check.py --markdown

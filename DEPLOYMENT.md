@@ -31,9 +31,28 @@ python3 tools/launch_handoff_manifest.py --markdown
 python3 tools/browser_acceptance_report.py --markdown
 NODE_PATH=/path/to/node_modules node tools/browser_acceptance_verify.mjs
 NODE_PATH=/path/to/node_modules node tools/bank_club_integration_smoke.mjs
+python3 tools/bank_club_deployment_manifest.py --markdown
+python3 tools/container_topology_check.py --markdown
 python3 tools/operations_runbook_audit.py
 python3 tools/verify_static_site.py
 ```
+
+## 三容器部署拓撲
+
+目前建議以 `docker-compose.yml` 啟動四個服務：`finance` 承載金融站前台、`bankclub` 承載銀行俱樂部完整 Next.js 前台、`backadmin` 承載統一後台與 API、`gateway` 負責公開入口路由。外部訪問路由為：
+
+- `/`：轉到 `finance`
+- `/bankclub/`：轉到 `bankclub`
+- `/bankclub/api/*`、`/api/*`、`/tfse/api/*`：轉到 `backadmin`
+- `/admin/`、`/admin.html`：轉到 `backadmin`
+
+本機或伺服器具備 Docker 時，可執行：
+
+```bash
+docker compose up --build
+```
+
+啟動後以 `http://127.0.0.1:8080/` 檢查金融站、`http://127.0.0.1:8080/bankclub/` 檢查銀行俱樂部、`http://127.0.0.1:8080/admin/` 檢查統一後台。
 
 2. 若本機沒有全域 Node/Playwright，可使用 Codex bundled runtime：`NODE_PATH=/Users/windzlc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules /Users/windzlc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node tools/browser_acceptance_verify.mjs`；Bank Club 合併鏈路則把最後的腳本路徑換成 `tools/bank_club_integration_smoke.mjs`。
 3. 推送前確認 `.github/workflows/tfse-acceptance.yml` 會在 GitHub Actions 執行同一組 Python 驗收、人工驗收報告生成與 Playwright 瀏覽器煙測。
@@ -230,7 +249,7 @@ python3 tools/persistent_api_smoke.py
 - env file：`/etc/tfse-api.env`，權限為 root-only，不提交 secret
 - Nginx：在正式域名新增 `location ^~ /api/`，反代到 `127.0.0.1:8788`
 - 若網站掛在 `/tfse` 子路徑，需同時將 `location ^~ /tfse/api/` 反代到同一個 API 服務；目前 API 已兼容 `/api/*` 與 `/tfse/api/*`，可由 Nginx 保留或移除 `/tfse` prefix。
-- public health：`https://tfse.tfse-fcc.com/api/health`
+- public health：`https://www.tfse-fcc.com/tfse/api/health`
 - security headers：`/etc/nginx/snippets/tfse-security-headers.conf` 已套用 CSP、X-Frame-Options、nosniff、Referrer-Policy 與 Permissions-Policy；HTTP 站點暫不加 `upgrade-insecure-requests`，避免 443 尚未放行時破壞可訪問性
 - cache headers：`/assets/` immutable、`site-config.json` no-store、`robots.txt` / `sitemap.xml` / `feed.xml` / `security.txt` 使用短期公開快取
 - backup timer：`tfse-api-backup.timer` 每日 03:15 觸發 `tfse-api-backup.service`
@@ -239,14 +258,14 @@ python3 tools/persistent_api_smoke.py
 
 該服務已提供 `POST /api/leads`、`POST /api/public-feedback`、內容查詢、Admin Auth、CRM 狀態更新、合規審核、個資請求與 `audit_logs`。合併 Bank Club 後，也提供 `POST /api/bank-club/leads`、`GET /api/admin/bank-club/leads` 與 `PATCH /api/admin/bank-club/leads/:id/status`，共用同一個 Admin session、CSRF 與 SQLite 資料庫。`/bank-club/index.html` 為主站前台入口，`admin.html` 會以多站點切換顯示 TFSE 與 Bank Club 兩個管理區。
 
-目前 `site-config.json > backend.mode` 已設為 `api`，`backend.api_base_url` 為 `https://tfse.tfse-fcc.com`。如果正式站使用子路徑部署，可改為 `/tfse`，但必須同步配置 `/tfse/api/` 反代。正式切換時需先解決 HTTPS 443 公網入站、填入正式 Line OA / Turnstile / 後端配置，並確認以下 URL 均可訪問：
+目前 `site-config.json > backend.mode` 已設為 `api`，`backend.api_base_url` 為 `https://www.tfse-fcc.com/tfse`。如果正式站使用子路徑部署，可改為 `/tfse`，但必須同步配置 `/tfse/api/` 反代。正式切換時需先解決 HTTPS 443 公網入站、填入正式 Line OA / Turnstile / 後端配置，並確認以下 URL 均可訪問：
 
-- `https://tfse.tfse-fcc.com/api/health`
-- `https://tfse.tfse-fcc.com/api/leads`
-- `https://tfse.tfse-fcc.com/api/bank-club/leads`
-- `https://tfse.tfse-fcc.com/api/admin/auth/login`
-- `https://tfse.tfse-fcc.com/api/admin/leads`
-- `https://tfse.tfse-fcc.com/api/admin/bank-club/leads`
+- `https://www.tfse-fcc.com/tfse/api/health`
+- `https://www.tfse-fcc.com/tfse/api/leads`
+- `https://www.tfse-fcc.com/tfse/api/bank-club/leads`
+- `https://www.tfse-fcc.com/tfse/api/admin/auth/login`
+- `https://www.tfse-fcc.com/tfse/api/admin/leads`
+- `https://www.tfse-fcc.com/tfse/api/admin/bank-club/leads`
 - 子路徑部署時，另驗 `/tfse/api/health` 與 `/tfse/api/bank-club/leads`
 
 前端已提供 `assets/js/tfse-api.js` API 適配層。正式後端上線時，在 `site-config.json` 填入：

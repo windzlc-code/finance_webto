@@ -28,6 +28,7 @@ if (process.env.ENABLE_HSTS === "true") {
 }
 
 const nextConfig: NextConfig = {
+  basePath: process.env.BANKCLUB_BASE_PATH || "",
   async headers() {
     return [
       {

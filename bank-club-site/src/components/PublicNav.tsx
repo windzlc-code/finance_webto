@@ -10,8 +10,13 @@ type NavItem = {
 };
 
 function isActivePath(pathname: string, href: string) {
+  if (href.endsWith(".html") || href.startsWith("http")) return false;
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function isDocumentLink(href: string) {
+  return href.endsWith(".html") || href.startsWith("http");
 }
 
 export function PublicNav({ items }: { items: NavItem[] }) {
@@ -32,6 +37,13 @@ export function PublicNav({ items }: { items: NavItem[] }) {
               <div className="nav-menu">
                 {item.children.map((child) => {
                   const childCurrent = isActivePath(pathname, child.href);
+                  if (isDocumentLink(child.href)) {
+                    return (
+                      <a key={child.href} href={child.href}>
+                        {child.label}
+                      </a>
+                    );
+                  }
                   return (
                     <Link
                       key={child.href}
@@ -49,6 +61,11 @@ export function PublicNav({ items }: { items: NavItem[] }) {
         }
 
         return (
+          isDocumentLink(item.href) ? (
+            <a key={item.href} href={item.href}>
+              {item.label}
+            </a>
+          ) : (
           <Link
             key={item.href}
             href={item.href}
@@ -57,6 +74,7 @@ export function PublicNav({ items }: { items: NavItem[] }) {
           >
             {item.label}
           </Link>
+          )
         );
       })}
     </nav>
