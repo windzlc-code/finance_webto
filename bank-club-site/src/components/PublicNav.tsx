@@ -10,13 +10,13 @@ type NavItem = {
 };
 
 function isActivePath(pathname: string, href: string) {
-  if (href.endsWith(".html") || href.startsWith("http")) return false;
+  if (isDocumentLink(href)) return false;
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function isDocumentLink(href: string) {
-  return href.endsWith(".html") || href.startsWith("http");
+  return href.endsWith(".html") || href.startsWith("http") || href.startsWith("/tfse/") || href.startsWith("/admin/");
 }
 
 export function PublicNav({ items }: { items: NavItem[] }) {

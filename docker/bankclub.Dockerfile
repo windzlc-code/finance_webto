@@ -10,7 +10,7 @@ FROM node:22-alpine AS runtime
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
 ENV NODE_ENV=production
-ENV BANKCLUB_BASE_PATH=/bankclub
+ENV BANKCLUB_BASE_PATH=
 COPY --from=deps /app/node_modules ./node_modules
 COPY bank-club-site ./
 RUN pnpm build

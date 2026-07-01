@@ -19,9 +19,11 @@ REQUIRED_FILES = [
     "assets/images/bank-club/bank_club_logo.png",
     "assets/images/bank-club/home_hero_office.jpg",
     "assets/js/bank-club-admin.js",
-    "assets/js/bank-club-site.js",
     "backend/tfse_persistent_api.py",
-    "bank-club/index.html",
+    "bank-club-site/src/app/page.tsx",
+    "bank-club-site/src/components/PublicLayout.tsx",
+    "docker-compose.yml",
+    "docker/gateway.nginx.conf",
     "index.html",
     "site-config.json",
     "tools/bank_club_deployment_manifest.py",
@@ -35,15 +37,15 @@ API_ENDPOINTS = {
 }
 
 TEXT_MARKERS = {
-    "admin.html": ["data-bank-club-admin", "銀行俱樂部後台", "bank-club/", "assets/js/bank-club-admin.js"],
-    "index.html": ["bank-club/"],
-    "site-config.json": ["bank-club/index.html"],
-    "sitemap.xml": ["bank-club/index.html"],
-    "bank-club/index.html": ["data-bank-lead-form", "../index.html", "../admin.html", "../assets/js/bank-club-site.js"],
-    "assets/js/bank-club-site.js": ["/api/bank-club/leads", "bank_club_leads", "API 暫時不可用"],
+    "admin.html": ["data-bank-club-admin", "銀行俱樂部後台", 'href="/"', "assets/js/bank-club-admin.js"],
+    "index.html": ['href="/"', "前往銀行俱樂部"],
     "assets/js/bank-club-admin.js": ["/api/admin/bank-club/leads", "tfse_admin_api_session", "data-bank-export", "source_mode"],
-    "backend/tfse_persistent_api.py": ["bank_club_leads", "normalize_api_path", "/api/admin/bank-club/leads", "/api/bank-club/leads", "BANK_CLUB_LEAD_STATUS_RE"],
-    "tools/bank_club_integration_smoke.mjs": ["tfse_bank_club_integration_smoke", "Bank Club form posts to shared API", "Bank Club admin export includes API leads", "/tfse/api/health"],
+    "backend/tfse_persistent_api.py": ["bank_club_leads", "normalize_api_path", "/api/admin/bank-club/leads", "/api/bank-club/leads", "BANK_CLUB_LEAD_STATUS_RE", 'source_page") or "/"'],
+    "bank-club-site/src/app/page.tsx": ["銀行俱樂部", "立即免費諮詢", "首頁核心入口"],
+    "bank-club-site/src/components/PublicLayout.tsx": ["/tfse/", "TFSE 金融站"],
+    "docker-compose.yml": ["finance:", "bankclub:", "backadmin:"],
+    "docker/gateway.nginx.conf": ["bankclub_upstream", "finance_upstream", "backadmin_upstream", "location /", "location ^~ /tfse/"],
+    "tools/bank_club_integration_smoke.mjs": ["tfse_bank_club_integration_smoke", "Bank Club lead API accepts shared admin payload", "Bank Club admin export includes API leads", "/tfse/api/health"],
     ".github/workflows/tfse-acceptance.yml": ["Bank Club shared admin smoke test", "tools/bank_club_integration_smoke.mjs"],
 }
 

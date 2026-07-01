@@ -39,11 +39,11 @@ python3 tools/verify_static_site.py
 
 ## 三容器部署拓撲
 
-目前建議以 `docker-compose.yml` 啟動四個服務：`finance` 承載金融站前台、`bankclub` 承載銀行俱樂部完整 Next.js 前台、`backadmin` 承載統一後台與 API、`gateway` 負責公開入口路由。外部訪問路由為：
+目前建議以 `docker-compose.yml` 啟動四個服務：`finance` 承載金融站前台、`bankclub` 承載銀行俱樂部完整 Next.js 前台、`backadmin` 承載統一後台與 API、`gateway` 負責公開入口路由。正式域名根路徑保留給銀行俱樂部，不再加 `/bankclub` 後綴。外部訪問路由為：
 
-- `/`：轉到 `finance`
-- `/bankclub/`：轉到 `bankclub`
-- `/bankclub/api/*`、`/api/*`、`/tfse/api/*`：轉到 `backadmin`
+- `/`：轉到 `bankclub`
+- `/tfse/`：轉到 `finance`
+- `/api/*`、`/tfse/api/*`：轉到 `backadmin`
 - `/admin/`、`/admin.html`：轉到 `backadmin`
 
 本機或伺服器具備 Docker 時，可執行：
@@ -52,7 +52,7 @@ python3 tools/verify_static_site.py
 docker compose up --build
 ```
 
-啟動後以 `http://127.0.0.1:8080/` 檢查金融站、`http://127.0.0.1:8080/bankclub/` 檢查銀行俱樂部、`http://127.0.0.1:8080/admin/` 檢查統一後台。
+啟動後以 `http://127.0.0.1:8080/` 檢查銀行俱樂部、`http://127.0.0.1:8080/tfse/` 檢查金融站、`http://127.0.0.1:8080/admin/` 檢查統一後台。
 
 2. 若本機沒有全域 Node/Playwright，可使用 Codex bundled runtime：`NODE_PATH=/Users/windzlc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules /Users/windzlc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node tools/browser_acceptance_verify.mjs`；Bank Club 合併鏈路則把最後的腳本路徑換成 `tools/bank_club_integration_smoke.mjs`。
 3. 推送前確認 `.github/workflows/tfse-acceptance.yml` 會在 GitHub Actions 執行同一組 Python 驗收、人工驗收報告生成與 Playwright 瀏覽器煙測。
@@ -256,7 +256,7 @@ python3 tools/persistent_api_smoke.py
 - backup path：`/var/lib/tfse-api/backups/tfse-api-*.sqlite3.gz` 與同名 `.manifest.json`
 - restore drill：每次 backup 後自動執行隔離恢復抽查，核對 `PRAGMA integrity_check` 與 critical table row counts
 
-該服務已提供 `POST /api/leads`、`POST /api/public-feedback`、內容查詢、Admin Auth、CRM 狀態更新、合規審核、個資請求與 `audit_logs`。合併 Bank Club 後，也提供 `POST /api/bank-club/leads`、`GET /api/admin/bank-club/leads` 與 `PATCH /api/admin/bank-club/leads/:id/status`，共用同一個 Admin session、CSRF 與 SQLite 資料庫。`/bank-club/index.html` 為主站前台入口，`admin.html` 會以多站點切換顯示 TFSE 與 Bank Club 兩個管理區。
+該服務已提供 `POST /api/leads`、`POST /api/public-feedback`、內容查詢、Admin Auth、CRM 狀態更新、合規審核、個資請求與 `audit_logs`。合併 Bank Club 後，也提供 `POST /api/bank-club/leads`、`GET /api/admin/bank-club/leads` 與 `PATCH /api/admin/bank-club/leads/:id/status`，共用同一個 Admin session、CSRF 與 SQLite 資料庫。Bank Club 主站由 `bankclub` 容器掛在域名根路徑 `/`，金融站由 `finance` 容器掛在 `/tfse/`，統一後台由 `backadmin` 容器掛在 `/admin/`；後台是單一帳戶頁面，不再保留舊的靜態中轉頁。
 
 目前 `site-config.json > backend.mode` 已設為 `api`，`backend.api_base_url` 為 `https://www.tfse-fcc.com/tfse`。如果正式站使用子路徑部署，可改為 `/tfse`，但必須同步配置 `/tfse/api/` 反代。正式切換時需先解決 HTTPS 443 公網入站、填入正式 Line OA / Turnstile / 後端配置，並確認以下 URL 均可訪問：
 

@@ -12,8 +12,8 @@ services:
       context: .
       dockerfile: docker/bankclub.Dockerfile
     environment:
-      BANKCLUB_BASE_PATH: /bankclub
-      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:8080/bankclub
+      BANKCLUB_BASE_PATH: ""
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:8080
     restart: unless-stopped
 
   backadmin:

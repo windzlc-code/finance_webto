@@ -158,7 +158,7 @@
         root.innerHTML = [
             "<div class=\"bank-admin-head\">",
             "<div><span>金融站後台模組</span><h2>Bank Club 業務管理</h2><p>Bank Club 線索、內容資源與事件分析已併入当前金融站後台，與 TFSE 資料在同一個帳戶頁面集中管理。資料來源：" + escapeHtml(leadResult.mode || "localStorage") + "</p></div>",
-            "<div class=\"bank-admin-actions\"><a href=\"bank-club/\" target=\"_blank\" rel=\"noopener\">打開 Bank Club 前台</a><button type=\"button\" data-bank-export>匯出 Bank Club 資料</button></div>",
+            "<div class=\"bank-admin-actions\"><a href=\"/\" target=\"_blank\" rel=\"noopener\">打開 Bank Club 前台</a><button type=\"button\" data-bank-export>匯出 Bank Club 資料</button></div>",
             "</div>",
             "<div class=\"bank-admin-metrics\">",
             "<article><small>主站線索</small><strong>" + leads.length + "</strong><span>Bank Club 前台表單</span></article>",
@@ -174,7 +174,7 @@
             "<section><h3>文件資源</h3><div class=\"bank-content-list\">" + data.files.map(function (item) {
                 return "<article><small>" + escapeHtml(item.type) + "</small><h4>" + escapeHtml(item.title) + "</h4><p>" + escapeHtml(item.description) + "</p></article>";
             }).join("") + "</div></section>",
-            "<section><h3>站點設定</h3><ul class=\"bank-admin-settings\"><li><span>專員</span><b>" + escapeHtml(data.settings.specialistName) + "｜" + escapeHtml(data.settings.specialistTitle) + "</b></li><li><span>電話</span><b>" + escapeHtml(data.settings.mobile) + "</b></li><li><span>Email</span><b>" + escapeHtml(data.settings.email) + "</b></li><li><span>前台路徑</span><b>bank-club/</b></li></ul></section>",
+            "<section><h3>站點設定</h3><ul class=\"bank-admin-settings\"><li><span>專員</span><b>" + escapeHtml(data.settings.specialistName) + "｜" + escapeHtml(data.settings.specialistTitle) + "</b></li><li><span>電話</span><b>" + escapeHtml(data.settings.mobile) + "</b></li><li><span>Email</span><b>" + escapeHtml(data.settings.email) + "</b></li><li><span>前台路徑</span><b>/</b></li></ul></section>",
             "</div>"
         ].join("");
     }

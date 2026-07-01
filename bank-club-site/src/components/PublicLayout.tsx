@@ -26,7 +26,7 @@ const nav = [
   { label: "常見QA", href: "/qa" },
   { label: "免費諮詢預約", href: "/consultation" },
   { label: "FB 銀行俱樂部社團", href: "/facebook" },
-  { label: "TFSE 金融站", href: "/index.html" },
+  { label: "TFSE 金融站", href: "/tfse/" },
 ];
 
 export function Header({ settings }: { settings: SiteSettings }) {

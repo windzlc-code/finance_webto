@@ -579,7 +579,7 @@ class Store:
                     str(payload.get("loan_type") or "unknown")[:80],
                     redact_sensitive_text(payload.get("message") or "")[:1000],
                     str(payload.get("status") or "new")[:80],
-                    str(payload.get("source_page") or "bank-club/index.html")[:300],
+                    str(payload.get("source_page") or "/")[:300],
                     json.dumps(clean_payload, ensure_ascii=False),
                     submitted_at,
                     now_iso(),

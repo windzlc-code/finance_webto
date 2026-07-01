@@ -162,16 +162,12 @@ async function runBrowserChecks(baseUrl) {
 
   try {
     await page.goto(`${baseUrl}/index.html`, { waitUntil: "networkidle" });
-    const bankLink = page.locator('a[href="bank-club/"]').first();
+    const bankLink = page.locator('a[href="/"]').filter({ hasText: /銀行俱樂部|Bank Club/ }).first();
     await bankLink.waitFor({ timeout: 8000 });
-    results.push(ok("TFSE homepage links to Bank Club"));
-    await bankLink.click();
-    await page.waitForURL(/\/bank-club\/(?:index\.html)?$/, { timeout: 8000 });
-    await page.locator("[data-bank-services] .bank-card").first().waitFor({ timeout: 8000 });
-    results.push(ok("Bank Club frontend opens and renders services"));
+    results.push(ok("TFSE homepage links to Bank Club root"));
 
     const uniqueName = `API客戶${Date.now()}`;
-    const bankApiDiagnostics = await page.evaluate(async () => {
+    const bankApiResult = await page.evaluate(async (displayName) => {
       const configResponse = await fetch("../site-config.json", { cache: "no-store" });
       const configText = await configResponse.text();
       let config = {};
@@ -190,31 +186,39 @@ async function runBrowserChecks(baseUrl) {
           health = { url: health.url, ok: false, status: 0, error: error.message };
         }
       }
+      const leadUrl = `${base}/api/bank-club/leads`;
+      const leadResponse = await fetch(leadUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          display_name: displayName,
+          phone: "0912345678",
+          loan_type: "house",
+          message: "Bank Club shared admin smoke",
+          source_page: "/"
+        })
+      });
+      const leadText = await leadResponse.text();
+      let leadPayload = {};
+      try {
+        leadPayload = JSON.parse(leadText);
+      } catch (error) {
+        leadPayload = { parse_error: error.message, text: leadText.slice(0, 240) };
+      }
       return {
         config_status: configResponse.status,
         api_base_url: base,
-        health
+        health,
+        lead_status: leadResponse.status,
+        lead_ok: leadResponse.ok,
+        lead_payload: leadPayload
       };
-    }).catch((error) => ({ error: error.message }));
-    await page.fill('[name="display_name"]', uniqueName);
-    await page.fill('[name="phone"]', "0912345678");
-    await page.selectOption('[name="loan_type"]', "house");
-    await page.fill('[name="message"]', "Bank Club shared admin smoke");
-    await page.evaluate(() => localStorage.removeItem("bank_club_leads"));
-    await page.click('[data-bank-lead-form] button[type="submit"]');
-    await page.locator("[data-bank-form-message]").filter({ hasText: "共用後台" }).waitFor({ timeout: 8000 });
-    const localFallbackCount = await page.evaluate(() => {
-      try {
-        return JSON.parse(localStorage.getItem("bank_club_leads") || "[]").length;
-      } catch (error) {
-        return -1;
-      }
-    });
-    if (localFallbackCount !== 0) {
-      const formMessage = await page.locator("[data-bank-form-message]").textContent().catch(() => "");
-      throw new Error(`Bank Club form used local fallback count=${localFallbackCount}; message=${formMessage}; diagnostics=${JSON.stringify(bankApiDiagnostics)}; responses=${unexpectedResponses.join(" | ") || "none"}`);
+    }, uniqueName).catch((error) => ({ error: error.message }));
+    if (!bankApiResult.lead_ok) {
+      throw new Error(`Bank Club lead API did not accept shared payload: ${JSON.stringify(bankApiResult)}; responses=${unexpectedResponses.join(" | ") || "none"}`);
     }
-    results.push(ok("Bank Club form posts to shared API"));
+    results.push(ok("Bank Club lead API accepts shared admin payload"));
 
     await page.goto(`${baseUrl}/admin.html`, { waitUntil: "networkidle" });
     await page.fill("[data-admin-password]", ADMIN_PASSWORD);
@@ -250,29 +254,29 @@ async function runBrowserChecks(baseUrl) {
     await page.locator("[data-admin-visual-console]").waitFor({ timeout: 8000 });
     results.push(ok("Single shared admin includes Bank Club module"));
 
-    const adminFrontendLink = page.locator('.bank-admin-actions a[href="bank-club/"]').first();
+    const adminFrontendLink = page.locator('.bank-admin-actions a[href="/"]').first();
     await adminFrontendLink.waitFor({ timeout: 8000 });
     const [popup] = await Promise.all([
       context.waitForEvent("page"),
       adminFrontendLink.click()
     ]);
     await popup.waitForLoadState("networkidle");
-    if (!/\/bank-club\/(?:index\.html)?$/.test(new URL(popup.url()).pathname)) {
+    if (new URL(popup.url()).pathname !== "/") {
       throw new Error(`Admin Bank Club link opened unexpected URL: ${popup.url()}`);
     }
     await popup.close();
-    results.push(ok("Admin opens Bank Club frontend"));
+    results.push(ok("Admin Bank Club link targets root frontend"));
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${baseUrl}/bank-club/index.html`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/admin.html`, { waitUntil: "networkidle" });
     const overflow = await page.evaluate(() => ({
       width: document.documentElement.clientWidth,
       scrollWidth: document.documentElement.scrollWidth
     }));
     if (overflow.scrollWidth > overflow.width + 2) {
-      throw new Error(`Bank Club mobile overflow ${overflow.scrollWidth} > ${overflow.width}`);
+      throw new Error(`Shared admin mobile overflow ${overflow.scrollWidth} > ${overflow.width}`);
     }
-    results.push(ok("Bank Club mobile layout has no horizontal overflow"));
+    results.push(ok("Shared admin mobile layout has no horizontal overflow"));
 
     if (unexpectedResponses.length) {
       results.push(fail("No unexpected HTTP failures", unexpectedResponses.slice(0, 12).join("\n")));

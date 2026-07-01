@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 from urllib.parse import urljoin, urlparse
 
 
-DEFAULT_BASE_URL = "http://tfse.tfse-fcc.com/"
-DEFAULT_HTTPS_URL = "https://tfse.tfse-fcc.com/"
+DEFAULT_BASE_URL = "http://www.tfse-fcc.com/"
+DEFAULT_HTTPS_URL = "https://www.tfse-fcc.com/"
 
 
 def fetch(url: str, timeout: float, method: str = "GET") -> dict:
@@ -135,20 +135,20 @@ def check_static_url(base_url: str, path: str, timeout: float, expected: str = "
 
 def build_report(base_url: str, https_url: str, timeout: float) -> dict:
     checks = [
-        check_static_url(base_url, "/", timeout, "TFSE"),
+        check_static_url(base_url, "/", timeout, "Bank"),
+        check_static_url(base_url, "/tfse/", timeout, "TFSE"),
         check_static_url(base_url, "/robots.txt", timeout, "Sitemap:", "max-age=3600"),
         check_static_url(base_url, "/sitemap.xml", timeout, "<urlset", "max-age=3600"),
         check_static_url(base_url, "/feed.xml", timeout, "<rss", "max-age=3600"),
         check_static_url(base_url, "/.well-known/security.txt", timeout, "Contact:", "max-age=86400"),
-        check_static_url(base_url, "/site-config.json", timeout, '"base_url"', "no-store"),
-        check_static_url(base_url, "/assets/images/logo/tfse-logo.png", timeout, "", "immutable"),
-        check_static_url(base_url, "/bank-club/index.html", timeout, "Bank Club"),
-        check_static_url(base_url, "/admin.html", timeout, "Bank Club"),
+        check_static_url(base_url, "/tfse/site-config.json", timeout, '"base_url"', "no-store"),
+        check_static_url(base_url, "/tfse/assets/images/logo/tfse-logo.png", timeout, "", "immutable"),
+        check_static_url(base_url, "/admin/", timeout, "Bank Club"),
         check_json_api(base_url, timeout),
         check_api_options(base_url, "/api/bank-club/leads", timeout),
         check_api_auth_required(base_url, "/api/admin/bank-club/leads", timeout),
     ]
-    https_check = check_static_url(https_url, "/", timeout, "TFSE")
+    https_check = check_static_url(https_url, "/", timeout, "Bank")
     https_check["name"] = "https_home"
     https_check["external_blocker_when_failed"] = True
     checks.append(https_check)

@@ -30,9 +30,10 @@ TEXT_MARKERS = {
         "server finance:80",
         "server bankclub:3000",
         "server backadmin:8788",
-        "location ^~ /bankclub/api/",
+        "location ^~ /tfse/",
         "location ^~ /api/",
         "location ^~ /admin/",
+        "proxy_pass http://bankclub_upstream",
     ],
     "apps/backadmin/server.py": [
         "class BackadminHandler",
