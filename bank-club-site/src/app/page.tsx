@@ -23,31 +23,37 @@ export default async function Home() {
     <PublicShell>
       <main>
         <section className="hero">
-          <div className="hero-content">
-            <h1>銀行俱樂部</h1>
-            <p className="hero-lead">
-              一對一銀行專員，
-              <span>信貸 / 房貸 / 企業貸款</span>
-              <span className="gold-text">免費評估</span>
-            </p>
-            <p className="hero-sub">
-              協助整理資格、文件與申辦流程，
-              <span>LINE 專員快速諮詢。</span>
-            </p>
-            <div className="hero-actions">
-              <EventLink className="primary-btn" href="/consultation?source_page=home" eventName="hero_form_click">
+          <div className="hero-shell">
+            <h1 className="sr-only">台灣社大銀行方案與行員俱樂部</h1>
+            <Image
+              className="hero-key-visual"
+              src="/brand/bank_club_hero.png"
+              alt=""
+              width={1897}
+              height={829}
+              priority
+              sizes="100vw"
+              unoptimized
+            />
+            <div className="hero-live-actions" aria-label="首頁主要操作">
+              <EventLink
+                className="primary-btn hero-cta-btn"
+                href="/consultation?source_page=home"
+                eventName="hero_form_click"
+                metadata={{ sourceSection: "hero" }}
+              >
                 立即免費諮詢
                 <Icon name="arrow" />
               </EventLink>
-              <EventLink className="secondary-btn" href="/application-flow" eventName="hero_flow_click">
+              <EventLink
+                className="secondary-btn hero-cta-btn"
+                href="/application-flow"
+                eventName="hero_flow_click"
+                metadata={{ sourceSection: "hero" }}
+              >
                 查看申辦流程
                 <Icon name="arrow" />
               </EventLink>
-            </div>
-            <div className="slider-dots" aria-hidden="true">
-              <span />
-              <span />
-              <span />
             </div>
           </div>
         </section>

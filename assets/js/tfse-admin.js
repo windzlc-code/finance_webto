@@ -718,6 +718,15 @@
     }
 
     function syncLeadsFromApi() {
+        if (!isAuthenticated() || authSource() !== "api") {
+            leadSourceMode = "localStorage";
+            renderList();
+            renderFollowUps();
+            renderLeadDedupe();
+            renderLineOptout();
+            renderRealMetrics();
+            return Promise.resolve({ mode: "localStorage" });
+        }
         if (!window.TFSEApi || !window.TFSEApi.listLeads) {
             renderList();
             renderFollowUps();
@@ -1150,6 +1159,10 @@
     }
 
     function syncAuthFromApi() {
+        if (!isAuthenticated()) {
+            renderAuthState();
+            return Promise.resolve({ mode: "localStorage", authenticated: false });
+        }
         if (!window.TFSEApi || !window.TFSEApi.getAdminSession) return Promise.resolve({ mode: "localStorage", authenticated: isAuthenticated() });
         return window.TFSEApi.getAdminSession().then(function (result) {
             if (result && result.mode === "api" && result.authenticated) {
@@ -8761,6 +8774,7 @@
         var items = [
             ["dashboard", "fa-tachometer-alt", "儀表板"],
             ["leads", "fa-user-friends", "線索與客戶"],
+            ["bankclub", "fa-university", "Bank Club"],
             ["workbench", "fa-th-large", "後台模組"],
             ["schedule", "fa-calendar-alt", "行事曆"],
             ["tasks", "fa-tasks", "任務管理"],
@@ -8781,6 +8795,7 @@
             freecheck: "線索與客戶",
             consult: "線索與客戶",
             clients: "線索與客戶",
+            bankclub: "Bank Club",
             workbench: "後台模組",
             schedule: "行事曆",
             tasks: "任務管理",
@@ -9010,8 +9025,18 @@
         ].join("");
     }
 
+    function visualRenderBankClubModule() {
+        return [
+            "<div class=\"tfse-visual-table-card tfse-bankclub-module\" data-bank-club-admin>",
+            "<div class=\"tfse-visual-module-head\"><div><span class=\"tfse-visual-eyebrow\">主站業務</span><h3>Bank Club 管理</h3><p>Bank Club 線索、內容資源與文件設定併入金融站後台，用同一套後台版面集中管理。</p></div><div class=\"tfse-visual-action-row\"><a class=\"tfse-visual-real-entry\" href=\"/\" target=\"_blank\" rel=\"noopener\"><i class=\"fa fa-external-link-alt\"></i> 打開前台</a><button type=\"button\" data-bank-export><i class=\"fa fa-download\"></i> 匯出資料</button></div></div>",
+            "<div class=\"tfse-visual-empty-block\">Bank Club 管理資料載入中。</div>",
+            "</div>"
+        ].join("");
+    }
+
     function visualRenderMainModule(payload, leads) {
         if (visualConsoleState.tab === "dashboard") return visualRenderDashboardModule(payload);
+        if (visualConsoleState.tab === "bankclub") return visualRenderBankClubModule();
         if (visualConsoleState.tab === "schedule") return visualRenderCalendar(payload);
         if (visualConsoleState.tab === "tasks") return visualRenderTasks(payload);
         if (visualConsoleState.tab === "compliance") return visualRenderComplianceModule(payload);
@@ -9087,6 +9112,7 @@
         if (statusSelect) statusSelect.value = visualConsoleState.status;
         if (sourceSelect) sourceSelect.value = visualConsoleState.source;
         if (ownerSelect) ownerSelect.value = visualConsoleState.owner;
+        document.dispatchEvent(new CustomEvent("tfse:bankclub-admin-ready"));
     }
 
     function updateVisualLeadStatus(leadId, statusValue) {
@@ -10222,7 +10248,7 @@
         renderAudit();
     });
     if (loginButton) loginButton.addEventListener("click", function () {
-        var selectedRole = roleSelect ? roleSelect.value : "viewer";
+        var selectedRole = roleSelect ? roleSelect.value : "super_admin";
         var password = passwordInput ? passwordInput.value : "";
         if (window.TFSEApi && window.TFSEApi.loginAdmin) {
             window.TFSEApi.loginAdmin({ password: password, role: selectedRole }).then(function (result) {

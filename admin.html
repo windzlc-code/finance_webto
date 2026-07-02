@@ -17,7 +17,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Favicon -->
-    <link rel="shortcut icon" type="image/x-icon" href="assets/images/favicon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="/admin/assets/images/favicon.png">
 
     <!-- CSS
 	============================================ -->
@@ -41,25 +41,25 @@
     <!-- <link rel="stylesheet" href="assets/css/style.css?v=20260701-admin-dashboard-split"> -->
 
     <!-- Use the minified version files listed below for better performance and remove the files listed above -->
-    <link rel="stylesheet" href="assets/css/vendor/vendor.min.css">
-    <link rel="stylesheet" href="assets/css/plugins/plugins.min.css">
-    <link rel="stylesheet" href="assets/css/style.css?v=20260701-admin-dashboard-split">
+    <link rel="stylesheet" href="/admin/assets/css/vendor/vendor.min.css">
+    <link rel="stylesheet" href="/admin/assets/css/plugins/plugins.min.css">
+    <link rel="stylesheet" href="/admin/assets/css/style.css?v=20260702-bankclub-merged-admin">
     <link rel="alternate" type="application/rss+xml" title="TFSE金融便民中心 RSS" href="https://www.tfse-fcc.com/tfse/feed.xml">
     <script type="application/ld+json" id="tfse-structured-data">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.tfse-fcc.com/tfse/#organization","name":"TFSE金融便民中心","url":"https://www.tfse-fcc.com/tfse/","logo":"https://www.tfse-fcc.com/tfse/assets/images/logo/tfse-logo.png","description":"TFSE 僅彙整公開合法金融商品與法令資訊，非銀行、放款機構或貸款代辦單位。"},{"@type":"WebSite","@id":"https://www.tfse-fcc.com/tfse/#website","name":"TFSE金融便民中心","url":"https://www.tfse-fcc.com/tfse/","publisher":{"@id":"https://www.tfse-fcc.com/tfse/#organization"},"inLanguage":"zh-TW","potentialAction":{"@type":"SearchAction","target":"https://www.tfse-fcc.com/tfse/search.html?q={search_term_string}","query-input":"required name=search_term_string"}},{"@type":"WebPage","@id":"https://www.tfse-fcc.com/tfse/admin.html#webpage","url":"https://www.tfse-fcc.com/tfse/admin.html","name":"TFSE金融便民中心","isPartOf":{"@id":"https://www.tfse-fcc.com/tfse/#website"},"publisher":{"@id":"https://www.tfse-fcc.com/tfse/#organization"},"inLanguage":"zh-TW"}]}</script>
-    <link rel="manifest" href="site.webmanifest">
+    <link rel="manifest" href="/admin/site.webmanifest">
     <meta name="theme-color" content="#1292ee">
-    <link rel="apple-touch-icon" href="assets/images/favicon.png">
+    <link rel="apple-touch-icon" href="/admin/assets/images/favicon.png">
 </head>
 
 <body class="tfse-final-page tfse-final-admin-page tfse-admin-standalone tfse-original-page-skin tfse-crm-page tfse-database-page">
 
     <div id="page">
-        <header class="tfse-admin-standalone-head" aria-label="銀行俱樂部金融後台">
+        <header class="tfse-admin-standalone-head" aria-label="金融站統一後台">
             <a class="tfse-admin-standalone-brand" href="admin.html">
-                <img src="assets/images/bank-club/bank_club_logo.png" alt="銀行俱樂部">
+                <img src="/admin/assets/images/bank-club/bank_club_logo.png" alt="銀行俱樂部">
                 <span>
-                    <strong>銀行俱樂部後台</strong>
-                    <small>金融站帳戶、CRM、內容、合規與上線交接</small>
+                    <strong>金融站統一後台</strong>
+                    <small>TFSE、Bank Club、CRM、內容、合規與上線交接</small>
                 </span>
             </a>
             <div class="tfse-admin-standalone-actions">
@@ -78,7 +78,7 @@
                         <div class="col-xl-2 col-auto order-0">
                             <div class="header-logo">
                                 <a href="index.html">
-                                    <img class="dark-logo" src="assets/images/logo/tfse-logo.png" alt="TFSE金融便民中心">
+                                    <img class="dark-logo" src="/admin/assets/images/logo/tfse-logo.png" alt="TFSE金融便民中心">
                                     
                                 </a>
                             </div>
@@ -206,7 +206,7 @@
         <div class="section section-padding fix" data-admin-auth>
             <div class="container">
                 <div class="section-title text-center" data-aos="fade-up">
-                    <h2 class="title fz-32">銀行俱樂部後台</h2>
+                    <h2 class="title fz-32">金融站統一後台</h2>
                     <p class="sub-title">使用同一個金融站後台帳戶登入，管理 TFSE 線索、Bank Club 線索、內容、文件與合規流程。</p>
                 </div>
                 <div class="row">
@@ -214,16 +214,8 @@
                         <div class="sidebar-widget">
                             <h5 class="title">金融站帳戶登入</h5>
                             <input data-admin-password type="password" placeholder="輸入 MVP 管理密碼">
-                            <select data-admin-role class="mt-4">
-                                <option value="super_admin">Super Admin｜全部權限</option>
-                                <option value="content_editor">Content Editor｜文章與 FAQ</option>
-                                <option value="data_manager">Data Manager｜資料庫與匯出</option>
-                                <option value="compliance_reviewer">Compliance Reviewer｜合規審核</option>
-                                <option value="consultant">Consultant｜潛客查看與備註</option>
-                                <option value="viewer">Viewer｜只讀報表</option>
-                            </select>
                             <button class="btn btn-primary btn-hover-secondary mt-4" data-admin-login>登入後台</button>
-                            <p class="mt-4" data-admin-login-message>請輸入管理員提供的金融站後台驗證碼。正式版需接入伺服器登入、角色權限與審計日誌。</p>
+                            <p class="mt-4" data-admin-login-message aria-live="polite"></p>
                         </div>
                     </div>
                 </div>
@@ -245,10 +237,6 @@
                         <button type="button" data-admin-refresh><i class="fa fa-sync-alt"></i> 更新資料</button>
                     </div>
                 </div>
-
-                <section id="bank-club-admin-workspace" class="bank-admin-panel" data-bank-club-admin aria-label="Bank Club 業務管理">
-                    <div class="bank-admin-loading">Bank Club 主站管理載入中。</div>
-                </section>
 
                 <section id="tfse-admin-workspace" class="tfse-admin-visual-console" data-admin-visual-console aria-label="TFSE 後台可視化工作台">
                     <div class="tfse-visual-loading">
@@ -1274,7 +1262,7 @@
             <!-- Animation Shape Start -->
             <div class="shape shape-1 scene">
                 <span data-depth="1">
-                    <img src="assets/images/shape-animation/newsletter-shape.png" alt="TFSE金融便民資訊視覺裝飾">
+                    <img src="/admin/assets/images/shape-animation/newsletter-shape.png" alt="TFSE金融便民資訊視覺裝飾">
                 </span>
             </div>
             <!-- Animation Shape End -->
@@ -1291,7 +1279,7 @@
                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-12 col-12 mb-6">
                         <div class="footer-widget">
                             <div class="footer-logo">
-                                <a href="index.html"><img src="assets/images/logo/tfse-logo.png" alt="TFSE金融便民中心"></a>
+                                <a href="index.html"><img src="/admin/assets/images/logo/tfse-logo.png" alt="TFSE金融便民中心"></a>
                             </div>
                             <div class="footer-widget-content">
                                 <div class="content">
@@ -1401,7 +1389,7 @@
         <div class="site-main-mobile-menu-inner">
             <div class="mobile-menu-header">
                 <div class="mobile-menu-logo">
-                    <a href="index.html"><img src="assets/images/logo/tfse-logo.png" alt="TFSE金融便民中心"></a>
+                    <a href="index.html"><img src="/admin/assets/images/logo/tfse-logo.png" alt="TFSE金融便民中心"></a>
                 </div>
                 <div class="mobile-menu-close">
                     <button class="toggle">
@@ -1485,17 +1473,17 @@
 -->
 
     <!-- Admin keeps the template header but swaps heavy vendor JS for a lightweight shell script. -->
-    <script src="assets/js/tfse-admin-shell.js"></script>
-    <script src="assets/js/tfse-api.js?v=20260701-admin-dashboard-split"></script>
-    <script src="assets/js/tfse-events.js"></script>
-    <script src="assets/js/tfse-admin.js?v=20260701-admin-dashboard-split"></script>
-    <script src="assets/js/bank-club-admin.js?v=20260702-bank-club-static"></script>
+    <script src="/admin/assets/js/tfse-admin-shell.js"></script>
+    <script src="/admin/assets/js/tfse-api.js?v=20260701-admin-dashboard-split"></script>
+    <script src="/admin/assets/js/tfse-events.js"></script>
+    <script src="/admin/assets/js/tfse-admin.js?v=20260702-bankclub-merged-admin"></script>
+    <script src="/admin/assets/js/bank-club-admin.js?v=20260702-bankclub-merged-admin"></script>
 
 
 
 
 
-    <script src="assets/js/tfse-search.js"></script>
+    <script src="/admin/assets/js/tfse-search.js"></script>
 </body>
 
 </html>

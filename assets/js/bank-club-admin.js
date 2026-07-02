@@ -7,6 +7,8 @@
     var eventKey = "bank_club_events";
     var configPromise = null;
     var currentLeadResult = { mode: "localStorage", items: [] };
+    var bankClubData = null;
+    var moduleBound = false;
 
     function $(selector, root) {
         return (root || document).querySelector(selector);
@@ -90,7 +92,15 @@
         });
     }
 
+    function isAdminAuthenticated() {
+        return localStorage.getItem("tfse_admin_auth") === "true"
+            && localStorage.getItem("tfse_admin_auth_source") === "api";
+    }
+
     function listBankLeads() {
+        if (!isAdminAuthenticated()) {
+            return Promise.resolve({ mode: "localStorage", items: readJson(leadKey, []) });
+        }
         return apiJson("/api/admin/bank-club/leads").then(function (data) {
             return { mode: "api", items: data.items || [] };
         }).catch(function (error) {
@@ -135,8 +145,8 @@
                 "<td><strong>" + escapeHtml(lead.display_name || "未命名") + "</strong><br><small>" + escapeHtml(lead.phone || "") + "</small></td>",
                 "<td>" + escapeHtml(lead.loan_type || "unknown") + "</td>",
                 "<td>" + escapeHtml(lead.message || "未填寫") + "</td>",
-                "<td>" + escapeHtml(statusLabel(lead.status)) + "</td>",
-                "<td><button type=\"button\" data-bank-lead-status=\"" + escapeHtml(lead.id) + "\" data-bank-lead-current=\"" + escapeHtml(lead.status || "new") + "\">切換狀態</button></td>",
+                "<td><span class=\"tfse-visual-status is-" + escapeHtml(lead.status || "new") + "\">" + escapeHtml(statusLabel(lead.status)) + "</span></td>",
+                "<td><button type=\"button\" class=\"tfse-visual-action-btn is-primary\" data-bank-lead-status=\"" + escapeHtml(lead.id) + "\" data-bank-lead-current=\"" + escapeHtml(lead.status || "new") + "\">切換狀態</button></td>",
                 "</tr>"
             ].join("");
         }).join("");
@@ -156,35 +166,41 @@
             return !["closed", "invalid"].includes(lead.status);
         });
         root.innerHTML = [
-            "<div class=\"bank-admin-head\">",
-            "<div><span>金融站後台模組</span><h2>Bank Club 業務管理</h2><p>Bank Club 線索、內容資源與事件分析已併入当前金融站後台，與 TFSE 資料在同一個帳戶頁面集中管理。資料來源：" + escapeHtml(leadResult.mode || "localStorage") + "</p></div>",
-            "<div class=\"bank-admin-actions\"><a href=\"/\" target=\"_blank\" rel=\"noopener\">打開 Bank Club 前台</a><button type=\"button\" data-bank-export>匯出 Bank Club 資料</button></div>",
+            "<div class=\"tfse-visual-module-head\">",
+            "<div><span class=\"tfse-visual-eyebrow\">主站業務</span><h3>Bank Club 管理</h3><p>Bank Club 線索、內容資源與事件分析已併入金融站後台，與 TFSE 資料在同一個帳戶頁面集中管理。資料來源：" + escapeHtml(leadResult.mode || "localStorage") + "</p></div>",
+            "<div class=\"tfse-visual-action-row\"><a class=\"tfse-visual-real-entry\" href=\"/\" target=\"_blank\" rel=\"noopener\"><i class=\"fa fa-external-link-alt\"></i> 打開前台</a><button type=\"button\" data-bank-export><i class=\"fa fa-download\"></i> 匯出資料</button></div>",
             "</div>",
-            "<div class=\"bank-admin-metrics\">",
-            "<article><small>主站線索</small><strong>" + leads.length + "</strong><span>Bank Club 前台表單</span></article>",
-            "<article><small>待處理</small><strong>" + openLeads.length + "</strong><span>未結案線索</span></article>",
-            "<article><small>內容文章</small><strong>" + data.articles.length + "</strong><span>由主站核心內容遷入</span></article>",
-            "<article><small>事件</small><strong>" + events.length + "</strong><span>頁面瀏覽與按鈕點擊</span></article>",
+            "<div class=\"tfse-visual-card-grid is-compact\">",
+            "<article class=\"tfse-visual-module-card\"><small>主站線索</small><h4>" + leads.length + "</h4><p>Bank Club 前台表單</p></article>",
+            "<article class=\"tfse-visual-module-card\"><small>待處理</small><h4>" + openLeads.length + "</h4><p>未結案線索</p></article>",
+            "<article class=\"tfse-visual-module-card\"><small>內容文章</small><h4>" + data.articles.length + "</h4><p>由主站核心內容遷入</p></article>",
+            "<article class=\"tfse-visual-module-card\"><small>事件</small><h4>" + events.length + "</h4><p>頁面瀏覽與按鈕點擊</p></article>",
             "</div>",
-            "<div class=\"bank-admin-grid\">",
-            "<section><h3>線索管理</h3><div class=\"bank-table-wrap\"><table><thead><tr><th>日期</th><th>聯絡人</th><th>需求</th><th>備註</th><th>狀態</th><th>動作</th></tr></thead><tbody>" + renderLeadRows(leads) + "</tbody></table></div></section>",
-            "<section><h3>內容管理</h3><div class=\"bank-content-list\">" + data.articles.map(function (item) {
-                return "<article><small>" + escapeHtml(item.category) + "</small><h4>" + escapeHtml(item.title) + "</h4><p>" + escapeHtml(item.excerpt) + "</p></article>";
+            "<div class=\"tfse-visual-split tfse-bankclub-split\">",
+            "<section class=\"tfse-visual-module-card\"><div class=\"tfse-visual-module-head\"><div><h3>線索管理</h3><p>直接在金融站後台檢視和更新 Bank Club 來源線索。</p></div></div><div class=\"tfse-visual-table-wrap\"><table><thead><tr><th>日期</th><th>聯絡人</th><th>需求</th><th>備註</th><th>狀態</th><th>動作</th></tr></thead><tbody>" + renderLeadRows(leads) + "</tbody></table></div></section>",
+            "<section class=\"tfse-visual-module-card\"><div class=\"tfse-visual-module-head\"><div><h3>內容管理</h3><p>主站核心內容以金融站後台列表格式集中查看。</p></div></div><div class=\"tfse-visual-data-list tfse-bankclub-list\">" + data.articles.map(function (item) {
+                return "<article class=\"tfse-visual-line-item\"><span><small>" + escapeHtml(item.category) + "</small><b>" + escapeHtml(item.title) + "</b></span><small>" + escapeHtml(item.excerpt) + "</small></article>";
             }).join("") + "</div></section>",
-            "<section><h3>文件資源</h3><div class=\"bank-content-list\">" + data.files.map(function (item) {
-                return "<article><small>" + escapeHtml(item.type) + "</small><h4>" + escapeHtml(item.title) + "</h4><p>" + escapeHtml(item.description) + "</p></article>";
-            }).join("") + "</div></section>",
-            "<section><h3>站點設定</h3><ul class=\"bank-admin-settings\"><li><span>專員</span><b>" + escapeHtml(data.settings.specialistName) + "｜" + escapeHtml(data.settings.specialistTitle) + "</b></li><li><span>電話</span><b>" + escapeHtml(data.settings.mobile) + "</b></li><li><span>Email</span><b>" + escapeHtml(data.settings.email) + "</b></li><li><span>前台路徑</span><b>/</b></li></ul></section>",
+            "<section class=\"tfse-visual-module-card\"><div class=\"tfse-visual-module-head\"><div><h3>文件資源</h3><p>文件與設定保留資料能力，但使用金融站後台版面呈現。</p></div></div><div class=\"tfse-visual-data-list tfse-bankclub-list\">" + data.files.map(function (item) {
+                return "<article class=\"tfse-visual-line-item\"><span><small>" + escapeHtml(item.type) + "</small><b>" + escapeHtml(item.title) + "</b></span><small>" + escapeHtml(item.description) + "</small></article>";
+            }).join("") + "</div><ul class=\"tfse-visual-checklist\"><li><span>專員</span><b>" + escapeHtml(data.settings.specialistName) + "｜" + escapeHtml(data.settings.specialistTitle) + "</b></li><li><span>電話</span><b>" + escapeHtml(data.settings.mobile) + "</b></li><li><span>Email</span><b>" + escapeHtml(data.settings.email) + "</b></li><li><span>前台路徑</span><b>/</b></li></ul></section>",
             "</div>"
         ].join("");
     }
 
+    function renderActiveModule() {
+        if (!bankClubData || !$("[data-bank-club-admin]")) return;
+        listBankLeads().then(function (leadResult) {
+            renderModule(bankClubData, leadResult);
+        });
+    }
+
     function bindModule(data) {
+        if (moduleBound) return;
+        moduleBound = true;
         function refreshSoon() {
             setTimeout(function () {
-                listBankLeads().then(function (leadResult) {
-                    renderModule(data, leadResult);
-                });
+                renderActiveModule();
             }, 450);
         }
         document.addEventListener("click", function (event) {
@@ -226,12 +242,12 @@
     }
 
     loadData().then(function (data) {
-        listBankLeads().then(function (leadResult) {
-            renderModule(data, leadResult);
-        });
+        bankClubData = data;
+        renderActiveModule();
         bindModule(data);
     }).catch(function () {
         var root = $("[data-bank-club-admin]");
         if (root) root.innerHTML = "<p>Bank Club 後台資料暫時無法載入。</p>";
     });
+    document.addEventListener("tfse:bankclub-admin-ready", renderActiveModule);
 }());

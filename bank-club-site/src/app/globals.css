@@ -432,57 +432,65 @@ svg {
   transform: translateY(-1px);
 }
 
+.sr-only {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 .hero {
-  background:
-    linear-gradient(90deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.7) 34%, rgba(255,255,255,0.22) 100%),
-    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(244,245,240,0.42)),
-    url("/brand/home_hero_office.jpg");
-  background-position: center 50%;
-  background-size: cover;
-  min-height: 448px;
+  background: #f7f4ec;
+  overflow: hidden;
+  padding: 0;
   position: relative;
 }
 
-.hero-content {
+.hero-shell {
   margin: 0 auto;
-  max-width: 1180px;
-  padding: 54px 20px 84px;
-  text-align: center;
+  max-width: 1897px;
+  position: relative;
+  display: block;
 }
 
-.hero h1 {
-  color: #172334;
-  font-size: clamp(44px, 7vw, 78px);
-  font-weight: 900;
-  line-height: 1.05;
-  margin: 0 0 14px;
+.hero-key-visual {
+  display: block;
+  height: auto;
+  width: 100%;
 }
 
-.hero-lead {
-  color: #243244;
-  font-size: clamp(22px, 3vw, 34px);
-  font-weight: 900;
-  margin: 0 0 12px;
+.hero-live-actions {
+  align-items: center;
+  background: transparent;
+  border-radius: 999px;
+  box-sizing: border-box;
+  display: flex;
+  gap: 12px;
+  height: 8.08%;
+  left: 8.33%;
+  padding: 7px;
+  position: absolute;
+  top: 48.01%;
+  width: 32%;
+  z-index: 2;
 }
 
-.hero-sub {
-  color: #3e4a58;
-  font-size: 19px;
-  font-weight: 700;
-  margin: 0 auto 28px;
-}
-
-.hero-lead span,
-.hero-sub span {
-  display: inline;
-}
-
-.gold-text {
-  color: var(--gold);
-}
-
-.hero-actions {
+.hero-cta-btn {
+  border-radius: 999px;
+  flex: 1 1 0;
+  font-size: clamp(12px, 0.95vw, 17px);
+  height: 100%;
   justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  padding: 0 clamp(12px, 1.3vw, 22px);
+  white-space: nowrap;
 }
 
 .slider-dots {
@@ -509,7 +517,7 @@ svg {
   box-shadow: 0 16px 36px rgba(22, 35, 52, 0.1);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  margin: -74px auto 18px;
+  margin: 18px auto;
   max-width: 1080px;
   min-height: 206px;
   overflow: hidden;
@@ -3258,7 +3266,7 @@ summary,
   }
 
   .service-rail {
-    margin: -36px 16px 24px;
+    margin: 12px 16px 24px;
   }
 
   .flow-step:not(:last-child)::after {
@@ -3317,13 +3325,25 @@ summary,
     overflow: hidden;
   }
 
-  .hero-content {
-    padding: 44px 18px 72px;
+  .hero-shell {
+    padding: 0;
   }
 
-  .hero-actions {
-    align-items: stretch;
-    width: 100%;
+  .hero-live-actions {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 246, 239, 0.96));
+    border: 1px solid rgba(213, 187, 122, 0.42);
+    box-shadow: 0 12px 26px rgba(22, 35, 52, 0.1);
+    gap: 8px;
+    margin: 8px auto 14px;
+    padding: 7px;
+    position: static;
+    width: min(420px, calc(100% - 28px));
+  }
+
+  .hero-cta-btn {
+    font-size: 13px;
+    min-height: 38px;
+    padding: 0 12px;
   }
 
   .hero-actions .primary-btn,
@@ -3369,14 +3389,6 @@ summary,
     text-align: left;
   }
 
-  .hero h1 {
-    font-size: 46px;
-  }
-
-  .hero-lead {
-    font-size: 24px;
-    overflow-wrap: anywhere;
-  }
 }
 
 @media (max-width: 520px) {
@@ -3386,7 +3398,23 @@ summary,
       "nav"
       "actions";
     grid-template-columns: minmax(0, 1fr);
-    padding: 18px 20px 16px;
+    height: auto;
+    padding: 12px 18px 14px;
+  }
+
+  .brand {
+    font-size: 24px;
+    gap: 10px;
+  }
+
+  .brand img {
+    height: 46px;
+    width: 58px;
+  }
+
+  .header-actions .icon-btn {
+    height: 38px;
+    width: 38px;
   }
 
   .loan-tab-list {
@@ -3542,44 +3570,44 @@ summary,
 
   .header-actions {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     justify-self: start;
   }
 
   .line-btn,
   .fb-btn {
+    border-radius: 8px;
+    font-size: 14px;
+    min-height: 42px;
     min-width: 0;
-    padding: 0 12px;
+    padding: 0 14px;
   }
 
-  .hero-content {
-    max-width: 100%;
-    padding: 48px 20px 72px;
+  .line-dot {
+    font-size: 8px;
+    height: 34px;
+    width: 34px;
   }
 
-  .hero h1 {
-    font-size: 44px;
-    overflow-wrap: anywhere;
+  .hero {
+    overflow: hidden;
   }
 
-  .hero-lead {
-    font-size: 23px;
-    line-height: 1.35;
+  .hero-live-actions {
+    gap: 6px;
+    margin: 8px auto 12px;
+    padding: 6px;
+    width: min(350px, calc(100% - 24px));
   }
 
-  .hero-sub {
-    font-size: 17px;
-    line-height: 1.55;
-    overflow-wrap: anywhere;
+  .hero-cta-btn {
+    font-size: 12px;
+    min-height: 34px;
+    padding: 0 8px;
   }
 
-  .hero-lead span,
-  .hero-sub span {
-    display: block;
-  }
-
-  .hero-actions {
-    flex-direction: column;
+  .service-rail {
+    margin: 12px 16px 22px;
   }
 
   .hero-actions .primary-btn,

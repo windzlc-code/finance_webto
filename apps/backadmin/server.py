@@ -43,11 +43,22 @@ class BackadminHandler(Handler):
         if path.startswith("/api/") or path.startswith("/tfse/api/"):
             super().do_GET()
             return
+        if path == "/admin.html":
+            self._redirect_admin_root()
+            return
         self._serve_static(path, include_body=True)
 
     def do_HEAD(self) -> None:
         path = urlparse(self.path).path
+        if path == "/admin.html":
+            self._redirect_admin_root()
+            return
         self._serve_static(path, include_body=False)
+
+    def _redirect_admin_root(self) -> None:
+        self.send_response(308)
+        self.send_header("Location", "/admin/")
+        self.end_headers()
 
     def _serve_static(self, path: str, include_body: bool) -> None:
         if path in {"", "/", "/admin", "/admin/"}:
