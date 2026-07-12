@@ -10,6 +10,7 @@
     var bankLeadsLoaded = false;
     var bankLeadSignature = "";
     var bankClubData = null;
+    var bankClubInitPromise = null;
     var moduleBound = false;
     var currentStage = "all";
     var currentSection = "leads";
@@ -48,6 +49,15 @@
             if (!response.ok) throw new Error("Bank Club admin data failed");
             return response.json();
         });
+    }
+
+    function emptyBankClubData() {
+        return {
+            site: "Bank Club",
+            articles: [],
+            files: [],
+            settings: { mobile: "", email: "" }
+        };
     }
 
     function loadConfig() {
@@ -162,17 +172,63 @@
         }[status] || status || "新線索";
     }
 
+    function genderLabel(value) {
+        return {
+            male: "男性",
+            female: "女性",
+            other: "其他 / 不便透露"
+        }[value] || "未填";
+    }
+
+    function loanLabel(value) {
+        return {
+            credit: "信用貸款",
+            house: "房屋貸款",
+            business: "企業貸款",
+            unknown: "初步諮詢"
+        }[value] || value || "初步諮詢";
+    }
+
+    function purposeLabel(value) {
+        return {
+            living: "生活消費",
+            renovation: "房屋修繕",
+            business: "營運週轉",
+            unsure: "先諮詢專員",
+            high_risk: "高風險用途（需覆核）"
+        }[value] || value || "";
+    }
+
+    function formatLeadDate(value) {
+        if (!value) return "未記錄";
+        var date = new Date(value);
+        if (isNaN(date.getTime())) return String(value);
+        return date.getFullYear() + "/" + String(date.getMonth() + 1).padStart(2, "0") + "/" + String(date.getDate()).padStart(2, "0") + " " + String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
+    }
+
+    function assessmentLabel(lead) {
+        var items = [loanLabel(lead.loan_type || lead.loanType), purposeLabel(lead.purpose)];
+        return items.filter(Boolean).join(" / ");
+    }
+
     function renderLeadRows(leads) {
         if (!leads.length) {
-            return "<tr><td colspan=\"6\">目前沒有 Bank Club 線索。可從 Bank Club 前台送出測試諮詢。</td></tr>";
+            return "<tr class=\"tfse-bankclub-empty-row\"><td colspan=\"12\"><div class=\"tfse-bankclub-empty-state\"><i class=\"fa fa-inbox\" aria-hidden=\"true\"></i><div><strong>目前尚無貸款申請</strong><span>使用者送出申請後，完整資料會顯示在此表格。</span></div></div></td></tr>";
         }
-        return leads.map(function (lead) {
+        return leads.map(function (lead, index) {
+            var description = lead.message || lead.note || purposeLabel(lead.purpose) || "未填寫";
             return [
                 "<tr>",
-                "<td><span class=\"tfse-visual-origin-badge is-bankclub\">Bank Club</span><small>" + escapeHtml((lead.submitted_at || "").slice(0, 10)) + "</small></td>",
-                "<td><strong>" + escapeHtml(lead.display_name || "未命名") + "</strong><br><small>" + escapeHtml(lead.phone || "") + "</small></td>",
-                "<td>" + escapeHtml(lead.loan_type || "unknown") + "</td>",
-                "<td>" + escapeHtml(lead.message || "未填寫") + "</td>",
+                "<td>" + (index + 1) + "</td>",
+                "<td><span class=\"tfse-visual-origin-badge is-bankclub\">Bank Club</span><small>" + escapeHtml(formatLeadDate(lead.submitted_at || lead.created_at)) + "</small></td>",
+                "<td><strong>" + escapeHtml(lead.display_name || lead.name || "未命名") + "</strong></td>",
+                "<td>" + escapeHtml(genderLabel(lead.gender)) + "</td>",
+                "<td>" + escapeHtml(lead.phone || "未填") + "</td>",
+                "<td>" + escapeHtml(assessmentLabel(lead)) + "</td>",
+                "<td>" + escapeHtml(lead.line_id || lead.lineId || "未填") + "</td>",
+                "<td>" + escapeHtml(lead.city || "未填") + "</td>",
+                "<td>" + escapeHtml(description) + "</td>",
+                "<td>" + escapeHtml(lead.submitted_ip || lead.ip || "未記錄") + "</td>",
                 "<td><span class=\"tfse-visual-status is-" + escapeHtml(lead.status || "new") + "\">" + escapeHtml(statusLabel(lead.status)) + "</span></td>",
                 "<td><button type=\"button\" class=\"tfse-visual-action-btn is-primary\" data-bank-lead-status=\"" + escapeHtml(lead.id) + "\" data-bank-lead-current=\"" + escapeHtml(lead.status || "new") + "\">切換狀態</button></td>",
                 "</tr>"
@@ -215,7 +271,7 @@
         ].join("");
         var leadSection = [
             stagePills,
-            "<section class=\"tfse-visual-module-card tfse-bankclub-lead-section\"><div class=\"tfse-visual-module-head\"><div><h3>Bank Club 表單名單</h3><p>來源徽標、處理階段與金融站分開顯示，操作仍在公共後台完成。</p></div></div><div class=\"tfse-visual-table-wrap\"><table><thead><tr><th>來源 / 日期</th><th>聯絡人</th><th>需求</th><th>備註</th><th>狀態</th><th>動作</th></tr></thead><tbody>" + renderLeadRows(leads) + "</tbody></table></div></section>"
+            "<section class=\"tfse-visual-module-card tfse-bankclub-lead-section\"><div class=\"tfse-visual-module-head\"><div><h3>Bank Club 貸款申請名單</h3><p>每筆申請完整保留填單資料，供後台查詢與後續處理。</p></div></div><div class=\"tfse-visual-table-wrap\"><table><thead><tr><th>序</th><th>填單日期</th><th>客戶名稱</th><th>性別</th><th>聯絡電話</th><th>評估項目</th><th>LINE ID</th><th>所在縣市</th><th>內容描述</th><th>填單 IP</th><th>狀態</th><th>動作</th></tr></thead><tbody>" + renderLeadRows(leads) + "</tbody></table></div></section>"
         ].join("");
         var resourceSection = [
             "<div class=\"tfse-visual-split tfse-bankclub-split\">",
@@ -247,7 +303,12 @@
     }
 
     function renderActiveModule() {
-        if (!bankClubData) return Promise.resolve(currentLeadResult);
+        if (!bankClubData) {
+            return bootstrapBankClubModule().then(function () {
+                if ($("[data-bank-club-admin]")) renderModule(bankClubData, currentLeadResult);
+                return currentLeadResult;
+            });
+        }
         if (bankLeadsLoaded) {
             if ($("[data-bank-club-admin]")) renderModule(bankClubData, currentLeadResult);
             return Promise.resolve(currentLeadResult);
@@ -261,6 +322,23 @@
             if (bankClubData && $("[data-bank-club-admin]")) renderModule(bankClubData, committed);
             return committed;
         });
+    }
+
+    function bootstrapBankClubModule() {
+        if (bankClubData) return Promise.resolve(bankClubData);
+        if (bankClubInitPromise) return bankClubInitPromise;
+        bankClubInitPromise = loadData().catch(function () {
+            // Keep the table usable even if the optional content seed is
+            // temporarily unavailable; lead data still comes from the API.
+            return emptyBankClubData();
+        }).then(function (data) {
+            bankClubData = data || emptyBankClubData();
+            bindModule(bankClubData);
+            return refreshBankLeads().then(function () {
+                return bankClubData;
+            });
+        });
+        return bankClubInitPromise;
     }
 
     function bindModule(data) {
@@ -332,13 +410,6 @@
         refresh: refreshBankLeads
     };
 
-    loadData().then(function (data) {
-        bankClubData = data;
-        bindModule(data);
-        return refreshBankLeads();
-    }).catch(function () {
-        var root = $("[data-bank-club-admin]");
-        if (root) root.innerHTML = "<p>Bank Club 後台資料暫時無法載入。</p>";
-    });
+    bootstrapBankClubModule();
     document.addEventListener("tfse:bankclub-admin-ready", renderActiveModule);
 }());

@@ -49,6 +49,7 @@ async function syncLeadToSharedAdmin(lead: Lead): Promise<SharedAdminSyncResult>
     utm_content: lead.utmContent,
     utm_term: lead.utmTerm,
     consent_at: lead.consentAt,
+    submitted_ip: lead.ip,
     submitted_at: lead.createdAt,
   };
   let lastError = "shared_admin_sync_failed";

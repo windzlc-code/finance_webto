@@ -552,7 +552,7 @@ class Store:
         audit = self.audit("lead_status_update", lead_id, str(payload.get("status") or ""), actor_role)
         return {"lead": public_lead(updated), "audit_log": audit}
 
-    def create_bank_club_lead(self, payload: dict) -> dict:
+    def create_bank_club_lead(self, payload: dict, client_ip: str = "") -> dict:
         if payload.get("website"):
             raise ValueError("honeypot_rejected")
         if has_high_risk_text(payload):
@@ -563,6 +563,9 @@ class Store:
         clean_payload["site_key"] = "bank_club"
         clean_payload["id"] = lead_id
         clean_payload["submitted_at"] = submitted_at
+        # The Bank Club application forwards the original visitor IP. Keep the
+        # proxy-observed address only as a fallback for direct API submissions.
+        clean_payload["submitted_ip"] = str(payload.get("submitted_ip") or payload.get("ip") or client_ip or "")[:120]
         with self.conn() as conn:
             conn.execute(
                 """
@@ -1108,7 +1111,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._write_json(self.store.add_feedback(payload))
                 return
             if path == "/api/bank-club/leads":
-                self._write_json(self.store.create_bank_club_lead(payload))
+                self._write_json(self.store.create_bank_club_lead(payload, self._client_ip()))
                 return
             if path == "/api/admin/auth/login":
                 role = str(payload.get("role") or "viewer")

@@ -57478,6 +57478,54 @@ body.tfse-admin-authenticated .tfse-bankclub-section-pills button.is-active {
   min-width: 0;
 }
 
+.tfse-bankclub-lead-section .tfse-visual-table-wrap table {
+  min-width: 1560px;
+  table-layout: auto;
+}
+
+.tfse-bankclub-empty-row td {
+  padding: 0;
+  background: #fbfcfd;
+}
+
+.tfse-bankclub-empty-state {
+  min-height: 126px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  color: #738497;
+  text-align: left;
+}
+
+.tfse-bankclub-empty-state i {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dce8ee;
+  border-radius: 50%;
+  color: #ba8c26;
+  background: #fffaf0;
+  font-size: 18px;
+}
+
+.tfse-bankclub-empty-state strong,
+.tfse-bankclub-empty-state span {
+  display: block;
+}
+
+.tfse-bankclub-empty-state strong {
+  color: #1d395c;
+  font-size: 14px;
+}
+
+.tfse-bankclub-empty-state span {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
 @media (max-width: 1199px) {
   body.tfse-admin-authenticated .tfse-visual-source-switch {
     grid-template-columns: minmax(0, 1fr);
