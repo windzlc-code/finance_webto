@@ -70,8 +70,8 @@ function initialDB(): BankClubDB {
   return {
     users: [
       {
-        id: "user-liang",
-        name: settings.specialistName,
+        id: "user-admin",
+        name: settings.brandName,
         email: settings.email,
         role: "super_admin",
         phone: settings.mobile,
@@ -186,7 +186,7 @@ function mergeSeedData(db: BankClubDB) {
       changed = true;
     }
     if (typeof legacyArticle.coverImageUrl !== "string") {
-      legacyArticle.coverImageUrl = "/brand/bank_club_logo.png";
+      legacyArticle.coverImageUrl = "/brand/bank_club_hero.png";
       changed = true;
     }
     if (typeof legacyArticle.coverImageAlt !== "string") {
@@ -211,8 +211,8 @@ function mergeSeedData(db: BankClubDB) {
     }
     if (
       seededArticle &&
-      seededArticle.coverImageUrl !== "/brand/bank_club_logo.png" &&
-      legacyArticle.coverImageUrl === "/brand/bank_club_logo.png" &&
+      seededArticle.coverImageUrl !== "/brand/bank_club_hero.png" &&
+      legacyArticle.coverImageUrl === "/brand/bank_club_hero.png" &&
       legacyArticle.coverImageAlt === `${article.title} 封面圖`
     ) {
       legacyArticle.coverImageUrl = seededArticle.coverImageUrl;
@@ -357,6 +357,10 @@ function mergeSeedData(db: BankClubDB) {
   };
   if (db.settings.lineUrl === "https://line.me/R/ti/p/") {
     db.settings.lineUrl = settings.lineUrl;
+    changed = true;
+  }
+  if (db.settings.address === "235 新北市中和區景安路 50 號 12 樓") {
+    db.settings.address = settings.address;
     changed = true;
   }
   if (!hadLineQrCodeUrl) {

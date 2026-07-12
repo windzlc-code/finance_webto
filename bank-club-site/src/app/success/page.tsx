@@ -9,8 +9,8 @@ import { createPageMetadata } from "@/lib/seo";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
-  title: "諮詢需求已送出｜銀行俱樂部",
-  description: "銀行俱樂部已收到諮詢需求，使用者可加入 LINE 或 FB 社團加速後續聯繫。",
+  title: "諮詢需求已送出｜銀行行員俱樂部",
+  description: "銀行行員俱樂部已收到諮詢需求，使用者可加入 LINE 或 FB 社團加速後續聯繫。",
   path: "/success",
   noIndex: true,
 });
@@ -39,12 +39,10 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
           <p>專員會依您留下的手機或 LINE ID 跟進。若想加快溝通，可直接掃描 QR Code 或加入 FB 社團。</p>
           <div className="success-contact">
             <div>
-              <strong>{settings.specialistName}</strong>
-              <span>{settings.specialistTitle}</span>
               <span>行動 {settings.mobile}</span>
               <span>Email {settings.email}</span>
             </div>
-            <Image src={settings.lineQrCodeUrl} alt={`${settings.specialistName} LINE 一對一諮詢 QR Code`} width={160} height={160} unoptimized />
+            <Image src={settings.lineQrCodeUrl} alt="LINE 一對一諮詢 QR Code" width={160} height={160} unoptimized />
           </div>
           <div className="hero-actions">
             <EventLink className="primary-btn" href={successLineHref} eventName="success_line_click" leadId={params.lead_id || ""} target={successLineHref.startsWith("http") ? "_blank" : undefined}>

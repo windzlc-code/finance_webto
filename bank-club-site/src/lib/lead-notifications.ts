@@ -37,7 +37,7 @@ async function sendNotificationWebhook(payload: Record<string, unknown>): Promis
 
 function specialistPayload(settings: SiteSettings) {
   return {
-    name: settings.specialistName,
+    name: settings.brandName,
     mobile: settings.mobile,
     email: settings.email,
   };
@@ -60,6 +60,8 @@ export async function sendLeadNotification(lead: Lead, settings: SiteSettings): 
       id: lead.id,
       adminUrl: adminLeadUrl(lead.id),
       name: lead.name,
+      gender: lead.gender,
+      city: lead.city,
       phone: lead.phone,
       lineId: lead.lineId,
       loanType: lead.loanType,
@@ -84,7 +86,7 @@ export async function sendLeadNotification(lead: Lead, settings: SiteSettings): 
 export async function sendTestNotification(settings: SiteSettings, actor: AdminUser): Promise<LeadNotificationResult> {
   return sendNotificationWebhook({
     event: "notification_test",
-    message: "銀行俱樂部後台通知測試",
+    message: "銀行行員俱樂部後台通知測試",
     specialist: specialistPayload(settings),
     actor: {
       id: actor.id,

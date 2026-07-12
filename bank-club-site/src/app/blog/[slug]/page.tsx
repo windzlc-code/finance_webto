@@ -20,7 +20,7 @@ type ArticleCta = {
 };
 
 function articleImageUrl(value: string) {
-  if (!value) return absoluteUrl("/brand/bank_club_logo.png");
+  if (!value) return absoluteUrl("/brand/bank_club_hero.png");
   if (value.startsWith("http://") || value.startsWith("https://")) return value;
   return absoluteUrl(value.startsWith("/") ? value : `/${value}`);
 }
@@ -106,7 +106,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
         <p className="article-excerpt">{article.excerpt}</p>
         <Image
           className="article-cover"
-          src={article.coverImageUrl || "/brand/bank_club_logo.png"}
+          src={article.coverImageUrl || "/brand/bank_club_hero.png"}
           alt={article.coverImageAlt || `${article.title} 封面圖`}
           width={1200}
           height={525}
@@ -157,10 +157,10 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             mainEntityOfPage: absoluteUrl(`/blog/${article.slug}`),
             publisher: {
               "@type": "Organization",
-              name: "銀行俱樂部",
+              name: "銀行行員俱樂部",
               logo: {
                 "@type": "ImageObject",
-                url: absoluteUrl("/brand/bank_club_logo.png"),
+                url: absoluteUrl("/brand/bank_club_hero.png"),
               },
             },
           }}

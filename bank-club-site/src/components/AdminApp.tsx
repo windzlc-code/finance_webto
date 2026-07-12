@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFbPostText } from "@/lib/fb-posts";
 import { allowedPublicResourceExtensions, maxPublicResourceUploadBytes } from "@/lib/file-resource-policy";
@@ -154,7 +153,7 @@ const launchReadinessLabels: Array<[LaunchReadinessBooleanKey, string]> = [
   ["lineEntryConfirmed", "LINE 深連結 / QR Code 已掃描確認"],
   ["fbGroupConfirmed", "FB 社團連結已確認"],
   ["officialApplyConfirmed", "銀行官方申請連結已確認可公開使用"],
-  ["brandAuthorizationConfirmed", "Logo / 國泰品牌使用規範已確認"],
+  ["brandAuthorizationConfirmed", "國泰品牌文字使用規範已確認"],
   ["ga4Confirmed", "GA4 已收到 page_view 與 CTA event"],
   ["searchConsoleConfirmed", "Search Console 已驗證並提交 sitemap"],
   ["notificationWebhookConfirmed", "通知 Webhook 已收測試通知"],
@@ -187,6 +186,11 @@ const priorityLabels: Record<LeadPriority, string> = {
   normal: "一般",
   needs_review: "需人工判斷",
   high: "高優先",
+};
+const genderLabels: Record<string, string> = {
+  male: "男性",
+  female: "女性",
+  other: "其他 / 不便透露",
 };
 const purposeLabels: Record<string, string> = {
   daily: "生活消費",
@@ -1350,9 +1354,8 @@ export function AdminApp() {
       <main className="admin-login">
         <form onSubmit={login}>
           <div className="admin-login-brand">
-            <Image src="/brand/bank_club_logo.png" alt="國泰人壽綠色樹形 Logo" width={92} height={64} priority unoptimized />
             <div>
-              <h1>銀行俱樂部後台</h1>
+              <h1>銀行行員俱樂部後台</h1>
               <p>線索、內容、文件與上線檢查管理入口</p>
             </div>
           </div>
@@ -1367,7 +1370,7 @@ export function AdminApp() {
   return (
     <main className="admin-shell">
       <aside>
-        <h1>銀行俱樂部</h1>
+        <h1>銀行行員俱樂部</h1>
         <p>{user.name}｜{user.role}</p>
         {availableTabs.map((item) => (
           <button className={currentTab === item ? "active" : ""} key={item} onClick={() => setTab(item)}>
@@ -1443,6 +1446,8 @@ export function AdminApp() {
                     <strong>基本聯絡與跟進</strong>
                     <div className="lead-detail-grid">
                       {labelValue("姓名", selected.name)}
+                      {labelValue("性別", genderLabels[selected.gender || ""] || "歷史資料未填")}
+                      {labelValue("所在城市", selected.city || "未填（選填）")}
                       {labelValue("身份類型", identityLabels[selected.identityType])}
                       {labelValue("貸款類型", loanLabels[selected.loanType])}
                       {labelValue("手機", canViewLeadContacts ? selected.phone : maskPhone(selected.phone))}
@@ -1731,7 +1736,7 @@ export function AdminApp() {
                 </select>
                 <textarea name="excerpt" placeholder="摘要" />
                 <textarea name="body" placeholder="正文" required />
-                <input name="coverImageUrl" placeholder="封面圖 URL，例如 /brand/bank_club_logo.png 或 https://..." />
+                <input name="coverImageUrl" placeholder="封面圖 URL，例如 /brand/bank_club_hero.png 或 https://..." />
                 <input name="coverImageAlt" placeholder="封面圖 alt，描述圖片內容" />
                 <input name="seoTitle" placeholder="SEO title，未填則使用標題" />
                 <textarea name="seoDescription" placeholder="SEO description，建議 80 到 160 字" />
@@ -2083,8 +2088,6 @@ export function AdminApp() {
               <label>品牌名稱<input name="brandName" defaultValue={siteSettings.brandName} /></label>
               <label>公司名稱<input name="companyName" defaultValue={siteSettings.companyName} /></label>
               <label>通訊處<input name="officeName" defaultValue={siteSettings.officeName} /></label>
-              <label>專員姓名<input name="specialistName" defaultValue={siteSettings.specialistName} /></label>
-              <label>對外職稱<input name="specialistTitle" defaultValue={siteSettings.specialistTitle} /></label>
               <label className="full-field">地址<input name="address" defaultValue={siteSettings.address} /></label>
               <label>電話<input name="phone" defaultValue={siteSettings.phone} /></label>
               <label>傳真<input name="fax" defaultValue={siteSettings.fax} /></label>

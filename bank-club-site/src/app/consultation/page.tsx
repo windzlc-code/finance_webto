@@ -5,7 +5,7 @@ import { createPageMetadata } from "@/lib/seo";
 import type { IdentityType, LoanType } from "@/lib/types";
 
 export const metadata = createPageMetadata({
-  title: "免費諮詢預約｜銀行俱樂部",
+  title: "免費諮詢預約｜銀行行員俱樂部",
   description: "填寫貸款諮詢表單，後台自動建立線索並由專員跟進。",
   path: "/consultation",
 });

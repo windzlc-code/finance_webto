@@ -14,6 +14,7 @@ services:
     environment:
       BANKCLUB_BASE_PATH: ""
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:8080
+      TFSE_SHARED_API_URL: http://backadmin:8788
     restart: unless-stopped
 
   backadmin:

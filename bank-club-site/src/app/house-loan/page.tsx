@@ -12,7 +12,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
-  title: "房屋貸款諮詢｜增貸、轉增貸、二胎房貸、購屋貸款｜銀行俱樂部",
+  title: "房屋貸款諮詢｜增貸、轉增貸、二胎房貸、購屋貸款｜銀行行員俱樂部",
   description: "房屋貸款分類、文件清單、鑑價到撥款流程與月付試算工具。",
   path: "/house-loan",
 });

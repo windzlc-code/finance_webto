@@ -6,8 +6,8 @@ import { createPageMetadata } from "@/lib/seo";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
-  title: "網站地圖｜銀行俱樂部",
-  description: "銀行俱樂部完整網站地圖，整理貸款服務、申辦流程、文件資源、常見 QA、文章、聯絡入口與法務頁面。",
+  title: "網站地圖｜銀行行員俱樂部",
+  description: "銀行行員俱樂部完整網站地圖，整理貸款服務、申辦流程、常見 QA、文章、聯絡入口與法務頁面。",
   path: "/site-map",
 });
 
@@ -20,10 +20,9 @@ const serviceLinks = [
 
 const workflowLinks = [
   { href: "/application-flow", label: "申請流程教學", note: "線上申請、文件拍攝、頁面當機與等待審核" },
-  { href: "/documents", label: "銀行資格與文件總整理", note: "信貸、房貸、企業貸文件比較與下載" },
   { href: "/qa", label: "常見 QA", note: "平台身份、核貸限制、用途風險與文件問題" },
   { href: "/consultation", label: "免費諮詢預約", note: "留下需求並由專員跟進" },
-  { href: "/facebook", label: "FB 銀行俱樂部社團", note: "社團福利、熱門文章與 LINE 入口" },
+  { href: "/facebook", label: "FB 銀行行員俱樂部社團", note: "社團福利、熱門文章與 LINE 入口" },
   { href: "/contact", label: "聯絡我們 / LINE 諮詢", note: "電話、Email、地址、QR Code 與 FB 入口" },
 ];
 
@@ -36,12 +35,8 @@ const legalLinks = [
 ];
 
 const adminLinks = [
-  { href: "/admin", label: "後台登入頁", note: "獨立後台入口，登入後進入管理儀表板" },
-  { href: "/admin", label: "後台儀表板", note: "總線索、新線索、文章、文件與營運摘要" },
-  { href: "/admin", label: "後台線索管理頁", note: "線索列表、線索詳情、狀態與跟進紀錄" },
-  { href: "/admin", label: "後台文章管理頁", note: "部落格文章、SEO、FB 摘要與發布流程" },
-  { href: "/admin", label: "後台文件資源管理頁", note: "公開文件、版本、下載統計與敏感內容邊界" },
-  { href: "/admin", label: "後台統計頁", note: "頁面瀏覽、表單提交、LINE 點擊與來源轉化" },
+  { href: "/admin/", label: "公共後台登入頁", note: "銀行行員俱樂部與金融站共用的管理入口" },
+  { href: "/admin/", label: "公共後台儀表板", note: "集中查看網站資料、線索與營運摘要" },
 ];
 
 function LinkGroup({

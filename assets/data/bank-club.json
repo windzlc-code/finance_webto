@@ -1,26 +1,24 @@
 {
   "site": {
     "key": "bank_club",
-    "name": "銀行俱樂部",
+    "name": "銀行行員俱樂部",
     "tagline": "銀行專員一對一，信貸 / 房貸 / 企業貸免費評估",
-    "description": "銀行俱樂部提供信用貸款、房屋貸款與企業貸款諮詢，協助整理資格、文件清單、申辦流程與 LINE 一對一免費評估。",
+    "description": "銀行行員俱樂部提供信用貸款、房屋貸款與企業貸款諮詢，協助整理資格、文件清單、申辦流程與 LINE 一對一免費評估。",
     "tfseUrl": "../index.html",
     "bankClubUrl": "index.html",
-    "logo": "../assets/images/bank-club/bank_club_logo.png",
+    "logo": "../assets/images/bank-club/bank_club_logo_new.png",
     "heroImage": "../assets/images/bank-club/home_hero_office.jpg",
     "lineQr": "../assets/images/bank-club/bank_club_line_qr.png"
   },
   "settings": {
     "companyName": "國泰人壽保險股份有限公司",
     "officeName": "永和通訊處",
-    "specialistName": "梁淵欽",
-    "specialistTitle": "放款經理人",
     "address": "235 新北市中和區景安路 50 號 12 樓",
-    "phone": "02 2243 7127",
-    "fax": "02 2928 7804",
-    "mobile": "0972 727 690",
-    "email": "yuanchin.liang@gmail.com",
-    "lineUrl": "#contact",
+    "phone": "09-8584-7613",
+    "fax": "",
+    "mobile": "09-8584-7613",
+    "email": "xmu6611@gmail.com / g0985847613@gmail.com",
+    "lineUrl": "https://line.me/R/ti/p/Gn148848",
     "fbGroupUrl": "https://www.facebook.com/share/g/1DzfRZ8fPw/?mibextid=wwXIfr",
     "officialApplyUrl": "https://www.feib.com.tw/"
   },
@@ -47,7 +45,13 @@
       "anchor": "#business"
     }
   ],
-  "processSteps": ["填寫需求", "專員初審", "準備文件", "銀行審核", "結果跟進"],
+  "processSteps": [
+    "填寫需求",
+    "專員初審",
+    "準備文件",
+    "銀行審核",
+    "結果跟進"
+  ],
   "articles": [
     {
       "id": "article-credit-fields",

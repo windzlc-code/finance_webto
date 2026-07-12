@@ -67,7 +67,7 @@ export function verifyTotp(secret: string, token: string) {
   return false;
 }
 
-export function createTotpUri(secret: string, email: string, issuer = "銀行俱樂部") {
+export function createTotpUri(secret: string, email: string, issuer = "銀行行員俱樂部") {
   const label = `${issuer}:${email}`;
   const params = new URLSearchParams({
     secret,

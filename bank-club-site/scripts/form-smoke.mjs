@@ -102,6 +102,7 @@ function buildApiLeadForm({ name, phone, lineId, sessionId, website = "", note =
   const form = new FormData();
   form.set("website", website);
   form.set("name", name);
+  form.set("gender", "other");
   form.set("phone", phone);
   form.set("lineId", lineId);
   form.set("identityType", "employee");
@@ -116,15 +117,12 @@ function buildApiLeadForm({ name, phone, lineId, sessionId, website = "", note =
   return form;
 }
 
-function tinyPngFile(name) {
-  const pngBytes = Uint8Array.from([
-    137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82,
-    0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137,
-    0, 0, 0, 13, 73, 68, 65, 84, 120, 156, 99, 248, 15, 4, 0, 9,
-    251, 3, 253, 167, 80, 188, 204, 0, 0, 0, 0, 73, 69, 78, 68,
-    174, 66, 96, 130,
+function tinyIdCardFile(name) {
+  const jpegBytes = Uint8Array.from([
+    0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x02, 0x00, 0x03,
+    0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x00, 0x03, 0x11, 0x00, 0xff, 0xd9,
   ]);
-  return new File([pngBytes], name, { type: "image/png" });
+  return new File([jpegBytes], name, { type: "image/jpeg" });
 }
 
 function buildCreditApiLeadForm({ name, phone, lineId, sessionId, includeFiles = true }) {
@@ -144,8 +142,8 @@ function buildCreditApiLeadForm({ name, phone, lineId, sessionId, includeFiles =
   form.set("caseSource", "company_preferential");
   form.set("programType", "binding");
   if (includeFiles) {
-    form.set("idFront", tinyPngFile("id-front-smoke.png"));
-    form.set("idBack", tinyPngFile("id-back-smoke.png"));
+    form.set("idFront", tinyIdCardFile("id-front-smoke.jpg"));
+    form.set("idBack", tinyIdCardFile("id-back-smoke.jpg"));
   }
   return form;
 }
@@ -289,8 +287,8 @@ async function run() {
     ) {
       fail("credit application should persist amount, term, program, upload status, LINE supplement status, and two ID files");
     }
-    if (!creditFiles.every((file) => file.mimeType === "image/png" && file.checksum && file.uploadStatus === "uploaded")) {
-      fail("credit ID file records should persist PNG mime type, checksum, and uploaded status");
+    if (!creditFiles.every((file) => file.mimeType === "image/jpeg" && file.checksum && file.uploadStatus === "uploaded")) {
+      fail("credit ID file records should persist JPEG mime type, checksum, and uploaded status");
     }
     creditUploadDirToRemove = path.join(process.cwd(), ".data", "credit-application-files", creditApplication.id);
     const frontCreditFile = creditFiles.find((file) => file.fileType === "id_front");
@@ -396,6 +394,8 @@ async function run() {
     }
 
     await page.locator('input[name="name"]').fill(leadName);
+    await page.locator('select[name="gender"]').selectOption("female");
+    await page.locator('select[name="city"]').selectOption("新北市");
     await page.locator('input[name="phone"]').fill(phone);
     await page.locator('input[name="lineId"]').fill("formSmokeLine");
     await page.locator('select[name="identityType"]').selectOption("employee");
@@ -584,6 +584,8 @@ async function run() {
     }
 
     await houseForm.locator('input[name="name"]').fill(houseLeadName);
+    await houseForm.locator('select[name="gender"]').selectOption("male");
+    await houseForm.locator('select[name="city"]').selectOption("新北市");
     await houseForm.locator('input[name="phone"]').fill(housePhone);
     await houseForm.locator('input[name="lineId"]').fill("houseSmokeLine");
     await houseForm.locator('select[name="desiredAmount"]').selectOption("1800000");
@@ -680,6 +682,7 @@ async function run() {
 
     const duplicateForm = new FormData();
     duplicateForm.set("name", `${leadName} 重複格式`);
+    duplicateForm.set("gender", "other");
     duplicateForm.set("phone", phone.replaceAll(" ", "-"));
     duplicateForm.set("lineId", "formSmokeDifferentLine");
     duplicateForm.set("identityType", "employee");

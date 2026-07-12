@@ -5,7 +5,7 @@ import { BreadcrumbJsonLd } from "@/components/StructuredData";
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
-  title: "貸款申辦流程教學｜網路申請、文件準備與審核等待｜銀行俱樂部",
+  title: "貸款申辦流程教學｜網路申請、文件準備與審核等待｜銀行行員俱樂部",
   description: "線上申請、實體遞件、身分證拍攝、頁面當機與資金用途風險提醒。",
   path: "/application-flow",
 });
@@ -32,9 +32,9 @@ export default function ApplicationFlowPage() {
       title: "準備身分與財力文件",
       note: "資料整理",
       icon: "shield",
-      href: "/documents",
-      eventName: "flow_step_documents_click",
-      cta: "查看文件",
+      href: "/consultation?source_page=flow_step_documents",
+      eventName: "flow_step_documents_form_click",
+      cta: "諮詢補件方式",
     },
     {
       title: "確認適合銀行方案",
@@ -66,7 +66,7 @@ export default function ApplicationFlowPage() {
       title: "線上網路申請流程",
       icon: "mail",
       body: "先確認需求與合法資金用途，再依銀行官方頁面順序填寫。進入官方頁後不要任意返回上一頁或重複刷新，避免流程中斷。",
-      items: ["確認姓名、手機、貸款類型與期望金額", "依真實狀況填寫申請金額與年限", "案件來源與方案類型以專員確認及銀行頁面規則為準"],
+      items: ["確認姓名、性別、手機、貸款類型與期望金額；所在城市可選填", "依真實狀況填寫申請金額與年限", "案件來源與方案類型以專員確認及銀行頁面規則為準"],
       href: "/credit-loan",
       eventName: "flow_credit_click",
       cta: "查看信貸網路申辦提醒",
@@ -85,9 +85,9 @@ export default function ApplicationFlowPage() {
       icon: "shield",
       body: "身分證正反面拍攝需清楚對焦、四角完整、避免反光與裁切。若使用銀行官方頁面上傳，請只在官方流程或授權通道提供。",
       items: ["避免模糊、反光、遮蔽或裁切", "確認正反面皆可辨識", "不要把身分證照片直接傳到普通網站表單"],
-      href: "/documents",
-      eventName: "flow_docs_click",
-      cta: "查看文件總整理",
+      href: "/credit-loan#credit-application",
+      eventName: "flow_credit_application_click",
+      cta: "查看信貸申請提醒",
     },
     {
       title: "財力證明準備方式",

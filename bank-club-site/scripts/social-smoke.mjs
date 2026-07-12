@@ -78,6 +78,7 @@ async function submitLead(sessionId) {
   const appointment = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16);
   form.set("website", "");
   form.set("name", "社群閉環煙測使用者");
+  form.set("gender", "other");
   form.set("phone", "0933 456 789");
   form.set("lineId", "socialSmokeLine");
   form.set("identityType", "employee");
@@ -232,43 +233,11 @@ async function run() {
     const businessLineHref = await assertLinkHref(page, businessLine, "business LINE href", "line.me", { source_page: "business", utm_medium: "line_cta" });
     assertUrl(await clickPopup(page, businessLine, "business LINE click"), "business LINE popup", "line.me", { source_page: "business" });
 
-    await page.goto(`${baseUrl}/documents`, { waitUntil: "networkidle" });
-    const documentsLineHref = await assertLinkHref(page, page.locator(".compare-table").getByRole("link", { name: /^LINE$/ }).first(), "documents LINE href", "line.me", { source_page: "documents", utm_medium: "line_cta" });
-    const documentsFb = page.getByRole("link", { name: "加入 FB 社團看文件範例" });
-    const documentsFbHref = await assertLinkHref(page, documentsFb, "documents FB href", "facebook.com", { source_page: "documents", source_detail: "file_checklist", utm_medium: "fb_cta" });
-    assertUrl(await clickPopup(page, documentsFb, "documents FB click"), "documents FB popup", "facebook.com", { source_page: "documents", source_detail: "file_checklist" });
-    const materialCards = page.locator(".material-card");
-    if ((await materialCards.count()) < 8) fail("documents page should render the first batch of 8 material cards");
-    if ((await page.locator('img[alt*="貸款資金用途風險提醒圖"]').count()) !== 1) {
-      fail("documents page material card image alt should identify the loan purpose risk asset");
-    }
-    const purposeMaterial = page.locator(".material-card", { hasText: "貸款資金用途風險提醒圖" }).getByRole("link", { name: "開啟圖卡" });
-    const purposeMaterialHref = await purposeMaterial.getAttribute("href");
-    if (purposeMaterialHref !== "/materials/loan-purpose-risk.svg") {
-      fail(`loan purpose material href mismatch: ${purposeMaterialHref || "missing"}`);
-    }
-    const materialPopupUrl = await clickPopup(page, purposeMaterial, "documents material asset click");
-    const materialPopup = new URL(materialPopupUrl);
-    if (materialPopup.origin !== baseUrl || materialPopup.pathname !== "/materials/loan-purpose-risk.svg") {
-      fail(`material asset popup opened unexpected URL: ${materialPopupUrl}`);
-    }
-    await waitForDb(
-      (candidate) =>
-        candidate.events.some(
-          (event) =>
-            event.sessionId === sessionId &&
-            event.eventName === "material_asset_open" &&
-            event.metadata?.materialSlug === "loan-purpose-risk" &&
-            event.sourceChannel === "documents",
-        ),
-      "documents material asset event",
-    );
-
     await page.goto(`${baseUrl}/blog/loan-purpose-risk`, { waitUntil: "networkidle" });
     const blogLineHref = await assertLinkHref(page, page.getByRole("link", { name: "加入 LINE 諮詢" }).first(), "blog detail LINE href", "line.me", { source_page: "blog", source_detail: "loan-purpose-risk" });
 
     await page.goto(`${baseUrl}/facebook?utm_source=facebook&utm_medium=group_post`, { waitUntil: "networkidle" });
-    if (!(await page.getByRole("heading", { name: "FB 銀行俱樂部社團" }).isVisible())) {
+    if (!(await page.getByRole("heading", { name: "FB 銀行行員俱樂部社團" }).isVisible())) {
       fail("facebook page identity check failed");
     }
     if ((await page.getByText("熱門文章入口").count()) < 1) fail("facebook page missing popular article section");
@@ -285,7 +254,7 @@ async function run() {
     assertUrl(await clickPopup(page, facebookLine, "facebook page LINE click"), "facebook page LINE popup", "line.me", { source_page: "facebook" });
 
     await page.goto(`${baseUrl}/contact?utm_source=google&utm_medium=organic`, { waitUntil: "networkidle" });
-    for (const text of ["國泰金控 / 國泰人壽", "人身 / 財產保險業務員", "02 2243 7127", "0972 727 690", "yuanchin.liang@gmail.com", "個資權利與資料請求", "停止利用", "刪除"]) {
+    for (const text of ["國泰金控 / 國泰人壽", "人身 / 財產保險業務員", "09-8584-7613", "xmu6611@gmail.com", "g0985847613@gmail.com", "個資權利與資料請求", "停止利用", "刪除"]) {
       if ((await page.getByText(text, { exact: false }).count()) < 1) fail(`contact page missing business card text: ${text}`);
     }
     const contactLine = page.getByRole("link", { name: "開啟 LINE 諮詢" });
@@ -333,7 +302,7 @@ async function run() {
     const lead = db.leads.find((item) => item.id === leadId);
     const sessionEvents = db.events.filter((event) => event.sessionId === sessionId);
     const eventNames = sessionEvents.map((event) => event.eventName);
-    for (const eventName of ["credit_line_click", "house_line_click", "business_line_click", "documents_fb_click", "material_asset_open", "fb_join_click", "fb_line_click", "contact_line_click", "contact_fb_click", "contact_privacy_click", "success_line_click", "success_fb_click", "form_submit"]) {
+    for (const eventName of ["credit_line_click", "house_line_click", "business_line_click", "fb_join_click", "fb_line_click", "contact_line_click", "contact_fb_click", "contact_privacy_click", "success_line_click", "success_fb_click", "form_submit"]) {
       if (!eventNames.includes(eventName)) fail(`missing ${eventName} event for smoke session ${sessionId}`);
     }
     for (const [eventName, loanType] of [
@@ -345,14 +314,6 @@ async function run() {
       if (productLineEvent?.metadata?.loanType !== loanType || productLineEvent?.metadata?.sourcePage !== loanType) {
         fail(`${eventName} did not preserve loanType/sourcePage metadata`);
       }
-    }
-    const documentsFbEvent = sessionEvents.find((event) => event.eventName === "documents_fb_click");
-    if (documentsFbEvent?.metadata?.sourceDetail !== "file_checklist" || documentsFbEvent?.sessionId !== sessionId) {
-      fail("documents FB event did not preserve source detail/session");
-    }
-    const materialEvent = sessionEvents.find((event) => event.eventName === "material_asset_open");
-    if (materialEvent?.metadata?.materialSlug !== "loan-purpose-risk" || materialEvent?.sourceChannel !== "documents") {
-      fail("documents material asset event did not preserve slug/source channel");
     }
     const facebookLineEvent = sessionEvents.find((event) => event.eventName === "fb_line_click");
     if (facebookLineEvent?.sourceChannel !== "facebook") {
@@ -377,10 +338,6 @@ async function run() {
     const socialCampaign = summaryResult.json.campaignConversions?.["social-smoke"];
     if (!socialCampaign || socialCampaign.leads < 1 || socialCampaign.formSubmits < 1 || !socialCampaign.sourceChannels?.includes("facebook")) {
       fail("summary campaignConversions did not attribute the social-smoke FB lead");
-    }
-    const documentsCtaStats = summaryResult.json.ctaClicksByPage?.["/documents"];
-    if (!documentsCtaStats || documentsCtaStats.fbClicks < 1) {
-      fail("summary ctaClicksByPage did not count documents FB clicks");
     }
     const facebookCtaStats = summaryResult.json.ctaClicksByPage?.["/facebook"];
     if (!facebookCtaStats || facebookCtaStats.lineClicks < 1 || facebookCtaStats.fbClicks < 1) {
@@ -409,8 +366,6 @@ async function run() {
         creditOfficialHref,
         houseLineHref,
         businessLineHref,
-        documentsLineHref,
-        documentsFbHref,
         blogLineHref,
       },
       contactLineHref,
@@ -426,7 +381,6 @@ async function run() {
       },
       summaryStats: {
         socialCampaign,
-        documentsCtaStats,
         facebookCtaStats,
         creditLoanStats,
         ctaClicksByLoanType: summaryResult.json.ctaClicksByLoanType,

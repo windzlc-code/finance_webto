@@ -7,6 +7,8 @@ export type IdentityType =
   | "home_owner"
   | "other";
 
+export type Gender = "male" | "female" | "other";
+
 export type LeadStatus =
   | "new"
   | "assigned"
@@ -37,6 +39,8 @@ export type CreditIdUploadStatus = "not_uploaded" | "uploaded" | "missing_front"
 export type Lead = {
   id: string;
   name: string;
+  gender?: Gender;
+  city?: string;
   phone: string;
   lineId: string;
   identityType: IdentityType;
@@ -328,8 +332,6 @@ export type SiteSettings = {
   brandName: string;
   companyName: string;
   officeName: string;
-  specialistName: string;
-  specialistTitle: string;
   address: string;
   phone: string;
   fax: string;

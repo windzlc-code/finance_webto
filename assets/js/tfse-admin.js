@@ -233,6 +233,8 @@
     var adminRecordSeedData = {};
     var visualConsoleState = {
         tab: "dashboard",
+        site: "finance",
+        stage: "all",
         status: "all",
         source: "all",
         owner: "all",
@@ -241,6 +243,10 @@
         page: 1,
         pageSize: 8
     };
+    var visualSearchTimer = 0;
+    var liveLeadRefreshInFlight = false;
+    var liveLeadRefreshIntervalMs = 8000;
+    var financeLeadSyncSignature = "";
     var adminWorkbenchGroups = [
         {
             key: "content",
@@ -612,7 +618,7 @@
             adminWorkbenchGroups.map(function (group) {
                 return [
                     "<button type=\"button\" data-visual-workbench-open=\"" + escapeHtml(group.key) + "\">",
-                    "<i class=\"fa " + escapeHtml(group.icon) + "\" aria-hidden=\"true\"></i>",
+                    visualIcon(visualWorkbenchIcon(group.key)),
                     "<span><strong>" + escapeHtml(group.label) + "</strong></span>",
                     "</button>"
                 ].join("");
@@ -736,9 +742,21 @@
         }
         return window.TFSEApi.listLeads().then(function (result) {
             leadSourceMode = result.mode || "localStorage";
+            var nextSignature = [leadSourceMode].concat((result.items || []).map(function (lead) {
+                return [
+                    lead.id || "",
+                    lead.status || "new",
+                    lead.updated_at || lead.submitted_at || "",
+                    lead.assigned_to || "",
+                    lead.display_name || ""
+                ].join(":");
+            }).sort()).join("|");
+            var changed = nextSignature !== financeLeadSyncSignature;
+            financeLeadSyncSignature = nextSignature;
             if (Array.isArray(result.items) && result.mode === "api") {
                 saveLeads(result.items);
             }
+            if (!changed) return result;
             renderList();
             renderFollowUps();
             renderLeadDedupe();
@@ -749,6 +767,19 @@
             renderRealMetrics();
             renderVisualConsole();
             return result;
+        });
+    }
+
+    function refreshLiveLeadSources() {
+        if (liveLeadRefreshInFlight || !isAuthenticated() || authSource() !== "api") {
+            return Promise.resolve({ skipped: true });
+        }
+        liveLeadRefreshInFlight = true;
+        var bankRefresh = window.TFSEBankClubAdmin && window.TFSEBankClubAdmin.refresh
+            ? window.TFSEBankClubAdmin.refresh()
+            : Promise.resolve({ mode: "unavailable" });
+        return Promise.all([syncLeadsFromApi(), bankRefresh]).finally(function () {
+            liveLeadRefreshInFlight = false;
         });
     }
 
@@ -8505,7 +8536,8 @@
             facebook: "FB/IG 廣告",
             paid_social: "社群廣告",
             line: "LINE OA",
-            referral: "合作夥伴轉介"
+            referral: "合作夥伴轉介",
+            bank_club: "Bank Club"
         }[value || "direct"] || value || "官網";
     }
 
@@ -8519,7 +8551,92 @@
     }
 
     function visualSourceOfLead(lead) {
+        if (lead && lead.visual_site === "bankclub") return "bank_club";
         return lead.utm_source || lead.source_channel || "direct";
+    }
+
+    function visualBankClubLeads() {
+        var bridge = window.TFSEBankClubAdmin;
+        if (bridge && bridge.isLoaded && bridge.isLoaded()) {
+            return bridge.getLeads ? bridge.getLeads() : [];
+        }
+        try {
+            return JSON.parse(localStorage.getItem("bank_club_leads") || "[]") || [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function visualNormalizeBankClubLead(lead) {
+        var bankStatus = lead.status || "new";
+        var normalizedStatus = {
+            appointment_scheduled: "consulted",
+            closed: "closed",
+            invalid: "spam",
+            contacted: "contacted"
+        }[bankStatus] || "new";
+        return {
+            id: "bankclub:" + (lead.id || "unknown"),
+            source_record_id: lead.id || "",
+            visual_site: "bankclub",
+            display_name: lead.display_name || lead.name || "未命名 Bank Club 線索",
+            phone: lead.phone || "",
+            line_id: lead.line_id || "",
+            region: lead.region || lead.city || "",
+            needs: lead.loan_type || lead.needs || "Bank Club 諮詢",
+            message: lead.message || "",
+            status: normalizedStatus,
+            bank_status: bankStatus,
+            submitted_at: lead.submitted_at || lead.created_at || lead.updated_at || "",
+            updated_at: lead.updated_at || lead.submitted_at || lead.created_at || "",
+            next_follow_up_at: lead.next_follow_up_at || lead.appointment_at || "",
+            source_channel: "bank_club",
+            utm_source: "bank_club",
+            assigned_to: lead.assigned_to || "consultant",
+            tags: (Array.isArray(lead.tags) ? lead.tags : []).concat(["source_bank_club"]),
+            consent_privacy: !!lead.consent_privacy,
+            consent_line: !!lead.consent_line
+        };
+    }
+
+    function visualSiteLabel(value) {
+        return value === "bankclub" ? "Bank Club" : "金融站";
+    }
+
+    function visualIcon(name) {
+        var paths = {
+            dashboard: '<rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><path d="M15 20v-5h5"></path>',
+            users: '<path d="M16 20v-1.5a4.5 4.5 0 0 0-4.5-4.5h-4A4.5 4.5 0 0 0 3 18.5V20"></path><circle cx="9.5" cy="7.5" r="3.5"></circle><path d="M17 4.5a3.5 3.5 0 0 1 0 6.5"></path><path d="M21 20v-1.3a4.5 4.5 0 0 0-2.8-4.2"></path>',
+            bank: '<path d="M3 9h18"></path><path d="M5 9v8m4-8v8m6-8v8m4-8v8"></path><path d="M3 21h18M2 18h20"></path><path d="m12 3 9 4H3l9-4Z"></path>',
+            layers: '<path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5"></path><path d="m3 16 9 5 9-5"></path>',
+            calendar: '<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path><path d="M8 14h3M8 17h6"></path>',
+            tasks: '<path d="m4 7 2 2 4-4"></path><path d="M12 7h8M12 12h8M12 17h8"></path><path d="m4 17 2 2 4-4"></path>',
+            shield: '<path d="M12 3 20 6v5c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6l8-3Z"></path><path d="m8.5 12 2.2 2.2 4.8-4.8"></path>',
+            chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path><path d="m4 8 5-4 5 4 6-7"></path>',
+            settings: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2 2-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2H12v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-2-2 .1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H5.7V11h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L7 8l2-2 .1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h2.8v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 2 2-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2v2.8h-.2a1.7 1.7 0 0 0-1.5 1.1Z"></path>',
+            inbox: '<path d="M4 4h16v16H4z"></path><path d="M4 15h5l1.5 2h3L15 15h5"></path>',
+            search: '<circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m15 15 5 5"></path>',
+            chat: '<path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.5 8.5 0 0 1-3.5-.8L4 20l1.4-3.4A7.2 7.2 0 0 1 4 12a8 8 0 0 1 16-.5Z"></path><path d="M8 12h.01M12 12h.01M16 12h.01"></path>',
+            menu: '<path d="M4 7h16M4 12h16M4 17h16"></path>',
+            bell: '<path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path>',
+            refresh: '<path d="M20 11a8 8 0 1 0 1.1 4"></path><path d="M20 4v7h-7"></path>',
+            download: '<path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 21h16"></path>',
+            external: '<path d="M14 4h6v6"></path><path d="m20 4-9 9"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>'
+        };
+        return '<svg class="tfse-visual-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.dashboard) + '</svg>';
+    }
+
+    function visualWorkbenchIcon(groupKey) {
+        return {
+            content: "layers",
+            acquisition: "chart",
+            governance: "shield",
+            launch: "tasks",
+            config: "settings",
+            seo_acceptance: "search",
+            privacy_line: "users",
+            backup: "inbox"
+        }[groupKey] || "layers";
     }
 
     function visualOwnerOfLead(lead) {
@@ -8528,14 +8645,14 @@
 
     function visualFilteredLeads() {
         var query = String(visualConsoleState.query || "").trim().toLowerCase();
-        var tabStatus = {
-            consult: "consulted",
-            clients: "closed"
-        };
         return getLeads().filter(function (lead) {
             var sourceValue = visualSourceOfLead(lead);
             var ownerValue = visualOwnerOfLead(lead);
             var statusValue = lead.status || "new";
+            var matchesStage = visualConsoleState.stage === "all"
+                || (visualConsoleState.stage === "pending" && ["new", "contacted", "info_sent", "unresponsive"].indexOf(statusValue) !== -1)
+                || (visualConsoleState.stage === "consult" && statusValue === "consulted")
+                || (visualConsoleState.stage === "closed" && statusValue === "closed");
             var haystack = [
                 lead.display_name,
                 lead.phone,
@@ -8547,7 +8664,7 @@
                 (lead.tags || []).join(" ")
             ].join(" ").toLowerCase();
             return (!query || haystack.indexOf(query) !== -1)
-                && (!tabStatus[visualConsoleState.tab] || statusValue === tabStatus[visualConsoleState.tab])
+                && matchesStage
                 && (visualConsoleState.status === "all" || statusValue === visualConsoleState.status)
                 && (visualConsoleState.source === "all" || sourceValue === visualConsoleState.source)
                 && (visualConsoleState.owner === "all" || ownerValue === visualConsoleState.owner);
@@ -8580,14 +8697,91 @@
         }).join("");
     }
 
+    function visualRenderSourceBarChart(counts) {
+        var keys = Object.keys(counts || {}).sort(function (a, b) { return (counts[b] || 0) - (counts[a] || 0); }).slice(0, 5);
+        if (!keys.length) {
+            return "<div class=\"tfse-visual-chart-empty\">目前還沒有來源資料；收到前台表單後會自動生成柱形圖。</div>";
+        }
+        var maxValue = Math.max.apply(null, keys.map(function (key) { return counts[key] || 0; }).concat([1]));
+        var chartWidth = 620;
+        var chartHeight = 236;
+        var left = 42;
+        var bottom = 194;
+        var plotHeight = 132;
+        var slot = (chartWidth - left - 24) / keys.length;
+        var barWidth = Math.min(66, slot * 0.52);
+        var bars = keys.map(function (key, index) {
+            var value = counts[key] || 0;
+            var height = Math.max(6, Math.round((value / maxValue) * plotHeight));
+            var x = left + (slot * index) + ((slot - barWidth) / 2);
+            var y = bottom - height;
+            var label = visualSourceLabel(key);
+            return [
+                "<g class=\"tfse-chart-bar\">",
+                "<rect x=\"" + x.toFixed(1) + "\" y=\"" + y + "\" width=\"" + barWidth.toFixed(1) + "\" height=\"" + height + "\" rx=\"10\"></rect>",
+                "<text class=\"tfse-chart-value\" x=\"" + (x + (barWidth / 2)).toFixed(1) + "\" y=\"" + (y - 9) + "\" text-anchor=\"middle\">" + value + "</text>",
+                "<text class=\"tfse-chart-label\" x=\"" + (x + (barWidth / 2)).toFixed(1) + "\" y=\"218\" text-anchor=\"middle\">" + escapeHtml(label.length > 8 ? label.slice(0, 8) : label) + "</text>",
+                "</g>"
+            ].join("");
+        }).join("");
+        var guides = [0, 1, 2, 3].map(function (step) {
+            var y = bottom - ((plotHeight / 3) * step);
+            var label = Math.round((maxValue / 3) * step);
+            return "<g><line x1=\"" + left + "\" y1=\"" + y.toFixed(1) + "\" x2=\"606\" y2=\"" + y.toFixed(1) + "\"></line><text x=\"34\" y=\"" + (y + 4).toFixed(1) + "\" text-anchor=\"end\">" + label + "</text></g>";
+        }).join("");
+        return "<div class=\"tfse-visual-chart-wrap\"><svg class=\"tfse-visual-bar-chart\" viewBox=\"0 0 " + chartWidth + " " + chartHeight + "\" role=\"img\" aria-label=\"線索來源柱形圖\"><g class=\"tfse-chart-guides\">" + guides + "</g>" + bars + "</svg></div>";
+    }
+
+    function visualRenderStatusDonut(counts) {
+        var items = [
+            { label: "待聯繫", value: counts.new || 0, color: "#d9ac4e" },
+            { label: "已聯繫", value: (counts.contacted || 0) + (counts.info_sent || 0), color: "#3e7a92" },
+            { label: "諮詢中", value: counts.consulted || 0, color: "#2f8b75" },
+            { label: "成交", value: counts.closed || 0, color: "#174b70" },
+            { label: "其他", value: (counts.unresponsive || 0) + (counts.spam || 0), color: "#b9c4cc" }
+        ].filter(function (item) { return item.value > 0; });
+        var total = items.reduce(function (sum, item) { return sum + item.value; }, 0);
+        if (!total) {
+            return "<div class=\"tfse-visual-chart-empty\">目前還沒有線索狀態；資料進入後會自動生成圓環圖。</div>";
+        }
+        var radius = 52;
+        var circumference = 2 * Math.PI * radius;
+        var offset = 0;
+        var segments = items.map(function (item) {
+            var length = (item.value / total) * circumference;
+            var circle = "<circle cx=\"72\" cy=\"72\" r=\"" + radius + "\" stroke=\"" + item.color + "\" stroke-dasharray=\"" + length.toFixed(2) + " " + (circumference - length).toFixed(2) + "\" stroke-dashoffset=\"" + (-offset).toFixed(2) + "\"></circle>";
+            offset += length;
+            return circle;
+        }).join("");
+        var legend = items.map(function (item) {
+            var percent = Math.round((item.value / total) * 100);
+            return "<li><i style=\"background:" + item.color + "\"></i><span>" + escapeHtml(item.label) + "</span><b>" + item.value + "</b><em>" + percent + "%</em></li>";
+        }).join("");
+        return [
+            "<div class=\"tfse-visual-donut-layout\">",
+            "<svg class=\"tfse-visual-donut-chart\" viewBox=\"0 0 144 144\" role=\"img\" aria-label=\"線索狀態圓環圖\"><circle class=\"tfse-donut-track\" cx=\"72\" cy=\"72\" r=\"" + radius + "\"></circle><g transform=\"rotate(-90 72 72)\">" + segments + "</g><text x=\"72\" y=\"67\" text-anchor=\"middle\">總線索</text><text class=\"tfse-donut-total\" x=\"72\" y=\"90\" text-anchor=\"middle\">" + total + "</text></svg>",
+            "<ul class=\"tfse-visual-chart-legend\">" + legend + "</ul>",
+            "</div>"
+        ].join("");
+    }
+
     function visualMetricPayload() {
-        var leads = getLeads();
+        var financeLeads = getLeads();
+        var bankLeads = visualBankClubLeads().map(visualNormalizeBankClubLead);
+        var leads = financeLeads.map(function (lead) {
+            return Object.assign({ visual_site: "finance" }, lead);
+        }).concat(bankLeads);
         var followUps = followUpPayload();
         var legal = legalReviewPayload();
         var lineItems = lineSegmentPayload().items || [];
         var sourceCounts = visualTopCounts(leads, visualSourceOfLead);
+        var bankOpen = bankLeads.filter(function (lead) {
+            return lead.status !== "closed" && lead.status !== "spam";
+        }).length;
         return {
             leads: leads,
+            financeLeads: financeLeads,
+            bankLeads: bankLeads,
             followUps: followUps,
             legal: legal,
             lineItems: lineItems,
@@ -8595,37 +8789,37 @@
             metrics: [
                 {
                     label: "今日待處理",
-                    value: followUps.counts.overdue_or_unscheduled || followUps.counts.total || 0,
-                    hint: "高優先 " + (followUps.counts.high_priority || 0),
-                    icon: "fa-clipboard-list",
+                    value: (followUps.counts.overdue_or_unscheduled || followUps.counts.total || 0) + bankOpen,
+                    hint: "金融站 " + (followUps.counts.overdue_or_unscheduled || followUps.counts.total || 0) + " · Bank Club " + bankOpen,
+                    icon: "tasks",
                     tone: "blue"
                 },
                 {
-                    label: "免費財務健檢查詢名單",
+                    label: "跨站表單線索",
                     value: leads.length,
-                    hint: "待聯繫 " + leads.filter(function (lead) { return (lead.status || "new") === "new"; }).length,
-                    icon: "fa-heart",
+                    hint: "金融站 " + financeLeads.length + " · Bank Club " + bankLeads.length,
+                    icon: "users",
                     tone: "gold"
                 },
                 {
                     label: "來源追蹤（本月）",
                     value: Object.keys(sourceCounts).length,
                     hint: "有效來源 " + leads.length,
-                    icon: "fa-search",
+                    icon: "search",
                     tone: "green"
                 },
                 {
                     label: "合規掃描（本月）",
                     value: legal.items.length,
                     hint: "需檢視 " + ((legal.status_counts.needs_review || 0) + (legal.status_counts.external_pending || 0) + (legal.status_counts.manual_external || 0)),
-                    icon: "fa-shield-alt",
+                    icon: "shield",
                     tone: "blue"
                 },
                 {
                     label: "Line OA 佇列",
                     value: lineItems.length,
                     hint: "可分群 " + lineItems.filter(function (item) { return (item.tags || []).length; }).length,
-                    icon: "fa-comments",
+                    icon: "chat",
                     tone: "green"
                 }
             ]
@@ -8639,7 +8833,7 @@
                 "<span>" + escapeHtml(item.label) + "</span>",
                 "<strong>" + escapeHtml(item.value) + "</strong>",
                 "<small>" + escapeHtml(item.hint) + "</small>",
-                "<i class=\"fa " + escapeHtml(item.icon) + "\"></i>",
+                visualIcon(item.icon),
                 "</article>"
             ].join("");
         }).join("");
@@ -8664,9 +8858,9 @@
             ].filter(Boolean).join(" + ") || "未同意提醒";
             return [
                 "<tr class=\"" + selectedClass + "\" data-visual-row=\"" + escapeHtml(lead.id) + "\">",
-                "<td>" + escapeHtml(formatDate(lead.submitted_at || lead.updated_at)) + "</td>",
+                "<td><span class=\"tfse-visual-origin-badge is-finance\">金融站</span><small>" + escapeHtml(formatDate(lead.submitted_at || lead.updated_at)) + "</small></td>",
                 "<td><strong>" + escapeHtml(lead.display_name || "未命名") + "</strong><small>" + escapeHtml(lead.phone || "未填手機") + "</small><small>" + escapeHtml(lead.region || "未填地區") + "</small></td>",
-                "<td><strong>" + escapeHtml(lead.needs || "尚未填寫需求") + "</strong><small>" + escapeHtml(lead.occupation_type || lead.current_job || "未填身份/工作") + "</small><small>" + escapeHtml(visualSourceLabel(visualSourceOfLead(lead))) + "</small></td>",
+                "<td><strong>" + escapeHtml(lead.needs || "尚未填寫需求") + "</strong><small>" + escapeHtml(lead.occupation_type || lead.current_job || "未填身份/工作") + "</small><small>渠道 · " + escapeHtml(visualSourceLabel(visualSourceOfLead(lead))) + "</small></td>",
                 "<td><strong>" + escapeHtml(lead.monthly_income || lead.income_type || "未填收入") + "</strong><small>" + escapeHtml(assets) + "</small><small>" + escapeHtml(consent) + "</small></td>",
                 "<td><span class=\"tfse-visual-status is-" + escapeHtml(statusValue) + "\">" + escapeHtml(visualStatusLabel(statusValue)) + "</span></td>",
                 "<td><strong>" + escapeHtml(visualOwnerLabel(visualOwnerOfLead(lead))) + "</strong><small>" + escapeHtml(lead.next_follow_up_at || "今日回覆") + "</small></td>",
@@ -8678,7 +8872,7 @@
 
     function visualSelectedLead(leads) {
         var selected = leads.filter(function (lead) { return lead.id === visualConsoleState.selectedLeadId; })[0];
-        return selected || leads[0] || getLeads()[0] || null;
+        return selected || leads[0] || null;
     }
 
     function visualLeadPreviewActions(lead) {
@@ -8719,7 +8913,7 @@
         return [
             "<div class=\"tfse-visual-detail-panel\" tabindex=\"-1\" data-visual-lead-detail-panel>",
             "<form data-visual-lead-edit=\"" + escapeHtml(lead.id) + "\">",
-            "<div class=\"tfse-visual-detail-head\"><div><span>線索詳情</span><h4>" + escapeHtml(lead.display_name || "未命名線索") + "</h4><p>提交：" + escapeHtml(formatDate(lead.submitted_at)) + "｜來源：" + escapeHtml(visualSourceLabel(visualSourceOfLead(lead))) + "</p></div><button type=\"button\" class=\"tfse-visual-action-btn is-muted\" data-visual-lead-close>關閉</button></div>",
+            "<div class=\"tfse-visual-detail-head\"><div><span>線索詳情</span><h4>" + escapeHtml(lead.display_name || "未命名線索") + "</h4><p>提交：" + escapeHtml(formatDate(lead.submitted_at)) + "｜站點：" + escapeHtml(visualSiteLabel("finance")) + "｜渠道：" + escapeHtml(visualSourceLabel(visualSourceOfLead(lead))) + "</p></div><button type=\"button\" class=\"tfse-visual-action-btn is-muted\" data-visual-lead-close>關閉</button></div>",
             "<div class=\"tfse-visual-edit-grid\">",
             visualEditInput("display_name", "姓名/稱呼", lead.display_name),
             visualEditInput("phone", "手機", lead.phone),
@@ -8772,30 +8966,32 @@
 
     function visualRenderSidebar() {
         var items = [
-            ["dashboard", "fa-tachometer-alt", "儀表板"],
-            ["leads", "fa-user-friends", "線索與客戶"],
-            ["bankclub", "fa-university", "Bank Club"],
-            ["workbench", "fa-th-large", "後台模組"],
-            ["schedule", "fa-calendar-alt", "行事曆"],
-            ["tasks", "fa-tasks", "任務管理"],
-            ["compliance", "fa-shield-alt", "合規掃描"],
-            ["reports", "fa-chart-bar", "報表分析"],
-            ["settings", "fa-cog", "系統設定"]
+            ["dashboard", "dashboard", "營運儀表板"],
+            ["leads", "users", "線索與客戶"],
+            ["workbench", "layers", "內容與站點"],
+            ["schedule", "calendar", "今日行程"],
+            ["tasks", "tasks", "待辦中心"],
+            ["compliance", "shield", "合規與風險"],
+            ["reports", "chart", "成效報表"],
+            ["settings", "settings", "系統設定"]
         ];
-        return "<aside class=\"tfse-visual-sidebar\"><a class=\"tfse-visual-brand\" href=\"index.html\" target=\"_blank\" rel=\"noopener\"><img src=\"assets/images/logo/tfse-logo.png\" alt=\"TFSE 金融便民中心\"></a><nav>" + items.map(function (item) {
+        var bankClubActive = visualConsoleState.tab === "leads" && visualConsoleState.site === "bankclub";
+        var exportTarget = bankClubActive ? "[data-bank-export]" : "[data-admin-export]";
+        var exportLabel = bankClubActive ? "匯出 Bank Club 線索" : "匯出金融站線索";
+        return "<aside class=\"tfse-visual-sidebar\"><a class=\"tfse-visual-brand\" href=\"index.html\" target=\"_blank\" rel=\"noopener\"><span><b>公共營運控制台</b><small>金融站 · Bank Club</small></span></a><small class=\"tfse-visual-nav-label\">主要工作</small><nav>" + items.map(function (item) {
             var active = visualConsoleState.tab === item[0] ? " is-active" : "";
-            return "<button type=\"button\" class=\"" + active + "\" data-visual-tab=\"" + item[0] + "\"><i class=\"fa " + item[1] + "\"></i><span>" + item[2] + "</span></button>";
-        }).join("") + "</nav><button type=\"button\" class=\"tfse-visual-collapse\" data-visual-trigger=\"[data-admin-export]\"><i class=\"fa fa-download\"></i><span>匯出線索資料</span></button></aside>";
+            return "<button type=\"button\" class=\"" + active + "\" data-visual-tab=\"" + item[0] + "\">" + visualIcon(item[1]) + "<span>" + item[2] + "</span></button>";
+        }).join("") + "</nav><button type=\"button\" class=\"tfse-visual-collapse\" data-visual-trigger=\"" + exportTarget + "\">" + visualIcon("download") + "<span>" + exportLabel + "</span></button></aside>";
     }
 
     function visualPageTitles() {
         return {
-            dashboard: "CRM 儀表板",
+            dashboard: "營運儀表板",
             leads: "線索與客戶",
             freecheck: "線索與客戶",
             consult: "線索與客戶",
             clients: "線索與客戶",
-            bankclub: "Bank Club",
+            bankclub: "線索與客戶",
             workbench: "後台模組",
             schedule: "行事曆",
             tasks: "任務管理",
@@ -8806,11 +9002,11 @@
     }
 
     function visualRenderFilters() {
-        return "<div class=\"tfse-visual-filters\"><label><span>狀態</span><select data-visual-filter=\"status\"><option value=\"all\">全部狀態</option><option value=\"new\">待聯繫</option><option value=\"contacted\">已聯繫</option><option value=\"info_sent\">已發資料</option><option value=\"consulted\">諮詢中</option><option value=\"closed\">成交</option></select></label><label><span>來源</span><select data-visual-filter=\"source\"><option value=\"all\">全部來源</option><option value=\"direct\">官網</option><option value=\"seo\">Google 搜尋</option><option value=\"facebook\">FB/IG</option><option value=\"paid_social\">社群廣告</option><option value=\"line\">LINE OA</option><option value=\"referral\">合作轉介</option></select></label><label><span>負責人</span><select data-visual-filter=\"owner\"><option value=\"all\">全部負責人</option><option value=\"consultant\">顧問組</option><option value=\"data_manager\">資料管理</option><option value=\"compliance_reviewer\">合規審核</option></select></label><label class=\"tfse-visual-search\"><span>搜尋</span><input data-visual-filter=\"query\" type=\"search\" value=\"" + escapeHtml(visualConsoleState.query) + "\" placeholder=\"姓名 / 手機 / Email / 需求\"></label><a class=\"tfse-visual-real-entry\" href=\"free-check.html\" target=\"_blank\" rel=\"noopener\"><i class=\"fa fa-external-link-alt\"></i> 前台提交真實資料</a></div>";
+        return "<div class=\"tfse-visual-filters\"><label><span>精確狀態</span><select data-visual-filter=\"status\"><option value=\"all\">全部狀態</option><option value=\"new\">待聯繫</option><option value=\"contacted\">已聯繫</option><option value=\"info_sent\">已發資料</option><option value=\"consulted\">諮詢中</option><option value=\"closed\">成交</option></select></label><label><span>獲客渠道</span><select data-visual-filter=\"source\"><option value=\"all\">全部渠道</option><option value=\"direct\">官網表單</option><option value=\"seo\">Google 搜尋</option><option value=\"facebook\">FB/IG</option><option value=\"paid_social\">社群廣告</option><option value=\"line\">LINE OA</option><option value=\"referral\">合作轉介</option></select></label><label><span>負責人</span><select data-visual-filter=\"owner\"><option value=\"all\">全部負責人</option><option value=\"consultant\">顧問組</option><option value=\"data_manager\">資料管理</option><option value=\"compliance_reviewer\">合規審核</option></select></label><label class=\"tfse-visual-search\"><span>搜尋</span><input data-visual-filter=\"query\" type=\"search\" value=\"" + escapeHtml(visualConsoleState.query) + "\" placeholder=\"姓名 / 手機 / Email / 需求\"></label><a class=\"tfse-visual-real-entry\" href=\"free-check.html\" target=\"_blank\" rel=\"noopener\"><i class=\"fa fa-external-link-alt\"></i> 打開金融站表單</a></div>";
     }
 
-    function visualLeadStageCounts() {
-        var leads = getLeads();
+    function visualLeadStageCounts(items) {
+        var leads = Array.isArray(items) ? items : getLeads();
         return leads.reduce(function (counts, lead) {
             var statusValue = lead.status || "new";
             counts.total += 1;
@@ -8824,9 +9020,9 @@
 
     function visualLeadWorkspaceMeta() {
         var counts = visualLeadStageCounts();
-        var tab = visualConsoleState.tab === "dashboard" ? "leads" : visualConsoleState.tab;
+        var stage = visualConsoleState.stage || "all";
         var meta = {
-            leads: {
+            all: {
                 eyebrow: "完整管線",
                 empty: "目前沒有符合篩選的真實線索。請從前台免費財務健檢查詢表單提交，或確認正式 API 已連線。",
                 cards: [
@@ -8836,9 +9032,9 @@
                     ["成交客戶", counts.closed || 0, "已完成轉換的客戶"]
                 ]
             },
-            freecheck: {
-                eyebrow: "前台收件",
-                empty: "目前沒有免費財務健檢查詢提交資料。請點擊「前台提交真實資料」完成一筆表單，後台才會出現資料。",
+            pending: {
+                eyebrow: "待跟進管線",
+                empty: "目前沒有待跟進的金融站表單。",
                 cards: [
                     ["待聯繫", counts.new || 0, "新提交且尚未回覆"],
                     ["已聯繫", counts.contacted || 0, "已完成首次聯繫"],
@@ -8856,7 +9052,7 @@
                     ["待聯繫", counts.new || 0, "尚未完成首次聯繫"]
                 ]
             },
-            clients: {
+            closed: {
                 eyebrow: "成交服務",
                 empty: "目前沒有已成交客戶。只有狀態更新為「成交」的真實線索會進入此分欄。",
                 cards: [
@@ -8867,7 +9063,7 @@
                 ]
             }
         };
-        return meta[tab] || meta.leads;
+        return meta[stage] || meta.all;
     }
 
     function visualRenderLeadStageSummary(meta) {
@@ -8876,31 +9072,71 @@
         }).join("") + "</div>";
     }
 
+    function visualBankClubLocalCount() {
+        return visualBankClubLeads().length;
+    }
+
+    function visualRenderLeadSourceSwitch() {
+        var financeActive = visualConsoleState.site !== "bankclub" ? " is-active" : "";
+        var bankActive = visualConsoleState.site === "bankclub" ? " is-active" : "";
+        return [
+            "<section class=\"tfse-visual-source-switch\" aria-label=\"表單站點來源\">",
+            "<div><span class=\"tfse-visual-eyebrow\">先選資料來源</span><h4>表單與客戶集中管理</h4><p>金融站與 Bank Club 共用同一個入口，切換後只顯示該站點資料。</p></div>",
+            "<div class=\"tfse-visual-source-pills\">",
+            "<button type=\"button\" class=\"is-finance" + financeActive + "\" data-visual-site=\"finance\"><span>金融站</span><strong>免費財務健檢表單</strong><em>" + getLeads().length + " 筆</em></button>",
+            "<button type=\"button\" class=\"is-bankclub" + bankActive + "\" data-visual-site=\"bankclub\"><span>Bank Club</span><strong>諮詢與貸款需求表單</strong><em data-visual-site-count=\"bankclub\">" + visualBankClubLocalCount() + " 筆</em></button>",
+            "</div></section>"
+        ].join("");
+    }
+
+    function visualRenderLeadStagePills() {
+        var counts = visualLeadStageCounts();
+        var pending = (counts.new || 0) + (counts.contacted || 0) + (counts.info_sent || 0) + (counts.unresponsive || 0);
+        var stages = [
+            ["all", "全部線索", counts.total],
+            ["pending", "待跟進", pending],
+            ["consult", "諮詢中", counts.consulted || 0],
+            ["closed", "成交客戶", counts.closed || 0]
+        ];
+        return "<div class=\"tfse-visual-stage-pills\" aria-label=\"客戶處理階段\">" + stages.map(function (item) {
+            return "<button type=\"button\" class=\"" + (visualConsoleState.stage === item[0] ? "is-active" : "") + "\" data-visual-stage=\"" + item[0] + "\"><span>" + escapeHtml(item[1]) + "</span><b>" + item[2] + "</b></button>";
+        }).join("") + "</div>";
+    }
+
     function visualRenderLeadWorkspace(leads, title, description) {
+        if (visualConsoleState.site === "bankclub") {
+            return [
+                "<div class=\"tfse-visual-lead-source-page\">",
+                visualRenderLeadSourceSwitch(),
+                "<div class=\"tfse-visual-table-card tfse-bankclub-module\" data-bank-club-admin><div class=\"tfse-visual-empty-block\">Bank Club 表單資料載入中。</div></div>",
+                "</div>"
+            ].join("");
+        }
         var totalPages = Math.max(1, Math.ceil(leads.length / visualConsoleState.pageSize));
         if (visualConsoleState.page > totalPages) visualConsoleState.page = totalPages;
         var pageStart = leads.length ? ((visualConsoleState.page - 1) * visualConsoleState.pageSize) + 1 : 0;
         var pageEnd = Math.min(leads.length, visualConsoleState.page * visualConsoleState.pageSize);
         var meta = visualLeadWorkspaceMeta();
         return [
+            "<div class=\"tfse-visual-lead-source-page\">",
+            visualRenderLeadSourceSwitch(),
             "<div class=\"tfse-visual-table-card\">",
             "<div class=\"tfse-visual-module-head\"><div><span class=\"tfse-visual-eyebrow\">" + escapeHtml(meta.eyebrow) + "</span><h3>" + escapeHtml(title) + "</h3><p>" + escapeHtml(description) + "</p></div><div class=\"tfse-visual-module-tools\">" + visualRenderLeadStageSummary(meta) + "<button type=\"button\" data-visual-refresh><i class=\"fa fa-sync-alt\"></i> 更新資料</button></div></div>",
-            "<div class=\"tfse-visual-tabs\"><button type=\"button\" class=\"" + (visualConsoleState.tab === "dashboard" || visualConsoleState.tab === "leads" ? "is-active" : "") + "\" data-visual-tab=\"leads\">線索總覽</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "freecheck" ? "is-active" : "") + "\" data-visual-tab=\"freecheck\">免費財務健檢查詢</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "consult" ? "is-active" : "") + "\" data-visual-tab=\"consult\">諮詢中案件</button><button type=\"button\" class=\"" + (visualConsoleState.tab === "clients" ? "is-active" : "") + "\" data-visual-tab=\"clients\">成交客戶</button></div>",
+            visualRenderLeadStagePills(),
             visualRenderFilters(),
-            "<div class=\"tfse-visual-table-wrap\"><table><thead><tr><th>建立時間</th><th>聯絡資料</th><th>需求 / 身份</th><th>財務資產</th><th>狀態</th><th>跟進</th><th>動作</th></tr></thead><tbody>" + visualRenderLeadRows(leads, meta.empty) + "</tbody></table></div>",
+            "<div class=\"tfse-visual-table-wrap\"><table><thead><tr><th>來源 / 建立時間</th><th>聯絡資料</th><th>需求 / 身份</th><th>財務資產</th><th>狀態</th><th>跟進</th><th>動作</th></tr></thead><tbody>" + visualRenderLeadRows(leads, meta.empty) + "</tbody></table></div>",
             "<div class=\"tfse-visual-pager\"><span>顯示 " + pageStart + " - " + pageEnd + " 筆，共 " + leads.length + " 筆</span>" + Array.from({ length: totalPages }).slice(0, 5).map(function (_, index) { var page = index + 1; return "<button type=\"button\" class=\"" + (visualConsoleState.page === page ? "is-active" : "") + "\" data-visual-page=\"" + page + "\">" + page + "</button>"; }).join("") + "</div>",
-            "</div>"
+            "</div></div>"
         ].join("");
     }
 
     function visualRenderDashboardModule(payload) {
-        var counts = visualLeadStageCounts();
+        var counts = visualLeadStageCounts(payload.leads);
         var legalCounts = payload.legal.status_counts || {};
         var reviewCount = (legalCounts.needs_review || 0) + (legalCounts.external_pending || 0) + (legalCounts.manual_external || 0);
         var pendingFeedback = publicFeedbackItemsCache.filter(function (item) {
             return (item.status || "queued") !== "closed" && (item.status || "queued") !== "resolved";
         }).length;
-        var sourceTotal = payload.leads.length || 1;
         var topOpenLeads = payload.leads.filter(function (lead) {
             var statusValue = lead.status || "new";
             return statusValue !== "closed" && statusValue !== "spam";
@@ -8909,7 +9145,7 @@
             "<div class=\"tfse-visual-dashboard-page\">",
             "<section class=\"tfse-visual-dashboard-hero\">",
             "<div><span class=\"tfse-visual-eyebrow\">總覽儀表盤</span><h3>今日營運狀態</h3><p>只顯示總覽、趨勢與快捷入口；表單資料、編輯、刪除與客戶詳情已獨立放到「線索與客戶」。</p></div>",
-            "<button type=\"button\" data-visual-refresh><i class=\"fa fa-sync-alt\"></i> 更新儀表盤</button>",
+            "<button type=\"button\" data-visual-refresh>" + visualIcon("refresh") + "更新儀表盤</button>",
             "</section>",
             "<section class=\"tfse-visual-dashboard-grid\">",
             "<article class=\"tfse-visual-dashboard-tile is-primary\"><small>真實線索</small><strong>" + counts.total + "</strong><span>前台表單 / API 寫入</span></article>",
@@ -8917,16 +9153,19 @@
             "<article class=\"tfse-visual-dashboard-tile\"><small>諮詢中</small><strong>" + (counts.consulted || 0) + "</strong><span>人工跟進中</span></article>",
             "<article class=\"tfse-visual-dashboard-tile\"><small>成交客戶</small><strong>" + (counts.closed || 0) + "</strong><span>已完成轉換</span></article>",
             "</section>",
+            "<section class=\"tfse-visual-dashboard-charts\">",
+            "<article class=\"tfse-visual-dashboard-card tfse-visual-chart-card\"><div class=\"tfse-visual-module-head\"><div><span class=\"tfse-visual-eyebrow\">來源分析</span><h3>線索從哪裡來</h3><p>柱形越高，代表該渠道帶來的線索越多。</p></div><button type=\"button\" data-visual-tab=\"reports\">查看完整報表</button></div>" + visualRenderSourceBarChart(payload.sourceCounts) + "</article>",
+            "<article class=\"tfse-visual-dashboard-card tfse-visual-chart-card\"><div class=\"tfse-visual-module-head\"><div><span class=\"tfse-visual-eyebrow\">跟進進度</span><h3>客戶目前在哪一步</h3><p>一眼看懂待聯繫、諮詢和成交的比例。</p></div><button type=\"button\" data-visual-tab=\"leads\">查看客戶</button></div>" + visualRenderStatusDonut(counts) + "</article>",
+            "</section>",
             "<section class=\"tfse-visual-dashboard-bottom\">",
-            "<article class=\"tfse-visual-dashboard-card is-source\"><div class=\"tfse-visual-module-head\"><div><h3>來源追蹤</h3><p>依真實線索統計，不使用假資料補數。</p></div><button type=\"button\" data-visual-tab=\"reports\">看報表</button></div>" + visualCountRows(payload.sourceCounts, visualSourceLabel, sourceTotal) + "</article>",
+            "<article class=\"tfse-visual-dashboard-card is-todo\"><div class=\"tfse-visual-module-head\"><div><span class=\"tfse-visual-eyebrow\">下一步</span><h3>今天先做這些</h3><p>按數字判斷優先級，點擊按鈕直接進入對應功能。</p></div><button type=\"button\" data-visual-tab=\"tasks\">打開待辦中心</button></div><ul class=\"tfse-visual-checklist\"><li><span>高優先跟進</span><b>" + (counts.high_priority || 0) + "</b></li><li><span>合規待檢視</span><b>" + reviewCount + "</b></li><li><span>資料回報工單</span><b>" + pendingFeedback + "</b></li><li><span>Line 可分群</span><b>" + payload.lineItems.length + "</b></li></ul></article>",
             "<div class=\"tfse-visual-dashboard-stack\">",
-            "<article class=\"tfse-visual-dashboard-card is-todo\"><div class=\"tfse-visual-module-head\"><div><h3>待辦摘要</h3><p>今日需要處理的營運事項。</p></div><button type=\"button\" data-visual-tab=\"tasks\">看任務</button></div><ul class=\"tfse-visual-checklist\"><li><span>高優先跟進</span><b>" + (counts.high_priority || 0) + "</b></li><li><span>合規待檢視</span><b>" + reviewCount + "</b></li><li><span>資料回報工單</span><b>" + pendingFeedback + "</b></li><li><span>Line 可分群</span><b>" + payload.lineItems.length + "</b></li></ul></article>",
             "<article class=\"tfse-visual-dashboard-card is-shortcuts\"><div class=\"tfse-visual-module-head\"><div><h3>快捷入口</h3><p>表單操作進入對應模組。</p></div></div>",
             "<div class=\"tfse-visual-dashboard-actions\">",
-            "<button type=\"button\" data-visual-tab=\"leads\"><i class=\"fa fa-user-friends\"></i><strong>線索與客戶</strong></button>",
-            "<button type=\"button\" data-visual-tab=\"workbench\"><i class=\"fa fa-th-large\"></i><strong>後台模組</strong></button>",
-            "<button type=\"button\" data-visual-tab=\"compliance\"><i class=\"fa fa-shield-alt\"></i><strong>合規掃描</strong></button>",
-            "<button type=\"button\" data-visual-tab=\"reports\"><i class=\"fa fa-chart-bar\"></i><strong>報表分析</strong></button>",
+            "<button type=\"button\" data-visual-tab=\"leads\">" + visualIcon("users") + "<strong>線索與客戶</strong><span>查看、跟進與更新狀態</span></button>",
+            "<button type=\"button\" data-visual-tab=\"workbench\">" + visualIcon("layers") + "<strong>內容與站點</strong><span>內容、SEO、設定與備份</span></button>",
+            "<button type=\"button\" data-visual-tab=\"compliance\">" + visualIcon("shield") + "<strong>合規與風險</strong><span>掃描、檢視與送審</span></button>",
+            "<button type=\"button\" data-visual-tab=\"reports\">" + visualIcon("chart") + "<strong>成效報表</strong><span>來源、轉換與匯出</span></button>",
             "</div>",
             "</article>",
             topOpenLeads.length ? "<article class=\"tfse-visual-dashboard-card is-followups\"><div class=\"tfse-visual-module-head\"><div><h3>近期待跟進</h3><p>摘要顯示，不展開表單。</p></div><button type=\"button\" data-visual-tab=\"leads\">處理</button></div><div class=\"tfse-visual-dashboard-list\">" + topOpenLeads.slice(0, 3).map(function (lead) { return "<article><span>" + escapeHtml(formatDate(lead.next_follow_up_at || lead.submitted_at || lead.updated_at)) + "</span><strong>" + escapeHtml(lead.display_name || "未命名線索") + "</strong><small>" + escapeHtml(visualStatusLabel(lead.status || "new")) + "</small></article>"; }).join("") + "</div></article>" : "",
@@ -8938,13 +9177,16 @@
 
     function visualLeadCard(lead, actionLabel) {
         var statusValue = lead.status || "new";
+        var action = lead.visual_site === "bankclub"
+            ? "<button type=\"button\" class=\"tfse-visual-mini-btn\" data-visual-site=\"bankclub\">前往 Bank Club</button>"
+            : "<button type=\"button\" class=\"tfse-visual-mini-btn\" data-visual-lead-view=\"" + escapeHtml(lead.id) + "\">" + escapeHtml(actionLabel || "檢視") + "</button>";
         return [
             "<article class=\"tfse-visual-module-card\">",
             "<small>" + escapeHtml(formatDate(lead.next_follow_up_at || lead.submitted_at || lead.updated_at)) + "</small>",
             "<h4>" + escapeHtml(lead.display_name || "未命名線索") + "</h4>",
             "<p>" + escapeHtml(lead.needs || "尚未填寫需求") + "</p>",
             "<div class=\"tfse-visual-pill-row\"><span class=\"tfse-visual-status is-" + escapeHtml(statusValue) + "\">" + escapeHtml(visualStatusLabel(statusValue)) + "</span><span>" + escapeHtml(visualSourceLabel(visualSourceOfLead(lead))) + "</span></div>",
-            "<button type=\"button\" class=\"tfse-visual-mini-btn\" data-visual-lead-view=\"" + escapeHtml(lead.id) + "\">" + escapeHtml(actionLabel || "檢視") + "</button>",
+            action,
             "</article>"
         ].join("");
     }
@@ -8997,7 +9239,7 @@
             "<div class=\"tfse-visual-module-head\"><div><h3>報表分析</h3><p>報表只根據目前可讀到的真實線索、來源、回報與合規狀態生成。</p></div><button type=\"button\" data-visual-trigger=\"[data-admin-attribution-export]\"><i class=\"fa fa-chart-line\"></i> 匯出歸因報表</button></div>",
             "<div class=\"tfse-visual-panel-nav\"><span class=\"is-active\">來源分布</span><span>數據摘要</span><span>匯出工具</span></div>",
             "<div class=\"tfse-visual-split\"><div class=\"tfse-visual-module-card\"><h4>來源分布</h4>" + visualCountRows(payload.sourceCounts, visualSourceLabel, payload.leads.length || 1) + "</div><div class=\"tfse-visual-module-card\"><h4>數據摘要</h4><ul class=\"tfse-visual-checklist\"><li><span>真實線索</span><b>" + payload.leads.length + "</b></li><li><span>公開回報工單</span><b>" + publicFeedbackItemsCache.length + "</b></li><li><span>合規掃描項</span><b>" + payload.legal.items.length + "</b></li><li><span>資料模式</span><b>" + escapeHtml(leadSourceMode) + "</b></li></ul></div></div>",
-            "<div class=\"tfse-visual-action-row\"><button type=\"button\" data-visual-trigger=\"[data-admin-export]\">匯出線索資料</button><button type=\"button\" data-visual-trigger=\"[data-admin-line-segments-export]\">匯出 Line 分群</button><button type=\"button\" data-visual-trigger=\"[data-admin-backup-export]\">匯出備份包</button></div>",
+            "<div class=\"tfse-visual-action-row\"><button type=\"button\" data-visual-unified-export>匯出跨站線索</button><button type=\"button\" data-visual-trigger=\"[data-admin-line-segments-export]\">匯出 Line 分群</button><button type=\"button\" data-visual-trigger=\"[data-admin-backup-export]\">匯出備份包</button></div>",
             "</div>"
         ].join("");
     }
@@ -9036,17 +9278,20 @@
 
     function visualRenderMainModule(payload, leads) {
         if (visualConsoleState.tab === "dashboard") return visualRenderDashboardModule(payload);
-        if (visualConsoleState.tab === "bankclub") return visualRenderBankClubModule();
         if (visualConsoleState.tab === "schedule") return visualRenderCalendar(payload);
         if (visualConsoleState.tab === "tasks") return visualRenderTasks(payload);
         if (visualConsoleState.tab === "compliance") return visualRenderComplianceModule(payload);
         if (visualConsoleState.tab === "reports") return visualRenderReportsModule(payload);
         if (visualConsoleState.tab === "settings") return visualRenderSettingsModule();
         if (visualConsoleState.tab === "workbench") return visualRenderWorkbenchModule();
-        if (visualConsoleState.tab === "freecheck") return visualRenderLeadWorkspace(leads, "免費財務健檢查詢名單", "從前台免費財務健檢查詢表單或正式 API 進來的真實資料，可檢視並更新跟進狀態。");
-        if (visualConsoleState.tab === "consult") return visualRenderLeadWorkspace(leads, "諮詢中案件", "只顯示狀態為諮詢中的真實線索，便於集中跟進。");
-        if (visualConsoleState.tab === "clients") return visualRenderLeadWorkspace(leads, "成交客戶", "只顯示已成交的真實客戶，方便後續服務與備份。");
-        return visualRenderLeadWorkspace(leads, "線索總覽", "集中管理前台提交與 API 寫入的真實線索，支援篩選、檢視與狀態更新。");
+        var stageCopy = {
+            all: ["金融站表單總覽", "集中管理金融站前台表單與 API 寫入資料；Bank Club 表單可由上方來源膠囊切換。"],
+            pending: ["金融站待跟進", "顯示尚未成交或排除、需要顧問繼續處理的金融站表單。"],
+            consult: ["金融站諮詢中案件", "只顯示已進入人工諮詢階段的金融站案件。"],
+            closed: ["金融站成交客戶", "只顯示狀態為成交的金融站客戶，方便後續服務。"]
+        };
+        var copy = stageCopy[visualConsoleState.stage] || stageCopy.all;
+        return visualRenderLeadWorkspace(leads, copy[0], copy[1]);
     }
 
     function visualRenderConnectionCard() {
@@ -9082,6 +9327,35 @@
         ].join("");
     }
 
+    function exportVisualCombinedLeads() {
+        if (!can("export")) {
+            addAudit("combined_lead_export_denied", "tfse-bankclub-leads.json");
+            renderAudit();
+            return;
+        }
+        var bankBridge = window.TFSEBankClubAdmin;
+        var payload = {
+            format: "tfse_bankclub_combined_leads",
+            exported_at: new Date().toISOString(),
+            totals: {
+                finance: getLeads().length,
+                bank_club: visualBankClubLeads().length
+            },
+            finance: {
+                mode: leadSourceMode,
+                items: getLeads()
+            },
+            bank_club: {
+                mode: bankBridge && bankBridge.getMode ? bankBridge.getMode() : "localStorage",
+                items: visualBankClubLeads()
+            }
+        };
+        var filename = "tfse-bankclub-leads-" + new Date().toISOString().slice(0, 10) + ".json";
+        addAudit("combined_lead_export", filename);
+        downloadJson(filename, payload);
+        renderAudit();
+    }
+
     function renderVisualConsole() {
         if (!visualConsolePanel) return;
         var payload = visualMetricPayload();
@@ -9089,20 +9363,23 @@
         var selectedLead = visualSelectedLead(leads);
         var legalCounts = payload.legal.status_counts || {};
         var lineItems = (payload.lineItems || []).slice(0, 3);
-        var notificationCount = (payload.followUps.counts.overdue_or_unscheduled || 0) + publicFeedbackItemsCache.length;
+        var notificationCount = (payload.followUps.counts.overdue_or_unscheduled || 0)
+            + payload.bankLeads.filter(function (lead) { return lead.status !== "closed" && lead.status !== "spam"; }).length
+            + publicFeedbackItemsCache.length;
         var pageTitles = visualPageTitles();
+        var showRightColumn = visualConsoleState.tab === "leads" && visualConsoleState.site !== "bankclub";
         visualConsolePanel.innerHTML = [
             "<div class=\"tfse-visual-shell\">",
             visualRenderSidebar(),
             "<main class=\"tfse-visual-main\">",
-            "<header class=\"tfse-visual-topbar\"><div class=\"tfse-visual-titlebar\"><button type=\"button\" class=\"tfse-visual-menu\" data-visual-tab=\"dashboard\"><i class=\"fa fa-bars\"></i></button><div><h2>" + escapeHtml(pageTitles[visualConsoleState.tab] || "CRM 儀表板") + "</h2><p>TFSE 後台管理｜完成度、CRM、資料、合規與上線交接</p></div></div><div class=\"tfse-visual-userbar\"><span class=\"tfse-visual-bell\"><i class=\"fa fa-bell\"></i><b>" + notificationCount + "</b></span><span>TFSE 金融便民中心</span><strong>" + escapeHtml(roleLabel(currentRole())) + "</strong><a href=\"index.html\">返回前台</a><a href=\"free-check.html\">查看免費財務健檢查詢</a><button type=\"button\" data-visual-refresh><i class=\"fa fa-sync-alt\"></i> 更新資料</button></div></header>",
+            "<header class=\"tfse-visual-topbar\"><div class=\"tfse-visual-titlebar\"><button type=\"button\" class=\"tfse-visual-menu\" data-visual-tab=\"dashboard\" aria-label=\"回到儀表板\">" + visualIcon("menu") + "</button><div><span class=\"tfse-visual-breadcrumb\">公共後台 / " + escapeHtml(pageTitles[visualConsoleState.tab] || "營運儀表板") + "</span><h2>" + escapeHtml(pageTitles[visualConsoleState.tab] || "營運儀表板") + "</h2><p>金融站與 Bank Club 的資料、客戶、內容和合規工作都在這裡。</p></div></div><div class=\"tfse-visual-userbar\"><span class=\"tfse-visual-bell\">" + visualIcon("bell") + "<b>" + notificationCount + "</b></span><span class=\"tfse-visual-account\">TFSE 公共後台</span><strong>" + escapeHtml(roleLabel(currentRole())) + "</strong><a href=\"index.html\">前台</a><button type=\"button\" data-visual-refresh>" + visualIcon("refresh") + "<span>更新資料</span></button></div></header>",
             visualConsoleState.tab === "dashboard" ? "<section class=\"tfse-visual-metrics\">" + visualRenderMetricCards(payload.metrics) + "</section>" : "",
-            "<section class=\"tfse-visual-workgrid is-page-" + escapeHtml(visualConsoleState.tab || "dashboard") + "\">",
+            "<section class=\"tfse-visual-workgrid is-page-" + escapeHtml(visualConsoleState.tab || "dashboard") + (showRightColumn ? " has-side-column" : " is-full-width") + "\">",
             visualRenderMainModule(payload, leads),
-            visualConsoleState.tab === "dashboard" ? "" : "<aside class=\"tfse-visual-rightcol\">",
-            visualConsoleState.tab === "dashboard" ? "" : visualRenderLeadDetail(selectedLead),
-            visualConsoleState.tab === "dashboard" ? "" : visualRenderRightSummary(payload, legalCounts, lineItems),
-            visualConsoleState.tab === "dashboard" ? "" : "</aside>",
+            showRightColumn ? "<aside class=\"tfse-visual-rightcol\">" : "",
+            showRightColumn ? visualRenderLeadDetail(selectedLead) : "",
+            showRightColumn ? visualRenderRightSummary(payload, legalCounts, lineItems) : "",
+            showRightColumn ? "</aside>" : "",
             "</section></main></div>",
             visualConsoleState.tab !== "dashboard" && visualConsoleState.selectedLeadId ? visualRenderLeadLightbox(selectedLead) : ""
         ].join("");
@@ -10016,9 +10293,40 @@
     if (sourceFilter) sourceFilter.addEventListener("change", renderList);
     if (visualConsolePanel) {
         visualConsolePanel.addEventListener("click", function (event) {
+            var siteButton = event.target.closest("[data-visual-site]");
+            if (siteButton) {
+                visualConsoleState.tab = "leads";
+                visualConsoleState.site = siteButton.getAttribute("data-visual-site") === "bankclub" ? "bankclub" : "finance";
+                visualConsoleState.stage = "all";
+                visualConsoleState.selectedLeadId = "";
+                visualConsoleState.page = 1;
+                renderVisualConsole();
+                return;
+            }
+            var stageButton = event.target.closest("[data-visual-stage]");
+            if (stageButton) {
+                visualConsoleState.tab = "leads";
+                visualConsoleState.site = "finance";
+                visualConsoleState.stage = stageButton.getAttribute("data-visual-stage") || "all";
+                visualConsoleState.selectedLeadId = "";
+                visualConsoleState.page = 1;
+                renderVisualConsole();
+                return;
+            }
             var tabButton = event.target.closest("[data-visual-tab]");
             if (tabButton) {
-                visualConsoleState.tab = tabButton.getAttribute("data-visual-tab") || "dashboard";
+                var nextTab = tabButton.getAttribute("data-visual-tab") || "dashboard";
+                if (nextTab === "bankclub") {
+                    visualConsoleState.tab = "leads";
+                    visualConsoleState.site = "bankclub";
+                    visualConsoleState.stage = "all";
+                } else if (["freecheck", "consult", "clients"].indexOf(nextTab) !== -1) {
+                    visualConsoleState.tab = "leads";
+                    visualConsoleState.site = "finance";
+                    visualConsoleState.stage = nextTab === "consult" ? "consult" : (nextTab === "clients" ? "closed" : "all");
+                } else {
+                    visualConsoleState.tab = nextTab;
+                }
                 visualConsoleState.page = 1;
                 renderVisualConsole();
                 return;
@@ -10063,6 +10371,11 @@
                 renderVisualConsole();
                 return;
             }
+            var unifiedExportButton = event.target.closest("[data-visual-unified-export]");
+            if (unifiedExportButton) {
+                exportVisualCombinedLeads();
+                return;
+            }
             var triggerButton = event.target.closest("[data-visual-trigger]");
             if (triggerButton) {
                 var target = document.querySelector(triggerButton.getAttribute("data-visual-trigger"));
@@ -10086,14 +10399,27 @@
         visualConsolePanel.addEventListener("input", function (event) {
             var target = event.target.closest("[data-visual-filter]");
             if (!target) return;
-            visualConsoleState[target.getAttribute("data-visual-filter")] = target.value || "";
+            var filterName = target.getAttribute("data-visual-filter");
+            if (filterName !== "query") return;
+            visualConsoleState.query = target.value || "";
             visualConsoleState.page = 1;
-            renderVisualConsole();
+            var caret = typeof target.selectionStart === "number" ? target.selectionStart : visualConsoleState.query.length;
+            window.clearTimeout(visualSearchTimer);
+            visualSearchTimer = window.setTimeout(function () {
+                renderVisualConsole();
+                var nextSearch = visualConsolePanel.querySelector("[data-visual-filter='query']");
+                if (nextSearch) {
+                    nextSearch.focus();
+                    if (nextSearch.setSelectionRange) nextSearch.setSelectionRange(caret, caret);
+                }
+            }, 180);
         });
         visualConsolePanel.addEventListener("change", function (event) {
             var target = event.target.closest("[data-visual-filter]");
             if (!target) return;
-            visualConsoleState[target.getAttribute("data-visual-filter")] = target.value || "";
+            var filterName = target.getAttribute("data-visual-filter");
+            if (filterName === "query") return;
+            visualConsoleState[filterName] = target.value || "";
             visualConsoleState.page = 1;
             renderVisualConsole();
         });
@@ -10104,6 +10430,9 @@
             saveVisualLeadEdit(form);
         });
     }
+    document.addEventListener("tfse:bankclub-leads-updated", function () {
+        if (visualConsolePanel && isAuthenticated()) renderVisualConsole();
+    });
     if (refreshButton) refreshButton.addEventListener("click", function () {
         refreshButton.disabled = true;
         refreshButton.innerHTML = '<i class="fa fa-sync-alt fa-spin"></i> 更新中';
@@ -11582,5 +11911,11 @@
     renderLineOptout();
     renderAudit();
     renderBackupStatus();
+    window.setInterval(function () {
+        if (document.visibilityState !== "hidden") refreshLiveLeadSources();
+    }, liveLeadRefreshIntervalMs);
+    document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "visible") refreshLiveLeadSources();
+    });
     loadAdminData();
 })();

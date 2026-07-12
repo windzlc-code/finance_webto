@@ -142,6 +142,7 @@ async function submitLead(overrides = {}) {
   const sessionId = overrides.sessionId || `notification-smoke-${Date.now()}`;
   form.set("website", "");
   form.set("name", overrides.name || "通知閉環煙測使用者");
+  form.set("gender", "other");
   form.set("phone", overrides.phone || "0955 456 789");
   form.set("lineId", overrides.lineId || "notificationSmokeLine");
   form.set("identityType", "employee");

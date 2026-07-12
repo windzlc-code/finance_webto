@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { sendLeadNotification } from "@/lib/lead-notifications";
 import { detectSensitiveLeadNote } from "@/lib/sensitive-content";
 import { createAudit, mutateDB } from "@/lib/store";
-import type { BusinessLoanApplication, CreditApplication, CreditApplicationFile, HouseLoanApplication, IdentityType, Lead, LoanType } from "@/lib/types";
+import type { BusinessLoanApplication, CreditApplication, CreditApplicationFile, Gender, HouseLoanApplication, IdentityType, Lead, LoanType } from "@/lib/types";
 
 const recentSubmits = new Map<string, number[]>();
 const recentAttempts = new Map<string, number[]>();
@@ -15,8 +15,60 @@ const attemptLimitMax = 20;
 const creditUploadDir = path.join(process.cwd(), ".data", "credit-application-files");
 const allowedCreditFileTypes = new Set(["image/jpeg", "image/png", "image/heic", "image/heif"]);
 const maxCreditFileBytes = 8 * 1024 * 1024;
+const idCardMinAspectRatio = 1.35;
+const idCardMaxAspectRatio = 1.85;
 const loanTypes = new Set<LoanType>(["credit", "house", "business", "unknown"]);
 const identityTypes = new Set<IdentityType>(["employee", "self_employed", "business_owner", "home_owner", "other"]);
+const genders = new Set<Gender>(["male", "female", "other"]);
+
+type SharedAdminSyncResult = { status: "not_configured" | "synced" | "failed"; error?: string };
+
+async function syncLeadToSharedAdmin(lead: Lead): Promise<SharedAdminSyncResult> {
+  const baseUrl = String(process.env.TFSE_SHARED_API_URL || "").replace(/\/$/, "");
+  if (!baseUrl) return { status: "not_configured" };
+
+  const payload = {
+    id: lead.id,
+    display_name: lead.name,
+    gender: lead.gender || "",
+    city: lead.city || "",
+    phone: lead.phone,
+    line_id: lead.lineId,
+    identity_type: lead.identityType,
+    loan_type: lead.loanType,
+    desired_amount: lead.desiredAmount,
+    appointment_time: lead.appointmentTime,
+    purpose: lead.purpose,
+    message: lead.note,
+    status: lead.status,
+    source_page: lead.sourcePage,
+    source_channel: lead.sourceChannel,
+    utm_source: lead.utmSource,
+    utm_medium: lead.utmMedium,
+    utm_campaign: lead.utmCampaign,
+    utm_content: lead.utmContent,
+    utm_term: lead.utmTerm,
+    consent_at: lead.consentAt,
+    submitted_at: lead.createdAt,
+  };
+  let lastError = "shared_admin_sync_failed";
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch(`${baseUrl}/api/bank-club/leads`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(4_000),
+      });
+      if (response.ok) return { status: "synced" };
+      lastError = `HTTP ${response.status}`;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 200));
+  }
+  return { status: "failed", error: lastError.slice(0, 240) };
+}
 
 function text(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -113,7 +165,98 @@ function missingFieldsResponse(fields: string[]) {
   return NextResponse.json({ message: `請完整填寫：${fields.join("、")}` }, { status: 400 });
 }
 
-function validateCreditFile(file: FormDataEntryValue | null, label: string): file is File {
+type ImageDimensions = {
+  width: number;
+  height: number;
+};
+
+function readPngDimensions(bytes: Buffer): ImageDimensions | null {
+  const pngSignature = "89504e470d0a1a0a";
+  if (bytes.length < 24 || bytes.subarray(0, 8).toString("hex") !== pngSignature) return null;
+  if (bytes.subarray(12, 16).toString("ascii") !== "IHDR") return null;
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+}
+
+function readJpegDimensions(bytes: Buffer): ImageDimensions | null {
+  if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return null;
+  let offset = 2;
+  const startOfFrameMarkers = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
+  while (offset + 9 < bytes.length) {
+    if (bytes[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+    while (bytes[offset] === 0xff) offset += 1;
+    const marker = bytes[offset];
+    offset += 1;
+    if (marker === 0xd9 || marker === 0xda) break;
+    if (offset + 2 > bytes.length) break;
+    const segmentLength = bytes.readUInt16BE(offset);
+    if (segmentLength < 2 || offset + segmentLength > bytes.length) break;
+    if (startOfFrameMarkers.has(marker)) {
+      return {
+        height: bytes.readUInt16BE(offset + 3),
+        width: bytes.readUInt16BE(offset + 5),
+      };
+    }
+    offset += segmentLength;
+  }
+  return null;
+}
+
+function readHeicDimensions(bytes: Buffer): ImageDimensions | null {
+  let offset = 0;
+  while (offset + 20 <= bytes.length) {
+    const type = bytes.subarray(offset + 4, offset + 8).toString("ascii");
+    if (type === "ispe") {
+      return {
+        width: bytes.readUInt32BE(offset + 12),
+        height: bytes.readUInt32BE(offset + 16),
+      };
+    }
+    const boxSize = bytes.readUInt32BE(offset);
+    if (boxSize === 0) break;
+    if (boxSize === 1) {
+      if (offset + 16 > bytes.length) break;
+      const largeSize = Number(bytes.readBigUInt64BE(offset + 8));
+      if (!Number.isSafeInteger(largeSize) || largeSize < 16) break;
+      offset += largeSize;
+      continue;
+    }
+    if (boxSize < 8) {
+      offset += 1;
+      continue;
+    }
+    offset += boxSize;
+  }
+  const ispeIndex = bytes.indexOf(Buffer.from("ispe"));
+  if (ispeIndex >= 4 && ispeIndex + 16 <= bytes.length) {
+    return {
+      width: bytes.readUInt32BE(ispeIndex + 8),
+      height: bytes.readUInt32BE(ispeIndex + 12),
+    };
+  }
+  return null;
+}
+
+function readImageDimensions(bytes: Buffer, mimeType: string): ImageDimensions | null {
+  if (mimeType === "image/png") return readPngDimensions(bytes);
+  if (mimeType === "image/jpeg") return readJpegDimensions(bytes);
+  if (mimeType === "image/heic" || mimeType === "image/heif") return readHeicDimensions(bytes);
+  return null;
+}
+
+function assertAcceptedIdCardRatio(dimensions: ImageDimensions | null, label: string) {
+  if (!dimensions?.width || !dimensions.height) {
+    throw new Error(`${label}無法讀取圖片尺寸，請改用清楚的 JPG、PNG 或 HEIC 圖片`);
+  }
+  const ratio = Math.max(dimensions.width, dimensions.height) / Math.min(dimensions.width, dimensions.height);
+  if (ratio < idCardMinAspectRatio || ratio > idCardMaxAspectRatio) {
+    throw new Error(`${label}比例不像一般身分證卡片，請重新拍攝接近橫式卡片比例的照片`);
+  }
+}
+
+async function validateCreditFile(file: FormDataEntryValue | null, label: string): Promise<{ file: File; bytes: Buffer }> {
   if (!(file instanceof File) || file.size === 0) {
     throw new Error(`請上傳${label}`);
   }
@@ -123,13 +266,14 @@ function validateCreditFile(file: FormDataEntryValue | null, label: string): fil
   if (!allowedCreditFileTypes.has(file.type)) {
     throw new Error(`${label}僅支援 JPG、PNG、HEIC 圖片`);
   }
-  return true;
+  const bytes = Buffer.from(await file.arrayBuffer());
+  assertAcceptedIdCardRatio(readImageDimensions(bytes, file.type), label);
+  return { file, bytes };
 }
 
-async function storeCreditFile(file: File, applicationId: string, fileType: "id_front" | "id_back", createdAt: string): Promise<CreditApplicationFile> {
+async function storeCreditFile(file: File, bytes: Buffer, applicationId: string, fileType: "id_front" | "id_back", createdAt: string): Promise<CreditApplicationFile> {
   await mkdir(creditUploadDir, { recursive: true });
   const id = randomUUID();
-  const bytes = Buffer.from(await file.arrayBuffer());
   const checksum = createHash("sha256").update(bytes).digest("hex");
   const extension = file.type === "image/png" ? "png" : file.type === "image/heic" ? "heic" : file.type === "image/heif" ? "heif" : "jpg";
   const storageKey = `${applicationId}/${fileType}-${id}.${extension}`;
@@ -175,6 +319,8 @@ export async function POST(request: Request) {
   }
 
   const name = text(form.get("name"));
+  const gender = text(form.get("gender")) as Gender;
+  const city = text(form.get("city"));
   const phoneInput = text(form.get("phone"));
   const phoneCountryCode = text(form.get("phoneCountryCode")) || "+886";
   let phone = "";
@@ -193,11 +339,11 @@ export async function POST(request: Request) {
   const note = text(form.get("note"));
   const consent = text(form.get("consent"));
 
-  if (!name || !phoneInput || !identityType || !loanType || !appointmentTime || consent !== "on") {
+  if (!name || !gender || !phoneInput || !identityType || !loanType || !appointmentTime || consent !== "on") {
     return NextResponse.json({ message: "請完整填寫必填欄位並勾選個資告知同意" }, { status: 400 });
   }
-  if (!loanTypes.has(loanType) || !identityTypes.has(identityType)) {
-    return NextResponse.json({ message: "請選擇有效的身份類型與貸款類型" }, { status: 400 });
+  if (!genders.has(gender) || !loanTypes.has(loanType) || !identityTypes.has(identityType)) {
+    return NextResponse.json({ message: "請選擇有效的性別、身份類型與貸款類型" }, { status: 400 });
   }
   if (loanType !== "unknown" && !lineId) {
     return missingFieldsResponse(["LINE ID"]);
@@ -250,11 +396,11 @@ export async function POST(request: Request) {
   const creditApplicationId = randomUUID();
   if (loanType === "credit") {
     try {
-      validateCreditFile(form.get("idFront"), "身分證正面");
-      validateCreditFile(form.get("idBack"), "身分證反面");
+      const idFront = await validateCreditFile(form.get("idFront"), "身分證正面");
+      const idBack = await validateCreditFile(form.get("idBack"), "身分證反面");
       const uploadCreatedAt = new Date().toISOString();
-      const front = await storeCreditFile(form.get("idFront") as File, creditApplicationId, "id_front", uploadCreatedAt);
-      const back = await storeCreditFile(form.get("idBack") as File, creditApplicationId, "id_back", uploadCreatedAt);
+      const front = await storeCreditFile(idFront.file, idFront.bytes, creditApplicationId, "id_front", uploadCreatedAt);
+      const back = await storeCreditFile(idBack.file, idBack.bytes, creditApplicationId, "id_back", uploadCreatedAt);
       creditFiles = { front, back };
     } catch (error) {
       return NextResponse.json({
@@ -283,6 +429,8 @@ export async function POST(request: Request) {
     const lead: Lead = {
       id: leadId,
       name,
+      gender,
+      city,
       phone,
       lineId,
       identityType: normalizedIdentityType,
@@ -307,7 +455,7 @@ export async function POST(request: Request) {
       utmTerm,
       sessionId,
       status: "new",
-      assignedTo: "user-liang",
+      assignedTo: "user-admin",
       leadPriority: loanType === "business" || purpose === "high_risk" ? "needs_review" : "normal",
       nextFollowUpAt: "",
       lastFollowUpAt: "",
@@ -461,5 +609,17 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json({ leadId });
+  const sharedAdminSync = await syncLeadToSharedAdmin(createdLead.lead);
+  if (sharedAdminSync.status !== "not_configured") {
+    await mutateDB((db) => {
+      db.auditLogs.unshift(createAudit(
+        "system",
+        sharedAdminSync.status === "synced" ? "shared_admin_lead_synced" : "shared_admin_lead_sync_failed",
+        "lead",
+        sharedAdminSync.status === "synced" ? leadId : `${leadId}:${sharedAdminSync.error || "unknown"}`,
+      ));
+    });
+  }
+
+  return NextResponse.json({ leadId, sharedAdminSync: sharedAdminSync.status });
 }

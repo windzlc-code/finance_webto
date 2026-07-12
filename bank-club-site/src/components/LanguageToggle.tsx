@@ -6,11 +6,15 @@ import { Icon } from "./Icons";
 type Language = "zh-TW" | "zh-CN";
 
 const originalText = new WeakMap<Text, string>();
+const translatableAttributes = ["aria-label", "title", "placeholder", "alt"] as const;
+const originalAttributes = new WeakMap<Element, Partial<Record<(typeof translatableAttributes)[number], string>>>();
 
 const traditionalToSimplified: Record<string, string> = {
   銀: "银",
   俠: "侠",
   樂: "乐",
+  傳: "传",
+  團: "团",
   專: "专",
   貸: "贷",
   學: "学",
@@ -129,6 +133,10 @@ function shouldSkipTextNode(node: Text) {
   return !parent || Boolean(parent.closest("script, style, noscript, textarea, input, select, option, [data-no-translate], [data-language-toggle]"));
 }
 
+function shouldSkipAttributeElement(element: Element) {
+  return Boolean(element.closest("script, style, noscript, textarea, select, option, [data-no-translate], [data-language-toggle]"));
+}
+
 function applyLanguage(language: Language, root: ParentNode = document.body) {
   if (!root) return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -141,6 +149,21 @@ function applyLanguage(language: Language, root: ParentNode = document.body) {
     }
     node = walker.nextNode() as Text | null;
   }
+  const elements = root instanceof Element ? [root, ...Array.from(root.querySelectorAll("*"))] : Array.from(root.querySelectorAll("*"));
+  elements.forEach((element) => {
+    if (shouldSkipAttributeElement(element)) return;
+    translatableAttributes.forEach((attribute) => {
+      const value = element.getAttribute(attribute);
+      if (!value) return;
+      const stored = originalAttributes.get(element) || {};
+      if (!stored[attribute]) {
+        stored[attribute] = value;
+        originalAttributes.set(element, stored);
+      }
+      const source = stored[attribute] || "";
+      element.setAttribute(attribute, language === "zh-CN" ? toSimplified(source) : source);
+    });
+  });
   document.documentElement.lang = language === "zh-CN" ? "zh-Hans" : "zh-Hant";
 }
 
@@ -153,7 +176,9 @@ function getInitialLanguage(): Language {
 
 export function LanguageToggle() {
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
+  const [open, setOpen] = useState(false);
   const languageRef = useRef<Language>(language);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     applyLanguage(languageRef.current);
@@ -163,13 +188,28 @@ export function LanguageToggle() {
   }, []);
 
   useEffect(() => {
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  useEffect(() => {
     languageRef.current = language;
     applyLanguage(language);
   }, [language]);
 
-  function updateLanguage() {
-    const nextLanguage: Language = language === "zh-TW" ? "zh-CN" : "zh-TW";
+  function updateLanguage(nextLanguage: Language) {
     setLanguage(nextLanguage);
+    setOpen(false);
     window.localStorage.setItem("bank_club_language", nextLanguage);
     const url = new URL(window.location.href);
     url.searchParams.set("lang", nextLanguage);
@@ -177,16 +217,39 @@ export function LanguageToggle() {
   }
 
   return (
-    <button
-      type="button"
-      className="language-toggle"
-      data-language-toggle
-      aria-label={language === "zh-TW" ? "切換簡體中文" : "切換繁體中文"}
-      title={language === "zh-TW" ? "切換簡體中文" : "切換繁體中文"}
-      onClick={updateLanguage}
-    >
-      <Icon name="globe" />
-      <span>{language === "zh-TW" ? "繁" : "简"}</span>
-    </button>
+    <div className="language-toggle-wrap" data-language-toggle ref={menuRef}>
+      <button
+        type="button"
+        className="language-toggle"
+        aria-label="語言選擇"
+        aria-expanded={open}
+        title="語言選擇"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <Icon name="globe" />
+      </button>
+      {open ? (
+        <div className="language-menu" role="menu" aria-label="語言選擇">
+          <button
+            type="button"
+            role="menuitemradio"
+            aria-checked={language === "zh-TW"}
+            className={language === "zh-TW" ? "active" : ""}
+            onClick={() => updateLanguage("zh-TW")}
+          >
+            繁體中文
+          </button>
+          <button
+            type="button"
+            role="menuitemradio"
+            aria-checked={language === "zh-CN"}
+            className={language === "zh-CN" ? "active" : ""}
+            onClick={() => updateLanguage("zh-CN")}
+          >
+            简体中文
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }

@@ -124,6 +124,15 @@ function makeStaticProxyServer(root, apiPort) {
     }
 
     let pathname = decodeURIComponent(requestUrl.pathname);
+    if (pathname === "/admin") {
+      response.writeHead(308, { location: "/admin/" });
+      response.end();
+      return;
+    }
+    if (pathname.startsWith("/admin/")) {
+      pathname = pathname.slice("/admin".length) || "/";
+      if (pathname === "/") pathname = "/admin.html";
+    }
     if (pathname === "/") pathname = "/index.html";
     let target = normalize(join(root, pathname));
     if (target.startsWith(root) && existsSync(target) && statSync(target).isDirectory()) {
@@ -162,9 +171,10 @@ async function runBrowserChecks(baseUrl) {
 
   try {
     await page.goto(`${baseUrl}/index.html`, { waitUntil: "networkidle" });
-    const bankLink = page.locator('a[href="/"]').filter({ hasText: /銀行俱樂部|Bank Club/ }).first();
-    await bankLink.waitFor({ timeout: 8000 });
-    results.push(ok("TFSE homepage links to Bank Club root"));
+    if (!(await page.title()).includes("TFSE金融便民中心")) {
+      throw new Error(`TFSE homepage identity mismatch: ${await page.title()}`);
+    }
+    results.push(ok("TFSE homepage remains reachable before shared-admin checks"));
 
     const uniqueName = `API客戶${Date.now()}`;
     const bankApiResult = await page.evaluate(async (displayName) => {
@@ -220,14 +230,56 @@ async function runBrowserChecks(baseUrl) {
     }
     results.push(ok("Bank Club lead API accepts shared admin payload"));
 
-    await page.goto(`${baseUrl}/admin.html`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/admin/`, { waitUntil: "networkidle" });
     await page.fill("[data-admin-password]", ADMIN_PASSWORD);
-    await page.selectOption("[data-admin-role]", "super_admin");
     await page.click("[data-admin-login]");
-    await page.locator("[data-admin-protected]").first().waitFor({ state: "visible", timeout: 10000 });
-    await page.locator("[data-bank-club-admin]").filter({ hasText: "資料來源：api" }).waitFor({ timeout: 10000 });
+    await page.waitForFunction(() => localStorage.getItem("tfse_admin_auth") === "true", null, { timeout: 10000 });
+    await page.getByRole("button", { name: "線索與客戶", exact: true }).click();
+    await page.locator('[data-visual-site="bankclub"]').click();
+    await page.locator("[data-bank-club-admin]").filter({ hasText: "連線模式：api" }).waitFor({ timeout: 10000 });
     await page.locator("[data-bank-club-admin]").filter({ hasText: uniqueName }).waitFor({ timeout: 10000 });
     results.push(ok("Shared admin login shows Bank Club API leads"));
+
+    const liveFinanceName = "自動刷新金融測試";
+    const liveBankName = "自動刷新銀行測試";
+    const liveSubmitResult = await page.evaluate(async ({ financeName, bankName }) => {
+      const [financeResponse, bankResponse] = await Promise.all([
+        fetch("/tfse/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            display_name: financeName,
+            phone: "0988111222",
+            needs: "銀行信貸資訊查詢",
+            consent_privacy: true,
+            consent_line: true,
+            source_url: "/free-check.html",
+            utm_source: "closed_loop_smoke",
+            device_id: "closed-loop-finance"
+          })
+        }),
+        fetch("/tfse/api/bank-club/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            display_name: bankName,
+            phone: "0911222333",
+            loan_type: "unknown",
+            source_page: "/consultation",
+            source_channel: "closed_loop_smoke"
+          })
+        })
+      ]);
+      return { finance: financeResponse.status, bank: bankResponse.status };
+    }, { financeName: liveFinanceName, bankName: liveBankName });
+    if (liveSubmitResult.finance !== 200 || liveSubmitResult.bank !== 200) {
+      throw new Error(`automatic refresh setup failed: ${JSON.stringify(liveSubmitResult)}`);
+    }
+    await page.locator('[data-visual-site="finance"]').click();
+    await page.locator("[data-admin-visual-console]").filter({ hasText: liveFinanceName }).waitFor({ timeout: 12000 });
+    await page.locator('[data-visual-site="bankclub"]').click();
+    await page.locator("[data-bank-club-admin]").filter({ hasText: liveBankName }).waitFor({ timeout: 12000 });
+    results.push(ok("Shared admin automatically refreshes finance and Bank Club leads"));
 
     await page.locator('[data-bank-lead-status]').first().click();
     await page.locator("[data-bank-club-admin]").filter({ hasText: "已聯繫" }).waitFor({ timeout: 10000 });
@@ -250,11 +302,11 @@ async function runBrowserChecks(baseUrl) {
     if (switcherCount !== 0) {
       throw new Error("single admin should not render legacy site switcher");
     }
-    await page.locator("[data-bank-club-admin]").filter({ hasText: "金融站後台模組" }).waitFor({ timeout: 8000 });
+    await page.locator("[data-bank-club-admin]").filter({ hasText: "表單、客戶與站點資料" }).waitFor({ timeout: 8000 });
     await page.locator("[data-admin-visual-console]").waitFor({ timeout: 8000 });
     results.push(ok("Single shared admin includes Bank Club module"));
 
-    const adminFrontendLink = page.locator('.bank-admin-actions a[href="/"]').first();
+    const adminFrontendLink = page.locator('[data-bank-club-admin] .tfse-visual-real-entry[href="/"]').first();
     await adminFrontendLink.waitFor({ timeout: 8000 });
     const [popup] = await Promise.all([
       context.waitForEvent("page"),
@@ -268,7 +320,7 @@ async function runBrowserChecks(baseUrl) {
     results.push(ok("Admin Bank Club link targets root frontend"));
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${baseUrl}/admin.html`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/admin/`, { waitUntil: "networkidle" });
     const overflow = await page.evaluate(() => ({
       width: document.documentElement.clientWidth,
       scrollWidth: document.documentElement.scrollWidth

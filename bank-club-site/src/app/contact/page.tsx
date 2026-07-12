@@ -9,8 +9,8 @@ import { createPageMetadata } from "@/lib/seo";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
-  title: "聯絡我們｜銀行俱樂部",
-  description: "銀行俱樂部聯絡資訊、LINE 一對一諮詢、電話、Email 與 FB 社團入口。",
+  title: "聯絡我們｜銀行行員俱樂部",
+  description: "銀行行員俱樂部聯絡資訊、LINE 一對一諮詢、電話、Email 與 FB 社團入口。",
   path: "/contact",
 });
 
@@ -19,6 +19,7 @@ export default async function ContactPage() {
   const { settings } = await readDB();
   const contactLineHref = lineHref(settings.lineUrl, { sourcePage: "contact" });
   const contactFbHref = fbHref(settings.fbGroupUrl, { sourcePage: "contact" });
+  const showMobile = settings.mobile && settings.mobile !== settings.phone;
   return (
     <PublicShell>
       <main className="subpage">
@@ -28,20 +29,22 @@ export default async function ContactPage() {
         </section>
         <section className="contact-page content-section">
           <div className="contact-card">
-            <Image src="/brand/bank_club_logo.png" alt="國泰人壽綠色樹形 Logo" width={132} height={92} unoptimized />
-            <p className="muted-line">國泰金控 / 國泰人壽</p>
-            <h2>{settings.specialistName}｜{settings.specialistTitle}</h2>
-            <p>人身 / 財產保險業務員，資格測驗合格。</p>
-            <p>{settings.companyName}｜{settings.officeName}</p>
             <p>{settings.address}</p>
-            <p>電話 {settings.phone}｜傳真 {settings.fax}</p>
-            <p>行動 {settings.mobile}｜Email {settings.email}</p>
-            <p className="muted-line">正式上線前需確認 Logo、國泰金控與國泰人壽品牌文字對外使用規範。</p>
+            <p>
+              電話 {settings.phone}
+              {settings.fax ? `｜傳真 ${settings.fax}` : ""}
+            </p>
+            {showMobile ? <p>行動 {settings.mobile}</p> : null}
+            <p>Email {settings.email}</p>
           </div>
           <div className="contact-card" id="line-qr">
             <h2>LINE 一對一諮詢</h2>
+            <p>LINE ID：Gn148848</p>
             <p>掃描 QR Code 加入專員，或使用手機直接開啟 LINE 入口。</p>
-            <Image src={settings.lineQrCodeUrl} alt={`${settings.specialistName} LINE 一對一諮詢 QR Code`} width={176} height={176} unoptimized />
+            <div className="contact-qr-row">
+              <Image src={settings.lineQrCodeUrl} alt="LINE 一對一諮詢 QR Code" width={176} height={176} unoptimized />
+              <Image src="/brand/bank_club_wechat_qr.png" alt="微信諮詢 QR Code" width={176} height={176} unoptimized />
+            </div>
             <div className="hero-actions">
               <EventLink className="primary-btn" href={contactLineHref} eventName="contact_line_click" target={contactLineHref.startsWith("http") ? "_blank" : undefined}>
                 開啟 LINE 諮詢
@@ -52,7 +55,7 @@ export default async function ContactPage() {
             </div>
           </div>
           <div className="contact-card">
-            <h2>FB 銀行俱樂部社團</h2>
+            <h2>FB 銀行行員俱樂部社團</h2>
             <p>加入社團取得貸款流程、文件清單、常見問題與最新文章更新。</p>
             <EventLink className="secondary-btn" href={contactFbHref} eventName="contact_fb_click" target="_blank">
               加入 FB 社團

@@ -25,7 +25,7 @@ function pdfStringObject(id: number, body: string) {
 function createPdf(title: string, content: string) {
   const rows = [
     title,
-    "銀行俱樂部公開文件清單",
+    "銀行行員俱樂部公開文件清單",
     `產生時間：${new Date().toLocaleDateString("zh-TW")}`,
     "",
     ...content.split("\n").flatMap((line) => wrapLine(line)),
@@ -90,7 +90,7 @@ export async function GET(request: Request, { params }: Params) {
     db.events.unshift({
       id: randomUUID(),
       eventName: "file_download",
-      pagePath: searchParams.get("source") || "/documents",
+      pagePath: searchParams.get("source") || "/consultation",
       leadId: "",
       sessionId,
       sourceChannel,

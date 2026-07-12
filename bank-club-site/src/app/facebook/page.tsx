@@ -8,8 +8,8 @@ import { createPageMetadata } from "@/lib/seo";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
-  title: "FB 銀行俱樂部社團｜貸款文件、流程與專員答疑",
-  description: "加入 FB 銀行俱樂部社團，取得最新貸款優惠、文件清單、流程教學與常見問題整理。",
+  title: "FB 銀行行員俱樂部社團｜貸款文件、流程與專員答疑",
+  description: "加入 FB 銀行行員俱樂部社團，取得最新貸款優惠、文件清單、流程教學與常見問題整理。",
   path: "/facebook",
 });
 
@@ -39,7 +39,7 @@ export default async function FacebookPage() {
     <PublicShell>
       <main className="subpage">
         <section className="page-hero compact">
-          <h1>FB 銀行俱樂部社團</h1>
+          <h1>FB 銀行行員俱樂部社團</h1>
           <p>把社群討論沉澱成站內文章，再由站內文章導回社團與 LINE 諮詢。</p>
           <div className="hero-actions">
             <EventLink className="primary-btn" href={facebookPageFbHref} eventName="fb_join_click" target="_blank">
@@ -102,7 +102,7 @@ export default async function FacebookPage() {
             </EventLink>
           </div>
         </section>
-        <BreadcrumbJsonLd current="FB 銀行俱樂部社團" path="/facebook" />
+        <BreadcrumbJsonLd current="FB 銀行行員俱樂部社團" path="/facebook" />
       </main>
     </PublicShell>
   );

@@ -99,6 +99,8 @@ function summaryLead(lead: Lead) {
   return {
     id: lead.id,
     name: lead.name,
+    gender: lead.gender,
+    city: lead.city,
     phone: maskPhone(lead.phone),
     lineId: maskLineId(lead.lineId),
     identityType: lead.identityType,

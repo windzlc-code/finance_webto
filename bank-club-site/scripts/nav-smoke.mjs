@@ -14,20 +14,18 @@ const navCases = [
   { path: "/house-loan", activeLabel: "貸款服務" },
   { path: "/business-loan", activeLabel: "貸款服務" },
   { path: "/application-flow", activeLabel: "申請流程教學" },
-  { path: "/documents", activeLabel: "銀行資格與文件總整理" },
   { path: "/qa", activeLabel: "常見 QA" },
   { path: "/consultation", activeLabel: "免費諮詢預約" },
-  { path: "/facebook", activeLabel: "FB 銀行俱樂部社團" },
+  { path: "/facebook", activeLabel: "FB 銀行行員俱樂部社團" },
 ];
 
 const expectedDesktopNavLabels = [
   "首頁",
   "貸款服務",
   "申請流程教學",
-  "銀行資格與文件總整理",
   "常見 QA",
   "免費諮詢預約",
-  "FB 銀行俱樂部社團",
+  "FB 銀行行員俱樂部社團",
 ];
 
 const expectedLoanDropdownLabels = [
@@ -129,13 +127,13 @@ async function run() {
     }
     const simplifiedBrand = (await page.locator(".brand span").textContent())?.trim();
     const simplifiedNav = (await page.locator(".main-nav > a").nth(1).textContent())?.trim();
-    if (simplifiedBrand !== "银行俱乐部" || simplifiedNav !== "申请流程教学") {
+    if (simplifiedBrand !== "银行行员俱乐部" || simplifiedNav !== "申请流程教学") {
       fail(`language toggle should simplify visible header text, got brand=${simplifiedBrand}, nav=${simplifiedNav}`);
     }
     await page.getByRole("button", { name: "切換繁體中文" }).click();
     await page.waitForFunction(() => document.documentElement.lang === "zh-Hant");
     const traditionalBrand = (await page.locator(".brand span").textContent())?.trim();
-    if (traditionalBrand !== "銀行俱樂部") {
+    if (traditionalBrand !== "銀行行員俱樂部") {
       fail(`language toggle should restore traditional header text, got ${traditionalBrand}`);
     }
 
@@ -171,7 +169,6 @@ async function run() {
         "house page highlights 貸款服務 parent",
         "business page highlights 貸款服務 parent",
         "application flow highlights only 申請流程教學",
-        "documents highlights only 銀行資格與文件總整理",
         "QA page highlights only 常見 QA",
         "consultation and FB entries follow document 4.1",
         "desktop header shows 7 text entries, one loan dropdown, and one gold contact/LINE button",

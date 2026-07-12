@@ -43,9 +43,8 @@ export function OrganizationJsonLd() {
       data={{
         "@context": "https://schema.org",
         "@type": "Organization",
-        name: "銀行俱樂部",
+        name: "銀行行員俱樂部",
         url: absoluteUrl("/"),
-        logo: absoluteUrl("/brand/bank_club_logo.png"),
       }}
     />
   );

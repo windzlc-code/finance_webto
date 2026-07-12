@@ -72,6 +72,7 @@ function buildTrackingLeadForm({ sessionId, seoKeyword }) {
   const form = new FormData();
   form.set("website", "");
   form.set("name", `追蹤統計煙測 ${Date.now()}`);
+  form.set("gender", "other");
   form.set("phone", smokePhone());
   form.set("lineId", `trackingSmoke${String(Date.now()).slice(-6)}`);
   form.set("identityType", "employee");
@@ -199,10 +200,10 @@ async function run() {
     await page.screenshot({ path: homeScreenshot, fullPage: true });
 
     const title = await page.title();
-    if (!title.includes("銀行俱樂部")) fail(`home page title mismatch: ${title}`);
+    if (!title.includes("銀行行員俱樂部")) fail(`home page title mismatch: ${title}`);
 
     const bodyText = await page.locator("body").innerText();
-    if (!bodyText.includes("銀行俱樂部") || !bodyText.includes("查看申辦流程")) {
+    if (!bodyText.includes("銀行行員俱樂部") || !bodyText.includes("查看申辦流程")) {
       fail("home page rendered without expected meaningful content");
     }
 

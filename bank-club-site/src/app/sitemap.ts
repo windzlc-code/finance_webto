@@ -1,15 +1,17 @@
 import type { MetadataRoute } from "next";
-import { baseUrl } from "@/lib/site-data";
+import { allowPublicIndexing, baseUrl } from "@/lib/site-data";
 import { readDB } from "@/lib/store";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (!allowPublicIndexing) {
+    return [];
+  }
   const pages = [
     "",
     "/credit-loan",
     "/house-loan",
     "/business-loan",
     "/application-flow",
-    "/documents",
     "/qa",
     "/consultation",
     "/facebook",

@@ -23,6 +23,10 @@ const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
 ];
 
+if (process.env.BANKCLUB_ALLOW_INDEXING !== "true") {
+  securityHeaders.push({ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive, nosnippet, noimageindex" });
+}
+
 if (process.env.ENABLE_HSTS === "true") {
   securityHeaders.push({ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" });
 }

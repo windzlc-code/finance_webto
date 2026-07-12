@@ -59,6 +59,8 @@ export async function GET(request: Request) {
   const header = [
     "lead_id",
     "name",
+    "gender",
+    "city",
     "phone",
     "line_id",
     "identity_type",
@@ -111,6 +113,8 @@ export async function GET(request: Request) {
       [
         lead.id,
         lead.name,
+        lead.gender,
+        lead.city,
         lead.phone,
         lead.lineId,
         lead.identityType,

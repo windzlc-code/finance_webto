@@ -104,7 +104,7 @@ async function run() {
     const adminHeaders = { ...sameOriginHeaders(cookie), "content-type": "application/json" };
     const sessionId = `files-smoke-${Date.now()}`;
 
-    const publicDownload = await fetch(`${baseUrl}/api/files/file-credit/download?source=/documents&source_channel=seo&session_id=${encodeURIComponent(sessionId)}`);
+    const publicDownload = await fetch(`${baseUrl}/api/files/file-credit/download?source=/consultation&source_channel=seo&session_id=${encodeURIComponent(sessionId)}`);
     const publicBytes = new Uint8Array(await publicDownload.arrayBuffer());
     assertPdf(publicDownload, publicBytes, "public file download");
 
@@ -133,34 +133,6 @@ async function run() {
       fail("summary fileDownloads did not count public credit file downloads by source channel");
     }
 
-    const documentsLandingResponse = await fetch(`${baseUrl}/documents?files_smoke_landing=${encodeURIComponent(sessionId)}`);
-    const documentsLandingHtml = await documentsLandingResponse.text();
-    const documentsLandingText = visibleText(documentsLandingHtml);
-    for (const expectedText of [
-      "信用貸款文件準備清單",
-      "房屋貸款文件準備清單",
-      "企業貸款文件準備清單",
-      "下載 信用貸款 PDF",
-      "下載 房屋貸款 PDF",
-      "下載 企業貸款 PDF",
-      "財力證明不在本站普通表單上傳",
-      "權狀、稅單與存摺透過 LINE",
-      "敏感文件後續透過 LINE",
-    ]) {
-      if (!documentsLandingResponse.ok || !documentsLandingText.includes(expectedText)) {
-        fail(`documents landing missing checklist copy: ${expectedText}`);
-      }
-    }
-    for (const expectedHref of [
-      "/api/files/file-credit/download?source=/documents&source_detail=credit",
-      "/api/files/file-house/download?source=/documents&source_detail=house",
-      "/api/files/file-business/download?source=/documents&source_detail=business",
-    ]) {
-      if (!documentsLandingHtml.includes(expectedHref) && !documentsLandingHtml.includes(expectedHref.replaceAll("&", "&amp;"))) {
-        fail(`documents landing missing typed download href: ${expectedHref}`);
-      }
-    }
-
     const created = await fetchJson("/api/admin/files", {
       method: "POST",
       headers: adminHeaders,
@@ -182,20 +154,6 @@ async function run() {
     if (created.json.file.version !== 1 || created.json.file.downloads !== 0 || created.json.file.sourceFilename !== "files-smoke-public.md") {
       fail("created file did not preserve source metadata/version defaults");
     }
-    const createdDocumentsPage = await fetch(`${baseUrl}/documents?files_smoke=${encodeURIComponent(sessionId)}`);
-    const createdDocumentsHtml = await createdDocumentsPage.text();
-    const createdDocumentsText = visibleText(createdDocumentsHtml);
-    if (
-      !createdDocumentsPage.ok ||
-      !createdDocumentsText.includes("文件煙測公開清單") ||
-      !createdDocumentsText.includes("文件煙測建立的公開文字資源") ||
-      !createdDocumentsHtml.includes(`/api/files/${fileId}/download?source=/documents`) ||
-      !createdDocumentsText.includes("版本 v1") ||
-      !createdDocumentsText.includes("已下載 0 次")
-    ) {
-      fail(`created public file did not render on /documents HTTP ${createdDocumentsPage.status}`);
-    }
-
     const sensitive = await fetchJson("/api/admin/files", {
       method: "POST",
       headers: adminHeaders,
@@ -268,29 +226,17 @@ async function run() {
       fail(`file replace did not create version history HTTP ${updated.response.status}: ${updated.json.message || ""}`);
     }
 
-    const currentTextResponse = await fetch(`${baseUrl}/api/files/${fileId}/download?format=txt&source=/documents&source_channel=website&session_id=${encodeURIComponent(sessionId)}`);
+    const currentTextResponse = await fetch(`${baseUrl}/api/files/${fileId}/download?format=txt&source=/consultation&source_channel=website&session_id=${encodeURIComponent(sessionId)}`);
     const currentText = await currentTextResponse.text();
     if (!currentTextResponse.ok || !currentText.includes("文件煙測 v2")) {
       fail(`current text download did not return replaced content HTTP ${currentTextResponse.status}`);
     }
 
-    const oldTextResponse = await fetch(`${baseUrl}/api/files/${fileId}/download?format=txt&version=1&source=/documents&source_channel=website&session_id=${encodeURIComponent(sessionId)}`);
+    const oldTextResponse = await fetch(`${baseUrl}/api/files/${fileId}/download?format=txt&version=1&source=/consultation&source_channel=website&session_id=${encodeURIComponent(sessionId)}`);
     const oldText = await oldTextResponse.text();
     if (!oldTextResponse.ok || !oldText.includes("文件煙測 v1") || oldText.includes("文件煙測 v2")) {
       fail(`versioned text download did not return v1 history HTTP ${oldTextResponse.status}`);
     }
-    const updatedDocumentsPage = await fetch(`${baseUrl}/documents?files_smoke_updated=${encodeURIComponent(sessionId)}`);
-    const updatedDocumentsHtml = await updatedDocumentsPage.text();
-    const updatedDocumentsText = visibleText(updatedDocumentsHtml);
-    if (
-      !updatedDocumentsPage.ok ||
-      !updatedDocumentsText.includes("文件煙測替換後的公開文字資源") ||
-      !updatedDocumentsText.includes("版本 v2") ||
-      !updatedDocumentsText.includes("已下載 2 次")
-    ) {
-      fail(`updated public file version/download count did not render on /documents HTTP ${updatedDocumentsPage.status}`);
-    }
-
     const adminOnly = await fetchJson("/api/admin/files", {
       method: "POST",
       headers: adminHeaders,
@@ -333,13 +279,6 @@ async function run() {
     if (!deletedPublic.response.ok || deletedPublic.json.ok !== true) {
       fail(`public file delete failed HTTP ${deletedPublic.response.status}: ${deletedPublic.json.message || ""}`);
     }
-    const removedDocumentsPage = await fetch(`${baseUrl}/documents?files_smoke_deleted=${encodeURIComponent(sessionId)}`);
-    const removedDocumentsHtml = await removedDocumentsPage.text();
-    const removedDocumentsText = visibleText(removedDocumentsHtml);
-    if (!removedDocumentsPage.ok || removedDocumentsText.includes("文件煙測公開清單")) {
-      fail(`deleted public file still rendered on /documents HTTP ${removedDocumentsPage.status}`);
-    }
-
     const deletedAdminOnly = await fetchJson(`/api/admin/files/${adminOnlyId}`, {
       method: "DELETE",
       headers: adminHeaders,
@@ -371,8 +310,6 @@ async function run() {
         version: smokeFileBeforeDelete.version,
         downloads: smokeFileBeforeDelete.downloads,
         historyVersions: smokeFileBeforeDelete.fileVersionHistory.map((version) => version.version),
-        renderedOnDocuments: true,
-        removedFromDocumentsAfterDelete: true,
       },
       adminOnly: {
         fileId: adminOnlyId,

@@ -23,7 +23,6 @@ const publicPaths = [
   "/house-loan",
   "/business-loan",
   "/application-flow",
-  "/documents",
   "/qa",
   "/consultation",
   "/facebook",
@@ -930,7 +929,6 @@ async function checkSuccessPageContact(origin: string, db: Awaited<ReturnType<ty
     const issues = [
       text.includes("已收到您的諮詢需求") ? "" : "缺少成功頁標題",
       text.includes(leadId) ? "" : "缺少線索編號",
-      text.includes(db.settings.specialistName) ? "" : "缺少專員姓名",
       text.includes(db.settings.mobile) ? "" : "缺少行動電話",
       text.includes(db.settings.email) ? "" : "缺少 Email",
       text.includes("補件提醒") ? "" : "缺少補件提醒",
@@ -948,7 +946,7 @@ async function checkSuccessPageContact(origin: string, db: Awaited<ReturnType<ty
       issues.length === 0,
       issues.length
         ? issues.join("；")
-        : "成功頁顯示線索編號、專員姓名、行動電話、Email、LINE QR Code、信貸專用身分證上傳邊界與 LINE 補件提醒，且 LINE/FB CTA 均保留 success 來源與 lead_id",
+        : "成功頁顯示線索編號、行動電話、Email、LINE QR Code、信貸專用身分證上傳邊界與 LINE 補件提醒，且 LINE/FB CTA 均保留 success 來源與 lead_id",
     );
   } catch (error) {
     return {
@@ -961,18 +959,15 @@ async function checkSuccessPageContact(origin: string, db: Awaited<ReturnType<ty
 }
 
 async function checkBrandAndLineQrAssets(origin: string, db: Awaited<ReturnType<typeof readDB>>): Promise<LaunchCheck> {
-  const logoHref = "/brand/bank_club_logo.png";
   const qrHref = db.settings.lineQrCodeUrl;
   const failures = [
-    await validateImageAsset(origin, "Logo", logoHref),
     await validateImageAsset(origin, "LINE QR Code", qrHref),
   ].filter(Boolean);
-  const expectedLogoUrl = parseHref(origin, "/", logoHref);
   const expectedQrUrl = parseHref(origin, "/", qrHref);
   const pageRequirements = [
-    { path: "/", label: "首頁", logo: true, qr: true },
-    { path: "/contact", label: "聯絡頁", logo: true, qr: true },
-    { path: "/success?lead_id=launch-check-assets", label: "成功頁", logo: true, qr: true },
+    { path: "/", label: "首頁", qr: true },
+    { path: "/contact", label: "聯絡頁", qr: true },
+    { path: "/success?lead_id=launch-check-assets", label: "成功頁", qr: true },
   ];
 
   for (const requirement of pageRequirements) {
@@ -985,15 +980,10 @@ async function checkBrandAndLineQrAssets(origin: string, db: Awaited<ReturnType<
       }
       const sourcePath = requirement.path.split("?")[0] || "/";
       const imageTags = extractImgTags(html);
-      const hasLogo = imageTags.some((tag) => {
-        const src = parseHref(origin, sourcePath, extractAttribute(tag, "src"));
-        return sameImageUrl(src, expectedLogoUrl) && extractAttribute(tag, "alt").includes("Logo");
-      });
       const hasQr = imageTags.some((tag) => {
         const src = parseHref(origin, sourcePath, extractAttribute(tag, "src"));
         return sameImageUrl(src, expectedQrUrl) && extractAttribute(tag, "alt").includes("LINE 一對一諮詢 QR Code");
       });
-      if (requirement.logo && !hasLogo) failures.push(`${requirement.label}:缺少可辨識 Logo 圖片`);
       if (requirement.qr && !hasQr) failures.push(`${requirement.label}:缺少可辨識 LINE QR Code 圖片`);
     } catch (error) {
       failures.push(`${requirement.label}:${error instanceof Error ? error.message : "request failed"}`);
@@ -1002,11 +992,11 @@ async function checkBrandAndLineQrAssets(origin: string, db: Awaited<ReturnType<
 
   return check(
     "assets:brand-line-qr",
-    "品牌 Logo 與 LINE QR 圖片",
+    "LINE QR 圖片",
     failures.length === 0,
     failures.length
       ? failures.slice(0, 8).join("；")
-      : "Logo 與 LINE QR Code 圖片可讀取，且首頁、聯絡頁、成功頁均引用正確圖片與可辨識 alt",
+      : "LINE QR Code 圖片可讀取，且首頁、聯絡頁、成功頁均引用正確圖片與可辨識 alt",
   );
 }
 
@@ -1020,15 +1010,9 @@ async function checkAdminLoginBranding(origin: string): Promise<LaunchCheck> {
 
     const text = stripHtml(html);
     const robots = extractMetaContent(html, "name", "robots").toLowerCase();
-    const logoHref = parseHref(origin, "/admin", "/brand/bank_club_logo.png");
-    const hasLogo = extractImgTags(html).some((tag) => {
-      const src = parseHref(origin, "/admin", extractAttribute(tag, "src"));
-      return sameImageUrl(src, logoHref) && extractAttribute(tag, "alt").includes("Logo");
-    });
     const issues = [
-      text.includes("銀行俱樂部後台") ? "" : "缺少後台登入標題",
+      text.includes("銀行行員俱樂部後台") ? "" : "缺少後台登入標題",
       text.includes("線索、內容、文件與上線檢查管理入口") ? "" : "缺少獨立後台管理說明",
-      hasLogo ? "" : "缺少可辨識 Logo 圖片",
       robots.includes("noindex") ? "" : `robots meta 未設定 noindex(${robots || "missing"})`,
     ].filter(Boolean);
 
@@ -1036,7 +1020,7 @@ async function checkAdminLoginBranding(origin: string): Promise<LaunchCheck> {
       "admin:login-branding",
       "後台登入頁品牌與索引設定",
       issues.length === 0,
-      issues.length ? issues.join("；") : "後台登入頁顯示品牌 Logo、後台管理說明，且設定 noindex 避免被搜尋引擎收錄",
+      issues.length ? issues.join("；") : "後台登入頁顯示後台管理說明，且設定 noindex 避免被搜尋引擎收錄",
     );
   } catch (error) {
     return check("admin:login-branding", "後台登入頁品牌與索引設定", false, error instanceof Error ? error.message : "request failed");
@@ -1047,7 +1031,7 @@ async function checkSitemapCoverage(origin: string, db: Awaited<ReturnType<typeo
   try {
     const response = await fetch(`${origin}/sitemap.xml`, { cache: "no-store" });
     const xml = await response.text();
-    const staticPaths = ["/", "/credit-loan", "/house-loan", "/business-loan", "/application-flow", "/documents", "/qa", "/blog"];
+    const staticPaths = ["/", "/credit-loan", "/house-loan", "/business-loan", "/application-flow", "/qa", "/blog"];
     const publishedArticlePaths = db.articles
       .filter((article) => article.status === "published")
       .map((article) => `/blog/${article.slug}`);
@@ -1095,10 +1079,9 @@ async function checkSiteMapInformationArchitecture(origin: string): Promise<Laun
     "房屋貸款",
     "企業貸款",
     "申請流程教學",
-    "銀行資格與文件總整理",
     "常見 QA",
     "免費諮詢預約",
-    "FB 銀行俱樂部社團",
+    "FB 銀行行員俱樂部社團",
     "聯絡我們 / LINE 諮詢",
     "部落格文章列表",
     "隱私權政策與個資告知",
@@ -1111,7 +1094,7 @@ async function checkSiteMapInformationArchitecture(origin: string): Promise<Laun
     "後台文件資源管理頁",
     "後台統計頁",
   ];
-  const requiredLinks = ["/", "/credit-loan", "/house-loan", "/business-loan", "/application-flow", "/documents", "/qa", "/consultation", "/facebook", "/contact", "/blog", "/privacy", "/risk", "/terms", "/admin"];
+  const requiredLinks = ["/", "/credit-loan", "/house-loan", "/business-loan", "/application-flow", "/qa", "/consultation", "/facebook", "/contact", "/blog", "/privacy", "/risk", "/terms", "/admin"];
 
   try {
     const response = await fetch(`${origin}/site-map`, { cache: "no-store" });
@@ -1397,10 +1380,8 @@ async function checkHeaderInformationArchitecture(origin: string): Promise<Launc
   const topLevelRequirements = [
     { label: "首頁", pathname: "/" },
     { label: "申請流程教學", pathname: "/application-flow" },
-    { label: "銀行資格與文件總整理", pathname: "/documents" },
     { label: "常見 QA", pathname: "/qa" },
-    { label: "免費諮詢預約", pathname: "/consultation" },
-    { label: "FB 銀行俱樂部社團", pathname: "/facebook" },
+    { label: "FB 銀行行員俱樂部社團", pathname: "/facebook" },
   ];
   const loanDropdownRequirements = [
     { label: "信用貸款", pathname: "/credit-loan" },
@@ -1419,7 +1400,6 @@ async function checkHeaderInformationArchitecture(origin: string): Promise<Launc
       return check("nav:information-architecture", "頂部導航信息架構", false, "首頁缺少 header");
     }
     if (!headerHtml.includes("貸款服務")) failures.push("缺少貸款服務分組");
-    if (!headerHtml.includes("銀行資格與文件總整理")) failures.push("銀行資格與文件總整理文案");
     for (const requirement of topLevelRequirements) {
       const matched = findHref(headerHtml, origin, "/", (url) => url.origin === origin && url.pathname === requirement.pathname);
       if (!matched) failures.push(requirement.label);
@@ -1436,7 +1416,7 @@ async function checkHeaderInformationArchitecture(origin: string): Promise<Launc
       "nav:information-architecture",
       "頂部導航信息架構",
       failures.length === 0,
-      failures.length ? `缺少 ${failures.join(", ")}` : "頂部導航以 8 個入口呈現：三大貸款收納於貸款服務下拉，聯絡 / LINE 諮詢使用金色按鈕並保留 header 來源參數",
+      failures.length ? `缺少 ${failures.join(", ")}` : "頂部導航以貸款服務為主軸：三大貸款收納於貸款服務下拉，聯絡 / LINE 諮詢使用金色按鈕並保留 header 來源參數",
     );
   } catch (error) {
     return check("nav:information-architecture", "頂部導航信息架構", false, error instanceof Error ? error.message : "request failed");
@@ -1449,7 +1429,6 @@ async function checkFullFooterEntrypoints(origin: string): Promise<LaunchCheck> 
     { label: "信用貸款", pathname: "/credit-loan" },
     { label: "房屋貸款", pathname: "/house-loan" },
     { label: "企業貸款", pathname: "/business-loan" },
-    { label: "文件總整理", pathname: "/documents" },
     { label: "FB 社團頁", pathname: "/facebook" },
     { label: "LINE / 聯絡我們", pathname: "/contact" },
     { label: "個資保護", pathname: "/privacy" },
@@ -1483,7 +1462,6 @@ async function checkFullFooterEntrypoints(origin: string): Promise<LaunchCheck> 
         !fbUrl || !isFacebookUrl(fbUrl) || !hasSearchParam(fbUrl, "source_page", "footer") ? "FB 社團入口" : "",
         !formUrl || formUrl.origin !== origin || formUrl.pathname !== "/consultation" || formUrl.searchParams.get("source_page") !== "footer" ? "免費諮詢預約" : "",
         !footerHtml.includes("熱門文章") ? "熱門文章標題" : "",
-        !footerHtml.includes("銀行資格與文件總整理") ? "銀行資格與文件總整理" : "",
         !footerHtml.includes("個資保護聲明") ? "個資保護聲明" : "",
         !footerHtml.includes("免責 / 服務條款") ? "免責 / 服務條款" : "",
       ].filter(Boolean);
@@ -1606,7 +1584,7 @@ async function checkFormDataMinimization(origin: string): Promise<LaunchCheck> {
       const name = extractAttribute(tag, "name");
       return type !== "hidden" && name !== "website";
     });
-    const requiredFieldNames = ["name", "phone", "lineId", "identityType", "loanType", "desiredAmount", "appointmentTime", "purpose", "note", "consent"];
+    const requiredFieldNames = ["name", "gender", "phone", "lineId", "identityType", "loanType", "desiredAmount", "appointmentTime", "purpose", "note", "consent"];
     const fieldNames = new Set(controls.map((tag) => extractAttribute(tag, "name")).filter(Boolean));
     const missingFields = requiredFieldNames.filter((field) => !fieldNames.has(field));
     const fileInputs = controls.filter((tag) => extractAttribute(tag, "type").toLowerCase() === "file");
@@ -2102,6 +2080,7 @@ function antiSpamProbeForm(index: number) {
   const form = new FormData();
   form.set("website", "https://spam.example");
   form.set("name", `上線檢查反垃圾探針 ${index}`);
+  form.set("gender", "other");
   form.set("phone", `0988${String(index).padStart(6, "0")}`);
   form.set("lineId", `launchAntispamProbe${index}`);
   form.set("identityType", "employee");
@@ -2198,8 +2177,6 @@ export async function GET(request: Request) {
       [
         db.settings.companyName,
         db.settings.officeName,
-        db.settings.specialistName,
-        db.settings.specialistTitle,
         db.settings.address,
         db.settings.phone,
         db.settings.fax,

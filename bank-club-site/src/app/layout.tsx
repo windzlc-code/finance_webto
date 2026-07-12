@@ -1,21 +1,30 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { createPageMetadata } from "@/lib/seo";
+import { allowPublicIndexing } from "@/lib/site-data";
 import { readDB } from "@/lib/store";
 import "./globals.css";
 
 export const metadata: Metadata = {
   ...createPageMetadata({
-    title: "銀行俱樂部｜銀行專員一對一 信用貸/房屋貸/企業貸免費評估",
+    title: "銀行行員俱樂部｜銀行專員一對一 信用貸/房屋貸/企業貸免費評估",
     description:
-      "銀行俱樂部連接銀行專業服務人員，提供信用貸款、房屋貸款、企業貸款諮詢，整理申請資格、文件清單、網路申辦流程與 LINE 一對一免費評估。",
+      "銀行行員俱樂部連接銀行專業服務人員，提供信用貸款、房屋貸款、企業貸款諮詢，整理申請資格、文件清單、網路申辦流程與 LINE 一對一免費評估。",
     path: "/",
   }),
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "銀行俱樂部｜銀行專員一對一 信用貸/房屋貸/企業貸免費評估",
+    default: "銀行行員俱樂部｜銀行專員一對一 信用貸/房屋貸/企業貸免費評估",
     template: "%s",
   },
+  robots: allowPublicIndexing
+    ? undefined
+    : {
+        index: false,
+        follow: false,
+        nocache: true,
+        googleBot: { index: false, follow: false, noimageindex: true, "max-snippet": -1 },
+      },
 };
 
 function isValidGaMeasurementId(value: string) {
@@ -35,7 +44,7 @@ export default async function RootLayout({
   return (
     <html lang="zh-Hant" className="h-full antialiased">
       <head>
-        {searchConsoleVerification ? (
+        {allowPublicIndexing && searchConsoleVerification ? (
           <meta name="google-site-verification" content={searchConsoleVerification} />
         ) : null}
       </head>

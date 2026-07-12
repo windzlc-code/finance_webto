@@ -1,8 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 import { connection } from "next/server";
 import { EventLink } from "./EventLink";
 import { Icon } from "./Icons";
+import { LanguageToggle } from "./LanguageToggle";
 import { PageViewTracker } from "./PageViewTracker";
 import { PublicNav } from "./PublicNav";
 import { fbHref } from "@/lib/fb-links";
@@ -22,27 +23,25 @@ const nav = [
     ],
   },
   { label: "申辦流程", href: "/application-flow" },
-  { label: "銀行資格與文件總整理", href: "/documents" },
   { label: "常見QA", href: "/qa" },
-  { label: "免費諮詢預約", href: "/consultation" },
   { label: "FB 銀行俱樂部社團", href: "/facebook" },
   { label: "TFSE 金融站", href: "/tfse/" },
 ];
 
 export function Header({ settings }: { settings: SiteSettings }) {
-  const headerLineHref = lineHref(settings.lineUrl, { sourcePage: "header" });
   return (
     <header className="site-header">
-      <Link className="brand" href="/" aria-label="銀行俱樂部首頁">
-        <Image src="/brand/bank_club_logo.png" alt="國泰人壽綠色樹形 Logo" width={72} height={50} priority unoptimized />
-        <span>銀行俱樂部</span>
+      <Link className="brand" href="/" aria-label={`${settings.brandName}首頁`}>
+        <Image className="brand-logo" src="/brand/bank_club_logo_new.png" alt="" width={72} height={68} priority unoptimized />
+        <span className="brand-label">{settings.brandName}</span>
       </Link>
       <PublicNav items={nav} />
       <div className="header-actions">
+        <LanguageToggle />
         <EventLink className="icon-btn" href="/blog#article-search" eventName="header_search_click" metadata={{ sourcePage: "header", destination: "/blog#article-search" }} ariaLabel="搜尋文章">
           <Icon name="search" />
         </EventLink>
-        <EventLink className="line-btn" href={headerLineHref} eventName="header_line_click" target={headerLineHref.startsWith("http") ? "_blank" : undefined} ariaLabel="聯絡我們 / LINE 諮詢">
+        <EventLink className="line-btn" href="/contact?source_page=header#line-qr" eventName="header_line_click" metadata={{ sourcePage: "header", destination: "/contact#line-qr" }} ariaLabel="LINE 諮詢">
           <span className="line-dot">LINE</span>
           LINE諮詢
         </EventLink>
@@ -62,24 +61,21 @@ export function Footer({
 }) {
   const footerLineHref = lineHref(settings.lineUrl, { sourcePage: "footer" });
   const footerFbHref = fbHref(settings.fbGroupUrl, { sourcePage: "footer" });
+  const showMobile = settings.mobile && settings.mobile !== settings.phone;
   return (
     <footer className="site-footer">
       <div className="footer-grid">
         <div className="footer-brand">
-          <Image src="/brand/bank_club_logo.png" alt="國泰人壽綠色樹形 Logo" width={64} height={44} unoptimized />
-          <div>
-            <strong>銀行俱樂部</strong>
-            <p>{settings.specialistName}｜{settings.specialistTitle}</p>
-          </div>
+          <Image className="footer-logo" src="/brand/bank_club_logo_new.png" alt="" width={84} height={79} unoptimized />
+          <strong>{settings.brandName}</strong>
         </div>
         <div>
           <h3>聯絡資訊</h3>
-          <p>{settings.companyName}｜{settings.officeName}</p>
           <p>{settings.address}</p>
         </div>
         <div>
           <p>電話 {settings.phone}</p>
-          <p>行動 {settings.mobile}</p>
+          {showMobile ? <p>行動 {settings.mobile}</p> : null}
           <p>Email {settings.email}</p>
         </div>
       </div>
@@ -110,14 +106,13 @@ export function Footer({
             <Link href="/credit-loan">信用貸款</Link>
             <Link href="/house-loan">房屋貸款</Link>
             <Link href="/business-loan">企業貸款</Link>
-            <Link href="/documents">銀行資格與文件總整理</Link>
             <Link href="/facebook">FB 社團頁</Link>
             <Link href="/contact">LINE / 聯絡我們</Link>
             <Link href="/privacy">個資保護聲明</Link>
             <Link href="/risk">風險聲明</Link>
             <Link href="/terms">免責 / 服務條款</Link>
             <Link href="/site-map">網站地圖</Link>
-            <a href="/admin/">後台管理</a>
+            <a href="/admin/">公共後台管理</a>
           </div>
         </>
       ) : null}

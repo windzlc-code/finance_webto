@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { baseUrl } from "./site-data";
+import { allowPublicIndexing, baseUrl } from "./site-data";
 
-const siteName = "銀行俱樂部";
+const siteName = "銀行行員俱樂部";
 const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
 
 type PageMetadataInput = {
@@ -16,13 +16,16 @@ export function absoluteUrl(path: string) {
   return `${normalizedBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export function createPageMetadata({ title, description, path, image = "/brand/bank_club_logo.png", noIndex }: PageMetadataInput): Metadata {
+export function createPageMetadata({ title, description, path, image = "/brand/bank_club_hero.png", noIndex }: PageMetadataInput): Metadata {
   const url = absoluteUrl(path);
+  const blockIndexing = noIndex || !allowPublicIndexing;
   return {
     title,
     description,
     alternates: { canonical: url },
-    robots: noIndex ? { index: false, follow: false } : undefined,
+    robots: blockIndexing
+      ? { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false, noimageindex: true, "max-snippet": -1 } }
+      : undefined,
     openGraph: {
       title,
       description,

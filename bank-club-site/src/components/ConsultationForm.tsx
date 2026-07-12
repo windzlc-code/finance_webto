@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { identityLabels, loanLabels } from "@/lib/site-data";
 import { getTrackingSessionId } from "@/lib/tracking-session";
-import type { IdentityType, LoanType } from "@/lib/types";
+import type { Gender, LoanType } from "@/lib/types";
 
 type Props = {
   defaultLoanType?: string;
@@ -29,7 +29,14 @@ type ValidationIssue = {
 
 const allowedCreditFileTypes = new Set(["image/jpeg", "image/png", "image/heic", "image/heif"]);
 const creditFileMaxBytes = 8 * 1024 * 1024;
+const idCardMinAspectRatio = 1.35;
+const idCardMaxAspectRatio = 1.85;
 const taiwanCities = ["台北市", "新北市", "桃園市", "台中市", "台南市", "高雄市", "基隆市", "新竹市", "新竹縣", "苗栗縣", "彰化縣", "南投縣", "雲林縣", "嘉義市", "嘉義縣", "屏東縣", "宜蘭縣", "花蓮縣", "台東縣", "澎湖縣", "金門縣", "連江縣"];
+const genderOptions: Array<[Gender, string]> = [
+  ["male", "男性"],
+  ["female", "女性"],
+  ["other", "其他 / 不便透露"],
+];
 const phoneCountryCodes = [
   ["+886", "台灣 +886"],
   ["+86", "中國大陸 +86"],
@@ -138,6 +145,38 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function isAcceptedIdCardRatio(width: number, height: number) {
+  if (!width || !height) return false;
+  const ratio = Math.max(width, height) / Math.min(width, height);
+  return ratio >= idCardMinAspectRatio && ratio <= idCardMaxAspectRatio;
+}
+
+async function readImageDimensions(file: File) {
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const dimensions = { width: bitmap.width, height: bitmap.height };
+      bitmap.close();
+      return dimensions;
+    } catch {
+      // Some browsers cannot decode HEIC locally; the server still validates it.
+    }
+  }
+  return new Promise<{ width: number; height: number } | null>((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new window.Image();
+    image.onload = () => {
+      resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      URL.revokeObjectURL(objectUrl);
+    };
+    image.onerror = () => {
+      resolve(null);
+      URL.revokeObjectURL(objectUrl);
+    };
+    image.src = objectUrl;
+  });
+}
+
 function formText(form: FormData, name: string) {
   return String(form.get(name) || "").trim();
 }
@@ -152,6 +191,8 @@ function validateLeadDraft(form: FormData, options: { requireComplete: boolean; 
     issues.push({ field, level, message });
   };
   const name = formText(form, "name");
+  const gender = formText(form, "gender");
+  const city = formText(form, "city");
   const phone = formText(form, "phone");
   const phoneDigits = digitsOnly(phone);
   const phoneCountryCode = formText(form, "phoneCountryCode") || "+886";
@@ -168,6 +209,9 @@ function validateLeadDraft(form: FormData, options: { requireComplete: boolean; 
   if (name && !/^[\p{L}\s.'·-]{2,40}$/u.test(name)) {
     addIssue("name", "error", "姓名請填寫 2 到 40 個中文字或英文字母，不要填數字、電話或符號。");
   }
+  if (options.requireComplete && !gender) addIssue("gender", "error", "請選擇性別。");
+  if (gender && !genderOptions.some(([value]) => value === gender)) addIssue("gender", "error", "請從清單選擇性別。");
+  if (city && !taiwanCities.includes(city)) addIssue("city", "error", "請從清單選擇所在城市。");
 
   if (options.requireComplete && !phone) addIssue("phone", "error", "請填寫手機號碼。");
   if (phone) {
@@ -263,7 +307,7 @@ function validateLeadDraft(form: FormData, options: { requireComplete: boolean; 
   return issues;
 }
 
-export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityType = "" }: Props) {
+export function ConsultationForm({ defaultLoanType = "unknown" }: Props) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
@@ -272,7 +316,7 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
   const [uploadProgress, setUploadProgress] = useState("");
   const [formStartedAt] = useState(() => Date.now().toString());
   const [loanType, setLoanType] = useState<LoanType>(defaultLoanType as LoanType);
-  const [purpose, setPurpose] = useState("unsure");
+  const [purpose, setPurpose] = useState("");
   const [existingMortgage, setExistingMortgage] = useState("");
   const [appointmentYear, setAppointmentYear] = useState("");
   const [appointmentMonth, setAppointmentMonth] = useState("");
@@ -300,20 +344,32 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
     });
   }
 
-  function handleCreditFileChange(side: CreditUploadSide, event: ChangeEvent<HTMLInputElement>) {
-    const file = event.currentTarget.files?.[0];
+  async function handleCreditFileChange(side: CreditUploadSide, event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) {
       updateUpload(side, emptyUploadState());
       return;
     }
     if (!allowedCreditFileTypes.has(file.type)) {
-      event.currentTarget.value = "";
+      input.value = "";
       updateUpload(side, { ...emptyUploadState(), error: "格式不支援，請改選 JPG、PNG 或 HEIC 圖片。" });
       return;
     }
     if (file.size > creditFileMaxBytes) {
-      event.currentTarget.value = "";
+      input.value = "";
       updateUpload(side, { ...emptyUploadState(), error: "檔案超過 8MB，請重新拍攝或壓縮後再上傳。" });
+      return;
+    }
+    const dimensions = await readImageDimensions(file);
+    if (!dimensions && (file.type === "image/jpeg" || file.type === "image/png")) {
+      input.value = "";
+      updateUpload(side, { ...emptyUploadState(), error: "無法讀取圖片尺寸，請重新拍攝或改選清楚的 JPG、PNG 圖片。" });
+      return;
+    }
+    if (dimensions && !isAcceptedIdCardRatio(dimensions.width, dimensions.height)) {
+      input.value = "";
+      updateUpload(side, { ...emptyUploadState(), error: "圖片比例不像一般身分證卡片，請上傳接近橫式卡片比例的正反面照片。" });
       return;
     }
     const previewUrl = ["image/jpeg", "image/png"].includes(file.type) ? URL.createObjectURL(file) : "";
@@ -378,7 +434,10 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
     return (
       <label className={fieldIssueClass("purpose")}>
         資金用途
-        <select name="purpose" value={purpose} onChange={(event) => setPurpose(event.target.value)}>
+        <select name="purpose" required value={purpose} onChange={(event) => setPurpose(event.target.value)}>
+          <option value="" disabled>
+            資金用途（必填）
+          </option>
           <option value="living">生活消費</option>
           <option value="renovation">房屋修繕</option>
           <option value="business">合法營運週轉</option>
@@ -411,18 +470,30 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
           accept="image/jpeg,image/png,image/heic,image/heif"
           onChange={(event) => handleCreditFileChange(side, event)}
         />
-        <label className="upload-preview-card" htmlFor={inputId}>
+        <label className={`upload-preview-card${hasSelectedFile ? "" : " upload-preview-card-empty"}`} htmlFor={inputId}>
           {state.previewUrl ? (
             <Image src={state.previewUrl} alt={`${title}預覽`} width={136} height={102} unoptimized />
           ) : (
-            <div className="upload-preview-placeholder">{hasSelectedFile ? "已選擇 HEIC 檔案" : "尚未選擇檔案"}</div>
+            <div className="upload-preview-placeholder" aria-label={`${title}上傳占位圖`}>
+              <span className="id-card-chip" aria-hidden="true" />
+              <span className="id-card-avatar" aria-hidden="true" />
+              <span className="id-card-lines" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </span>
+              <span className="id-card-placeholder-text">
+                <strong>{hasSelectedFile ? "已選擇 HEIC 檔案" : `點擊上傳${title}`}</strong>
+                {!hasSelectedFile ? <small>{help}</small> : null}
+              </span>
+            </div>
           )}
           <div>
             <strong>{displayName}</strong>
             <span>{hasSelectedFile ? `${formatFileSize(displaySize)}，送出前可刪除重選。` : help}</span>
-            {state.error ? <span className="upload-error">{state.error}</span> : null}
           </div>
         </label>
+        {state.error ? <span className="upload-error upload-error-standalone">{state.error}</span> : null}
         {renderFieldIssues(side === "front" ? "idFront" : "idBack")}
         {hasSelectedFile ? (
           <button type="button" className="ghost-button upload-clear-button" onClick={() => clearCreditFile(side)}>
@@ -504,6 +575,34 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
             <input name="name" required placeholder="請輸入姓名（必填）" />
             {renderFieldIssues("name")}
           </label>
+          <label className={fieldIssueClass("gender")}>
+            性別
+            <select name="gender" required defaultValue="">
+              <option value="" disabled>
+                請選擇（必填）
+              </option>
+              {genderOptions.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            {renderFieldIssues("gender")}
+          </label>
+          <label className={fieldIssueClass("city")}>
+            所在城市
+            <select name="city" defaultValue="">
+              <option value="">
+                請選擇（選填）
+              </option>
+              {taiwanCities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
+            {renderFieldIssues("city")}
+          </label>
           <label className={`phone-field${fieldIssueClass("phone")}`}>
             手機
             <div className="phone-control">
@@ -526,7 +625,7 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
           </label>
           <label className={fieldIssueClass("identityType")}>
             身份類型
-            <select name="identityType" required defaultValue={defaultIdentityType as IdentityType | ""}>
+            <select name="identityType" required defaultValue="">
               <option value="" disabled>
                 請選擇（必填）
               </option>
@@ -589,7 +688,10 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
           <div className="field-grid credit-basic-grid">
             <label className={fieldIssueClass("requestedAmount")}>
               申請金額
-              <select name="requestedAmount" required defaultValue="7000000">
+              <select name="requestedAmount" required defaultValue="">
+                <option value="" disabled>
+                  申請金額（必填）
+                </option>
                 {amountOptionsFor("credit").map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
@@ -601,7 +703,10 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
             </label>
             <label className={fieldIssueClass("requestedTermYears")}>
               申請年限
-              <select name="requestedTermYears" required defaultValue="10">
+              <select name="requestedTermYears" required defaultValue="">
+                <option value="" disabled>
+                  申請年限（必填）
+                </option>
                 <option value="10">10 年</option>
                 <option value="7">7 年</option>
                 <option value="5">5 年</option>
@@ -613,7 +718,10 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
             {renderPurposeSelect()}
             <label className={fieldIssueClass("caseSource")}>
               案件來源
-              <select name="caseSource" required defaultValue="company_preferential">
+              <select name="caseSource" required defaultValue="">
+                <option value="" disabled>
+                  案件來源（必填）
+                </option>
                 <option value="company_preferential">公司優惠貸款</option>
                 <option value="specialist_referral">專員協助確認</option>
                 <option value="unsure">不確定，先諮詢</option>
@@ -623,7 +731,10 @@ export function ConsultationForm({ defaultLoanType = "unknown", defaultIdentityT
             </label>
             <label className={fieldIssueClass("programType")}>
               適用方案
-              <select name="programType" required defaultValue="binding">
+              <select name="programType" required defaultValue="">
+                <option value="" disabled>
+                  適用方案（必填）
+                </option>
                 <option value="binding">綁約方案</option>
                 <option value="non_binding">不綁約方案</option>
                 <option value="unsure">不確定，先諮詢</option>

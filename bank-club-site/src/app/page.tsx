@@ -10,8 +10,8 @@ import { processSteps, serviceCards } from "@/lib/site-data";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
-  title: "銀行俱樂部｜銀行專員一對一 信用貸/房屋貸/企業貸免費評估",
-  description: "銀行俱樂部提供信貸、房貸、企業貸款諮詢，協助整理資格、文件清單、申辦流程與 LINE 一對一免費評估。",
+  title: "銀行行員俱樂部｜銀行專員一對一 信用貸/房屋貸/企業貸免費評估",
+  description: "銀行行員俱樂部提供信貸、房貸、企業貸款諮詢，協助整理資格、文件清單、申辦流程與 LINE 一對一免費評估。",
   path: "/",
 });
 
@@ -35,25 +35,19 @@ export default async function Home() {
               sizes="100vw"
               unoptimized
             />
-            <div className="hero-live-actions" aria-label="首頁主要操作">
-              <EventLink
-                className="primary-btn hero-cta-btn"
-                href="/consultation?source_page=home"
-                eventName="hero_form_click"
-                metadata={{ sourceSection: "hero" }}
-              >
-                立即免費諮詢
-                <Icon name="arrow" />
-              </EventLink>
-              <EventLink
-                className="secondary-btn hero-cta-btn"
-                href="/application-flow"
-                eventName="hero_flow_click"
-                metadata={{ sourceSection: "hero" }}
-              >
-                查看申辦流程
-                <Icon name="arrow" />
-              </EventLink>
+            <div className="hero-live-actions loan-first-actions" aria-label="三大貸款快速入口">
+              {serviceCards.map((card) => (
+                <EventLink
+                  className="hero-loan-btn"
+                  href={card.href}
+                  eventName="hero_loan_click"
+                  metadata={{ loanType: card.key, sourceSection: "hero" }}
+                  key={card.key}
+                >
+                  {card.title}
+                  <Icon name="arrow" />
+                </EventLink>
+              ))}
             </div>
           </div>
         </section>
@@ -75,17 +69,16 @@ export default async function Home() {
                 <span>{card.subtitle}</span>
                 <span>{card.railDescription}</span>
               </p>
-              <span>›</span>
+              <span className="service-panel-action">
+                {card.cta}
+                <Icon name="arrow" />
+              </span>
             </EventLink>
           ))}
         </section>
 
-        <section className="contact-strip">
+        <section className="contact-strip service-contact-strip">
           <div className="advisor">
-            <span className="advisor-icon"><Icon name="person" /></span>
-            <strong>{settings.specialistName}</strong>
-            <span>{settings.specialistTitle}</span>
-            <span className="divider" />
             <Icon name="phone" />
             <span>{settings.mobile}</span>
             <span className="divider" />
@@ -93,18 +86,18 @@ export default async function Home() {
             <span>{settings.email}</span>
           </div>
           <EventLink
-            className="qr-mini"
+            className="qr-mini subtle-contact-link"
             href={homeLineHref}
             eventName="home_line_click"
             target={homeLineHref.startsWith("http") ? "_blank" : undefined}
             metadata={{ sourceSection: "contact_strip" }}
           >
             <span>
-              LINE 一對一諮詢
+              需要確認貸款類型？
               <br />
-              掃描 QR Code 加入專員
+              先用 LINE 補充需求
             </span>
-            <Image src={settings.lineQrCodeUrl} alt={`${settings.specialistName} LINE 一對一諮詢 QR Code`} width={74} height={74} unoptimized />
+            <Image src={settings.lineQrCodeUrl} alt="LINE 一對一諮詢 QR Code" width={74} height={74} unoptimized />
           </EventLink>
         </section>
 
@@ -147,7 +140,7 @@ export default async function Home() {
         <section className="content-section">
           <div className="section-heading">
             <h2>文件準備提醒</h2>
-            <p>首頁只做簡潔提示，完整清單由「文件總整理」頁承接。</p>
+            <p>首頁只保留申請前重點提醒，敏感資料請先透過 LINE 與專員確認。</p>
           </div>
           <div className="reminder-grid">
             <div>

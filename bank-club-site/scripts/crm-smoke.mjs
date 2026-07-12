@@ -96,6 +96,7 @@ async function submitLead() {
   const sessionId = `crm-smoke-${Date.now()}`;
   form.set("website", "");
   form.set("name", csvFormulaProbeName);
+  form.set("gender", "other");
   form.set("phone", "0912 345 678");
   form.set("lineId", "crmSmokeLine");
   form.set("identityType", "employee");

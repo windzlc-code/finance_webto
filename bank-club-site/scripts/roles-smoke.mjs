@@ -248,7 +248,7 @@ async function run() {
       "角色煙測敏感備註",
       "role-smoke-sensitive-session",
       "127.0.0.203",
-      "yuanchin.liang@gmail.com",
+      "contact@example.invalid",
     ]);
     const specialistDetail = await expectStatus("specialist own detail", "/api/admin/leads/role-smoke-owned-lead", specialistCookie, 200);
     if (specialistDetail.json.lead?.phone !== "0911 111 111") fail("specialist own detail should expose assigned lead contact");
@@ -282,8 +282,8 @@ async function run() {
       "角色煙測敏感備註",
       "role-smoke-sensitive-session",
       "127.0.0.203",
-      "user-liang",
-      "yuanchin.liang@gmail.com",
+      "user-admin",
+      "contact@example.invalid",
     ]);
     if ((contentSummary.json.latestLeads || []).length) {
       fail("content summary should not include lead preview rows");
@@ -316,8 +316,8 @@ async function run() {
       "角色煙測敏感備註",
       "role-smoke-sensitive-session",
       "127.0.0.203",
-      "user-liang",
-      "yuanchin.liang@gmail.com",
+      "user-admin",
+      "contact@example.invalid",
     ]);
     if ((readonlySummary.json.latestLeads || []).length) {
       fail("readonly summary should not include lead preview rows");

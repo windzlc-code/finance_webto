@@ -10,8 +10,8 @@ import type { Article } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const metadata = createPageMetadata({
-  title: "貸款知識文章｜銀行俱樂部",
-  description: "銀行俱樂部 SEO 文章列表，沉澱信貸、房貸、企業貸、文件與風險提醒內容。",
+  title: "貸款知識文章｜銀行行員俱樂部",
+  description: "銀行行員俱樂部 SEO 文章列表，沉澱信貸、房貸、企業貸、文件與風險提醒內容。",
   path: "/blog",
 });
 
@@ -118,7 +118,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             articles.map((article) => (
               <Link className="article-row" href={`/blog/${article.slug}`} key={article.id}>
                 <Image
-                  src={article.coverImageUrl || "/brand/bank_club_logo.png"}
+                  src={article.coverImageUrl || "/brand/bank_club_hero.png"}
                   alt={article.coverImageAlt || `${article.title} 封面圖`}
                   width={320}
                   height={240}
@@ -134,10 +134,10 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           ) : (
             <div className="empty-state">
               <h2>目前沒有符合的文章</h2>
-              <p>可以換一個關鍵詞，或先查看文件清單與常見 QA。</p>
+              <p>可以換一個關鍵詞，或先查看常見 QA 與免費諮詢入口。</p>
               <div className="inline-actions">
-                <Link className="outline-link" href="/documents">查看文件清單</Link>
                 <Link className="outline-link" href="/qa">查看常見 QA</Link>
+                <Link className="outline-link" href="/consultation?source_page=blog_empty">免費諮詢</Link>
               </div>
             </div>
           )}

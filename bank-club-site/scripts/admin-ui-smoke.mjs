@@ -360,16 +360,8 @@ async function run() {
     await page.goto(`${baseUrl}/admin`, { waitUntil: "networkidle" });
     const title = await page.title();
     if (!page.url().startsWith(`${baseUrl}/admin`)) fail(`admin page identity mismatch: ${page.url()}`);
-    if (!(await page.getByRole("heading", { name: "銀行俱樂部後台" }).isVisible())) {
+    if (!(await page.getByRole("heading", { name: "銀行行員俱樂部後台" }).isVisible())) {
       fail("admin login screen did not render");
-    }
-    const loginLogo = page.locator("main.admin-login img[alt='國泰人壽綠色樹形 Logo']");
-    if ((await loginLogo.count()) !== 1) {
-      fail("admin login screen should render the brand logo from the plan asset");
-    }
-    const loginLogoBox = await loginLogo.boundingBox();
-    if (!loginLogoBox || loginLogoBox.width < 70 || loginLogoBox.height < 44) {
-      fail(`admin login brand logo rendered at an unexpected size: ${loginLogoBox ? `${Math.round(loginLogoBox.width)}x${Math.round(loginLogoBox.height)}` : "missing box"}`);
     }
     if (!(await page.getByText("線索、內容、文件與上線檢查管理入口").isVisible())) {
       fail("admin login screen missing independent admin management descriptor");
@@ -691,7 +683,7 @@ async function run() {
     await page.screenshot({ path: screenshots.twoFactor, fullPage: true });
 
     await page.getByRole("button", { name: "登出" }).click();
-    await page.getByRole("heading", { name: "銀行俱樂部後台" }).waitFor({ state: "visible", timeout: 8000 });
+    await page.getByRole("heading", { name: "銀行行員俱樂部後台" }).waitFor({ state: "visible", timeout: 8000 });
     const loginInputs = await page.locator("main.admin-login input").evaluateAll((inputs) => inputs.map((input) => input.getAttribute("name")));
     if (loginInputs.length !== 1 || loginInputs[0] !== "password") {
       fail(`admin login should only render password input, got ${loginInputs.join(",")}`);
@@ -733,11 +725,9 @@ async function run() {
     );
 
     const updatedSettings = {
-      brandName: "銀行俱樂部 Smoke",
-      companyName: "銀行俱樂部顧問測試公司",
+      brandName: "銀行行員俱樂部 Smoke",
+      companyName: "銀行行員俱樂部顧問測試公司",
       officeName: "設定同步測試通訊處",
-      specialistName: `設定煙測專員 ${runId}`,
-      specialistTitle: "設定同步顧問",
       address: "235 新北市中和區設定同步路 88 號",
       phone: "02 2243 7000",
       fax: "02 2928 7000",
@@ -784,8 +774,6 @@ async function run() {
     await page.screenshot({ path: screenshots.settingsUpdated, fullPage: true });
 
     await waitForPageTexts(page, `${baseUrl}/contact?settings_smoke=${runId}`, "聯絡我們", [
-      updatedSettings.specialistName,
-      updatedSettings.specialistTitle,
       updatedSettings.companyName,
       updatedSettings.officeName,
       updatedSettings.address,
@@ -794,22 +782,12 @@ async function run() {
       updatedSettings.mobile,
       updatedSettings.email,
     ], "contact page");
-    const contactQrAlt = await page.locator("#line-qr img").getAttribute("alt");
-    if (!contactQrAlt?.includes(updatedSettings.specialistName)) {
-      fail(`contact LINE QR alt did not include updated specialist name: ${contactQrAlt || "missing"}`);
-    }
     await page.screenshot({ path: screenshots.contactSettings, fullPage: true });
 
     await waitForPageTexts(page, `${baseUrl}/success?lead_id=admin-settings-smoke-${runId}`, "已收到您的諮詢需求", [
-      updatedSettings.specialistName,
-      updatedSettings.specialistTitle,
       updatedSettings.mobile,
       updatedSettings.email,
     ], "success page");
-    const successQrAlt = await page.locator(".success-contact img").getAttribute("alt");
-    if (!successQrAlt?.includes(updatedSettings.specialistName)) {
-      fail(`success LINE QR alt did not include updated specialist name: ${successQrAlt || "missing"}`);
-    }
     await page.screenshot({ path: screenshots.successSettings, fullPage: true });
 
     await page.goto(`${baseUrl}/admin`, { waitUntil: "networkidle" });
@@ -840,8 +818,6 @@ async function run() {
       },
       verifiedTabs: ["線索管理", "文章管理", "文件資源", "帳號權限", "操作日誌", "統計儀表板", "站點設定", "上線檢查"],
       settingsSync: {
-        specialistName: updatedSettings.specialistName,
-        specialistTitle: updatedSettings.specialistTitle,
         contactPage: "/contact",
         successPage: "/success",
       },

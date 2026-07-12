@@ -5,8 +5,8 @@ import { createPageMetadata } from "@/lib/seo";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
-  title: "隱私權政策與個資告知｜銀行俱樂部",
-  description: "說明銀行俱樂部貸款諮詢資料蒐集目的、資料類別、使用方式與查詢、更正、停止利用、刪除權利。",
+  title: "隱私權政策與個資告知｜銀行行員俱樂部",
+  description: "說明銀行行員俱樂部貸款諮詢資料蒐集目的、資料類別、使用方式與查詢、更正、停止利用、刪除權利。",
   path: "/privacy",
 });
 
@@ -24,7 +24,7 @@ export default async function PrivacyPage() {
         </section>
         <section>
           <h2>蒐集資料類別</h2>
-          <p>第一階段表單蒐集姓名、手機、LINE ID、身份類型、貸款類型、期望金額、預約時段、資金用途、備註、房屋或企業初步資料、來源參數、同意時間、IP 與 user agent。</p>
+          <p>第一階段表單蒐集姓名、性別、選填的所在城市、手機、LINE ID、身份類型、貸款類型、期望金額、預約時段、資金用途、備註、房屋或企業初步資料、來源參數、同意時間、IP 與 user agent。</p>
           <p>信用貸款站內申請會在專用安全模組收取身分證正反面照片，用於專員初步確認與後續申請提醒；財力證明、銀行存摺影本、稅務文件、房屋權狀與企業報稅資料不在普通表單上傳，應先透過 LINE 與專員確認補件方式、授權通道與必要性。</p>
         </section>
         <section>

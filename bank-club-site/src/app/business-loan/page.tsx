@@ -11,7 +11,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
-  title: "企業貸款諮詢｜中小企業營運週轉、企業信用貸、廠房抵押貸｜銀行俱樂部",
+  title: "企業貸款諮詢｜中小企業營運週轉、企業信用貸、廠房抵押貸｜銀行行員俱樂部",
   description: "企業貸款分類、申請文件、審核重點與常見驳件原因整理。",
   path: "/business-loan",
 });

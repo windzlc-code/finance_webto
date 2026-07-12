@@ -1,6 +1,6 @@
-# 銀行俱樂部獨立站
+# 銀行行員俱樂部獨立站
 
-Next.js 全棧應用，覆蓋銀行俱樂部前台內容站、免費諮詢表單、後台 CRM、文章/文件管理、事件追蹤與基礎 SEO。
+Next.js 全棧應用，覆蓋銀行行員俱樂部前台內容站、免費諮詢表單、後台 CRM、文章/文件管理、事件追蹤與基礎 SEO。
 
 ## 本地啟動
 
@@ -82,7 +82,7 @@ curl -I http://127.0.0.1:3000/
 curl -I http://127.0.0.1:3000/sitemap.xml
 curl -I http://127.0.0.1:3000/robots.txt
 curl http://127.0.0.1:3000/api/health
-curl -I "http://127.0.0.1:3000/api/files/file-credit/download?source=/documents"
+curl -I "http://127.0.0.1:3000/api/files/file-credit/download?source=/consultation"
 ```
 
 後台登入後可在「上線檢查」執行完整 readiness checklist；它會檢查公開頁面、全站唯一 SEO title/description、`sitemap.xml`、`robots.txt`、`/api/health`、內鏈、外部 CTA 來源參數、必要環境變數、站點設定、內容數量、2FA 與備份紀錄。

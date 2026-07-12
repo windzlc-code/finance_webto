@@ -3,8 +3,8 @@ import { BreadcrumbJsonLd } from "@/components/StructuredData";
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
-  title: "金融風險聲明｜銀行俱樂部",
-  description: "聲明銀行俱樂部非銀行或金融機構，不保證核貸、額度、利率或撥款結果，資金用途需依真實需求與銀行規則填寫。",
+  title: "金融風險聲明｜銀行行員俱樂部",
+  description: "聲明銀行行員俱樂部非銀行或金融機構，不保證核貸、額度、利率或撥款結果，資金用途需依真實需求與銀行規則填寫。",
   path: "/risk",
 });
 

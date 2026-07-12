@@ -6,7 +6,6 @@ export async function GET() {
     const db = await readDB();
     const criticalSettings = [
       db.settings.brandName,
-      db.settings.specialistName,
       db.settings.mobile,
       db.settings.email,
       db.settings.fbGroupUrl,

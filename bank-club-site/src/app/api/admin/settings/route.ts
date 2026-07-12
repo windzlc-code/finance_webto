@@ -11,8 +11,6 @@ const editableKeys: StringSettingKey[] = [
   "brandName",
   "companyName",
   "officeName",
-  "specialistName",
-  "specialistTitle",
   "address",
   "phone",
   "fax",

@@ -11,7 +11,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
-  title: "信用貸款申請指南｜網路申辦流程、文件準備、公司優惠綁約注意事項｜銀行俱樂部",
+  title: "信用貸款申請指南｜網路申辦流程、文件準備、公司優惠綁約注意事項｜銀行行員俱樂部",
   description: "整理信用貸款資格、文件、網路申辦 SOP、資金用途風險與 LINE 一對一諮詢入口。",
   path: "/credit-loan",
 });
@@ -33,7 +33,7 @@ const creditFaqs: TrackedFaqItem[] = [
     id: "credit-income-documents",
     question: "財力證明要直接上傳到網站嗎？",
     answer: "本站信貸申請只收身分證正反面；薪轉、扣繳憑單、報稅資料等財力證明不要上傳本站，請透過 LINE 與專員確認補件方式。",
-    href: "/documents",
+    href: "/consultation?source_page=credit_income_documents",
   },
   {
     id: "credit-back-button-crash",
@@ -59,7 +59,7 @@ export default async function CreditLoanPage() {
       id: "documents-compliance",
       icon: "證",
       title: "文件 / 合規",
-      text: "本站信貸申請只上傳身分證正反面；財力證明請透過 LINE 確認。銀行俱樂部為銀行服務人員媒合與諮詢平台，不保證核貸、額度、利率或撥款結果。",
+      text: "本站信貸申請只上傳身分證正反面；財力證明請透過 LINE 確認。銀行行員俱樂部為銀行服務人員媒合與諮詢平台，不保證核貸、額度、利率或撥款結果。",
     },
   ];
   const documentGuides = [
@@ -76,7 +76,7 @@ export default async function CreditLoanPage() {
   ];
   const applicationSteps = [
     "準備身分證正反面，確認照片清楚、完整、無反光。",
-    "填寫姓名、手機、LINE ID、身份類型與預約時段。",
+    "填寫姓名、性別、手機、LINE ID、身份類型與預約時段；所在城市可選填。",
     "確認申請金額 700 萬、申請年限 10 年、案件來源公司優惠貸款、適用綁約方案。",
     "依真實需求選擇資金用途；不確定時選「先諮詢專員」。",
     "上傳身分證正反面，財力證明改用 LINE 與專員確認。",

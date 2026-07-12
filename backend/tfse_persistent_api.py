@@ -570,6 +570,17 @@ class Store:
                     id, display_name, phone, line_id, loan_type, message, status,
                     source_page, payload_json, submitted_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    display_name = excluded.display_name,
+                    phone = excluded.phone,
+                    line_id = excluded.line_id,
+                    loan_type = excluded.loan_type,
+                    message = excluded.message,
+                    status = excluded.status,
+                    source_page = excluded.source_page,
+                    payload_json = excluded.payload_json,
+                    submitted_at = excluded.submitted_at,
+                    updated_at = excluded.updated_at
                 """,
                 (
                     lead_id,

@@ -3,8 +3,8 @@ import { BreadcrumbJsonLd } from "@/components/StructuredData";
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
-  title: "服務條款｜銀行俱樂部",
-  description: "銀行俱樂部服務條款，說明貸款資訊整理、資格初步評估、文件提醒與專員諮詢媒合的使用規範。",
+  title: "服務條款｜銀行行員俱樂部",
+  description: "銀行行員俱樂部服務條款，說明貸款資訊整理、資格初步評估、文件提醒與專員諮詢媒合的使用規範。",
   path: "/terms",
 });
 
@@ -15,7 +15,7 @@ export default function TermsPage() {
         <h1>服務條款</h1>
         <section>
           <h2>服務範圍</h2>
-          <p>銀行俱樂部提供貸款資訊整理、資格初步評估、文件準備提醒、來源導流與專員諮詢媒合。</p>
+          <p>銀行行員俱樂部提供貸款資訊整理、資格初步評估、文件準備提醒、來源導流與專員諮詢媒合。</p>
           <p>網站內容為一般資訊與諮詢輔助，不構成銀行核貸承諾、正式授信建議、投資建議或法律意見。</p>
         </section>
         <section>

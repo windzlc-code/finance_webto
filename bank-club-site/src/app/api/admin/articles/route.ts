@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       category,
       excerpt: body.excerpt?.trim() || "",
       body: body.body?.trim() || "",
-      coverImageUrl: body.coverImageUrl?.trim() || "/brand/bank_club_logo.png",
+      coverImageUrl: body.coverImageUrl?.trim() || "/brand/bank_club_hero.png",
       coverImageAlt: body.coverImageAlt?.trim() || `${title} 封面圖`,
       seoTitle: body.seoTitle?.trim() || title,
       seoDescription: body.seoDescription?.trim() || body.excerpt?.trim() || "",

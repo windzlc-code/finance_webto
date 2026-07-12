@@ -51,7 +51,7 @@ function renderSvg(asset: (typeof materialAssets)[number]) {
   <line x1="96" y1="344" x2="984" y2="344" stroke="${asset.accent}" stroke-opacity="0.18" stroke-width="2"/>
   ${points}
   <rect x="96" y="890" width="888" height="92" rx="28" fill="${asset.accent}" opacity="0.09"/>
-  <text x="126" y="932" class="fine">銀行俱樂部提供貸款諮詢與文件整理，非銀行或金融機構。</text>
+  <text x="126" y="932" class="fine">銀行行員俱樂部提供貸款諮詢與文件整理，非銀行或金融機構。</text>
   <text x="126" y="965" class="fine">實際核准、額度、利率、年限與撥款結果以銀行最終審核為準。</text>
 </svg>`;
 }

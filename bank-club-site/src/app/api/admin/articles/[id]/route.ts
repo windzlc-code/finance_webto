@@ -105,7 +105,7 @@ export async function PATCH(request: Request, { params }: Params) {
     }
     if (typeof body.excerpt === "string") item.excerpt = body.excerpt.trim();
     if (typeof body.body === "string") item.body = body.body.trim();
-    if (typeof body.coverImageUrl === "string") item.coverImageUrl = body.coverImageUrl.trim() || "/brand/bank_club_logo.png";
+    if (typeof body.coverImageUrl === "string") item.coverImageUrl = body.coverImageUrl.trim() || "/brand/bank_club_hero.png";
     if (typeof body.coverImageAlt === "string") item.coverImageAlt = body.coverImageAlt.trim() || `${item.title} 封面圖`;
     if (typeof body.seoTitle === "string") item.seoTitle = body.seoTitle.trim() || item.title;
     if (typeof body.seoDescription === "string") item.seoDescription = body.seoDescription.trim() || item.excerpt;

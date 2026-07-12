@@ -129,7 +129,6 @@ async function run() {
       "public:/house-loan",
       "public:/business-loan",
       "public:/application-flow",
-      "public:/documents",
       "public:/qa",
       "public:/consultation",
       "public:/facebook",

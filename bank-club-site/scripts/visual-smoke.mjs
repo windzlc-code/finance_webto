@@ -13,7 +13,7 @@ const viewports = [
 ];
 
 const requiredTexts = [
-  "銀行俱樂部",
+  "銀行行員俱樂部",
   "一對一銀行專員",
   "信貸 / 房貸 / 企業貸款",
   "立即免費諮詢",
@@ -79,14 +79,14 @@ const subpageSmokeCases = [
     name: "credit-loan",
     path: "/credit-loan",
     navLabel: "信用貸款",
-    requiredTexts: ["信用貸款", "方案、利率與費用揭露", "總費用年百分率不等於貸款利率", "站內信貸網路申請", "身分證正面", "身分證反面", "財力證明請傳 LINE", "信貸常見問題"],
+    requiredTexts: ["信用貸款", "方案、利率與費用揭露", "總費用年百分率不等於貸款利率", "站內信貸網路申請", "所在城市", "身分證正面", "身分證反面", "財力證明請傳 LINE", "信貸常見問題"],
     selectors: [".page-hero", ".financial-disclosure", ".loan-tabs", "#credit-application", ".lead-form", ".faq-list"],
   },
   {
     name: "house-loan",
     path: "/house-loan",
     navLabel: "房屋貸款",
-    requiredTexts: ["房屋貸款", "方案、利率與費用揭露", "總費用年百分率不等於貸款利率", "房屋貸款申請表", "房貸類型", "房屋縣市", "房貸月付試算", "總還款約"],
+    requiredTexts: ["房屋貸款", "方案、利率與費用揭露", "總費用年百分率不等於貸款利率", "房屋貸款申請表", "所在城市", "房貸類型", "房屋縣市", "房貸月付試算", "總還款約"],
     selectors: [".page-hero", ".financial-disclosure", ".loan-tabs", "#house-application", ".calculator", ".lead-form"],
     calculator: true,
   },
@@ -94,7 +94,7 @@ const subpageSmokeCases = [
     name: "business-loan",
     path: "/business-loan",
     navLabel: "企業貸款",
-    requiredTexts: ["企業貸款", "方案、利率與費用揭露", "總費用年百分率不等於貸款利率", "企業貸款申請表", "企業貸款類型", "公司 / 商號名稱", "報稅資料、存摺、執照"],
+    requiredTexts: ["企業貸款", "方案、利率與費用揭露", "總費用年百分率不等於貸款利率", "企業貸款申請表", "所在城市", "企業貸款類型", "公司 / 商號名稱", "報稅資料、存摺、執照"],
     selectors: [".page-hero", ".financial-disclosure", ".loan-tabs", "#business-application", ".lead-form"],
   },
   {
@@ -104,12 +104,6 @@ const subpageSmokeCases = [
     requiredTexts: ["申辦流程教學", "線上或表單填寫需求", "填寫需求", "預約初評", "跟進案件", "申請前檢查清單"],
     selectors: [".page-hero", ".timeline", ".timeline .step-cta", ".flow-guide-grid", ".flow-guide-card"],
     stepCtaCount: 6,
-  },
-  {
-    name: "documents",
-    path: "/documents",
-    requiredTexts: ["銀行資格與文件總整理", "常見資格", "常見文件", "首批圖文素材"],
-    selectors: [".page-hero", ".compare-table", ".card-grid", ".material-grid"],
   },
   {
     name: "qa",
@@ -127,13 +121,13 @@ const subpageSmokeCases = [
   {
     name: "contact",
     path: "/contact",
-    requiredTexts: ["聯絡我們", "國泰金控 / 國泰人壽", "人身 / 財產保險業務員", "02 2243 7127", "0972 727 690", "yuanchin.liang@gmail.com", "LINE 一對一諮詢", "FB 銀行俱樂部社團"],
+    requiredTexts: ["聯絡我們", "國泰金控 / 國泰人壽", "人身 / 財產保險業務員", "09-8584-7613", "xmu6611@gmail.com", "g0985847613@gmail.com", "LINE 一對一諮詢", "FB 銀行行員俱樂部社團"],
     selectors: [".page-hero", ".contact-page"],
   },
   {
     name: "facebook",
     path: "/facebook",
-    requiredTexts: ["FB 銀行俱樂部社團", "熱門文章入口", "常見社團問題", "從社團討論進入一對一諮詢"],
+    requiredTexts: ["FB 銀行行員俱樂部社團", "熱門文章入口", "常見社團問題", "從社團討論進入一對一諮詢"],
     selectors: [".page-hero", ".card-grid", ".article-card-link", ".warning-block"],
   },
 ];
@@ -368,7 +362,7 @@ async function assertHomeReferenceComposition(page, name) {
     const panelTopSpread = Math.max(...servicePanels.map((panel) => panel.top)) - Math.min(...servicePanels.map((panel) => panel.top));
     if (panelTopSpread > 4) fail(`${name}: service panels should align in a single desktop row`, [`spread=${Math.round(panelTopSpread)}px`]);
   } else {
-    const expectedMobileNavLabels = ["首頁", "貸款服務", "申請流程教學", "銀行資格與文件總整理", "常見 QA", "免費諮詢預約", "FB 銀行俱樂部社團"];
+    const expectedMobileNavLabels = ["首頁", "貸款服務", "申請流程教學", "常見 QA", "免費諮詢預約", "FB 銀行行員俱樂部社團"];
     if (navLinks.map((link) => link.text).join("|") !== expectedMobileNavLabels.join("|")) {
       fail(`${name}: mobile header nav should keep the plan section 4.1 labels`, [`got=${navLinks.map((link) => link.text).join(", ")}`]);
     }
@@ -450,7 +444,7 @@ async function assertHomepage(page, name) {
   }
 
   const desktopNavLabels = await page.locator(".main-nav > a, .main-nav > details > summary").evaluateAll((items) => items.map((item) => item.textContent?.trim() || ""));
-  const expectedDesktopNavLabels = ["首頁", "貸款服務", "申請流程教學", "銀行資格與文件總整理", "常見 QA", "免費諮詢預約", "FB 銀行俱樂部社團"];
+  const expectedDesktopNavLabels = ["首頁", "貸款服務", "申請流程教學", "常見 QA", "免費諮詢預約", "FB 銀行行員俱樂部社團"];
   if (name === "desktop" && desktopNavLabels.join("|") !== expectedDesktopNavLabels.join("|")) {
     fail(`${name}: header nav should match plan section 4.1 labels, got ${desktopNavLabels.join(", ")}`);
   }
