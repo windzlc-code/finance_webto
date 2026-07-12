@@ -4,7 +4,6 @@ import { PublicShell } from "@/components/PublicLayout";
 import { EventLink } from "@/components/EventLink";
 import { BreadcrumbJsonLd } from "@/components/StructuredData";
 import { fbHref } from "@/lib/fb-links";
-import { lineHref } from "@/lib/line-links";
 import { createPageMetadata } from "@/lib/seo";
 import { readDB } from "@/lib/store";
 
@@ -17,7 +16,6 @@ export const metadata = createPageMetadata({
 export default async function ContactPage() {
   await connection();
   const { settings } = await readDB();
-  const contactLineHref = lineHref(settings.lineUrl, { sourcePage: "contact" });
   const contactFbHref = fbHref(settings.fbGroupUrl, { sourcePage: "contact" });
   const showMobile = settings.mobile && settings.mobile !== settings.phone;
   return (
@@ -28,14 +26,16 @@ export default async function ContactPage() {
           <p>LINE、電話與 Email 諮詢入口。</p>
         </section>
         <section className="contact-page content-section">
-          <div className="contact-card">
-            <p>{settings.address}</p>
-            <p>
-              電話 {settings.phone}
-              {settings.fax ? `｜傳真 ${settings.fax}` : ""}
-            </p>
-            {showMobile ? <p>行動 {settings.mobile}</p> : null}
-            <p>Email {settings.email}</p>
+          <div className="contact-card contact-details-card">
+            <p className="contact-address">{settings.address}</p>
+            <div className="contact-detail-list">
+              <p>
+                電話 {settings.phone}
+                {settings.fax ? `｜傳真 ${settings.fax}` : ""}
+              </p>
+              {showMobile ? <p>行動 {settings.mobile}</p> : null}
+              <p>Email {settings.email}</p>
+            </div>
           </div>
           <div className="contact-card" id="line-qr">
             <h2>LINE 一對一諮詢</h2>
@@ -46,8 +46,8 @@ export default async function ContactPage() {
               <Image src="/brand/bank_club_wechat_qr.png" alt="微信諮詢 QR Code" width={176} height={176} unoptimized />
             </div>
             <div className="hero-actions">
-              <EventLink className="primary-btn" href={contactLineHref} eventName="contact_line_click" target={contactLineHref.startsWith("http") ? "_blank" : undefined}>
-                開啟 LINE 諮詢
+              <EventLink className="primary-btn" href="/#loan-services" eventName="contact_loan_services_click" metadata={{ sourcePage: "contact", destination: "/#loan-services" }}>
+                開始貸款服務
               </EventLink>
               <EventLink className="secondary-btn" href="/consultation?source_page=contact" eventName="contact_form_click">
                 填寫免費預約

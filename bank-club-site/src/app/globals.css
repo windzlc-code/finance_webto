@@ -1482,6 +1482,27 @@ svg {
   margin: 0;
 }
 
+.contact-details-card {
+  align-self: start;
+  gap: 16px;
+  padding: 26px 28px;
+}
+
+.contact-address {
+  color: #172334 !important;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.55 !important;
+  overflow-wrap: anywhere;
+}
+
+.contact-detail-list {
+  border-top: 1px solid #ece8dd;
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+}
+
 .contact-qr-row {
   align-items: center;
   display: flex;
