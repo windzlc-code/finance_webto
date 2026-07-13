@@ -22,6 +22,31 @@
         }
     }
 
+    function bindNavigationFallback() {
+        if (document.documentElement.hasAttribute("data-tfse-valuation-navigation")) return;
+        document.documentElement.setAttribute("data-tfse-valuation-navigation", "true");
+
+        // Keep the two valuation entries usable even when a theme plugin consumes
+        // a link click later in the event chain.
+        document.addEventListener("click", function (event) {
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            var target = event.target && event.target.closest
+                ? event.target.closest("[data-property-valuation-link], #" + BUTTON_ID)
+                : null;
+            if (!target || target.target === "_blank" || target.hasAttribute("download")) return;
+
+            var href = target.href;
+            if (!href) return;
+            try {
+                var url = new URL(href, window.location.href);
+                if (url.origin !== window.location.origin || url.pathname.indexOf("/valuation/") !== 0) return;
+                window.location.assign(url.href);
+            } catch (error) {
+                window.location.assign(href);
+            }
+        }, true);
+    }
+
     function applyLinks(config) {
         var valuation = (config && config.property_valuation) || {};
         var url = valuation.url || DEFAULT_URL;
@@ -55,6 +80,7 @@
             });
     }
 
+    bindNavigationFallback();
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", loadConfig);
     else loadConfig();
 }());
