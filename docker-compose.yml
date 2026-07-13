@@ -30,6 +30,13 @@ services:
       - backadmin-data:/data
     restart: unless-stopped
 
+  valuation:
+    container_name: valuation
+    build:
+      context: ../完整版
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
   gateway:
     container_name: gateway
     image: nginx:1.27-alpine
@@ -37,6 +44,7 @@ services:
       - finance
       - bankclub
       - backadmin
+      - valuation
     ports:
       - "8080:8080"
     volumes:

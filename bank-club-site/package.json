@@ -22,7 +22,8 @@
     "articles:smoke": "node scripts/articles-smoke.mjs",
     "form:smoke": "node scripts/form-smoke.mjs",
     "admin-deeplink:smoke": "node scripts/admin-deeplink-smoke.mjs",
-    "admin-ui:smoke": "node scripts/admin-ui-smoke.mjs"
+    "admin-ui:smoke": "node scripts/admin-ui-smoke.mjs",
+    "loan-comparison:smoke": "node scripts/loan-comparison-smoke.mjs"
   },
   "dependencies": {
     "next": "16.2.9",

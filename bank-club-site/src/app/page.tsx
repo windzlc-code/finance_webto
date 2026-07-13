@@ -6,7 +6,7 @@ import { PublicShell } from "@/components/PublicLayout";
 import { BreadcrumbJsonLd, OrganizationJsonLd } from "@/components/StructuredData";
 import { lineHref } from "@/lib/line-links";
 import { createPageMetadata } from "@/lib/seo";
-import { processSteps, serviceCards } from "@/lib/site-data";
+import { processSteps, propertyValuationUrl, serviceCards } from "@/lib/site-data";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
@@ -85,20 +85,31 @@ export default async function Home() {
             <Icon name="mail" />
             <span>{settings.email}</span>
           </div>
-          <EventLink
-            className="qr-mini subtle-contact-link"
-            href={homeLineHref}
-            eventName="home_line_click"
-            target={homeLineHref.startsWith("http") ? "_blank" : undefined}
-            metadata={{ sourceSection: "contact_strip" }}
-          >
-            <span>
-              需要確認貸款類型？
-              <br />
-              先用 LINE 補充需求
-            </span>
-            <Image src={settings.lineQrCodeUrl} alt="LINE 一對一諮詢 QR Code" width={74} height={74} unoptimized />
-          </EventLink>
+          <div className="contact-actions">
+            <EventLink
+              className="qr-mini subtle-contact-link"
+              href={homeLineHref}
+              eventName="home_line_click"
+              target={homeLineHref.startsWith("http") ? "_blank" : undefined}
+              metadata={{ sourceSection: "contact_strip" }}
+            >
+              <span>
+                需要確認貸款類型？
+                <br />
+                先用 LINE 補充需求
+              </span>
+              <Image src={settings.lineQrCodeUrl} alt="LINE 一對一諮詢 QR Code" width={74} height={74} unoptimized />
+            </EventLink>
+            <EventLink
+              className="property-valuation-inline"
+              href={propertyValuationUrl}
+              eventName="property_valuation_home_click"
+              metadata={{ sourceSection: "home_contact_strip" }}
+            >
+              <Icon name="home" />
+              不動產估價工具
+            </EventLink>
+          </div>
         </section>
 
         <section className="content-section">

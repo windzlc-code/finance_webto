@@ -14,6 +14,7 @@ export const metadata = createPageMetadata({
 const serviceLinks = [
   { href: "/", label: "首頁", note: "信貸、房貸、企業貸與免費評估入口" },
   { href: "/credit-loan", label: "信用貸款", note: "網路申辦流程、資格、文件與資金用途提醒" },
+  { href: "/loan-comparison", label: "貸款方案比較", note: "銀行利率、費用、APR、資格與方案明細比較" },
   { href: "/house-loan", label: "房屋貸款", note: "增貸、轉增貸、二胎房貸與房貸試算" },
   { href: "/business-loan", label: "企業貸款", note: "營運週轉、企業信用貸與文件準備" },
 ];

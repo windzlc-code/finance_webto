@@ -6,6 +6,7 @@ import { BreadcrumbJsonLd } from "@/components/StructuredData";
 import { fbHref } from "@/lib/fb-links";
 import { lineHref } from "@/lib/line-links";
 import { createPageMetadata } from "@/lib/seo";
+import { propertyValuationUrl } from "@/lib/site-data";
 import { readDB } from "@/lib/store";
 
 export const metadata = createPageMetadata({
@@ -50,6 +51,9 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
             </EventLink>
             <EventLink className="secondary-btn" href={successFbHref} eventName="success_fb_click" leadId={params.lead_id || ""} target="_blank">
               加入 FB 社團
+            </EventLink>
+            <EventLink className="secondary-btn" href={propertyValuationUrl} eventName="property_valuation_success_click" leadId={params.lead_id || ""}>
+              不動產估價工具
             </EventLink>
           </div>
           <div className="success-notice">

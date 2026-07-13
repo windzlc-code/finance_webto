@@ -14,6 +14,7 @@ type Props = {
   leadId?: string;
   confirmMessage?: string;
   ariaLabel?: string;
+  prefetch?: boolean;
 };
 
 function currentSourceChannel() {
@@ -33,7 +34,7 @@ function currentSourceChannel() {
   }
 }
 
-export function EventLink({ href, eventName, className, children, target, metadata, leadId, confirmMessage, ariaLabel }: Props) {
+export function EventLink({ href, eventName, className, children, target, metadata, leadId, confirmMessage, ariaLabel, prefetch }: Props) {
   function track(event?: MouseEvent<HTMLAnchorElement>) {
     if (confirmMessage && !window.confirm(confirmMessage)) {
       event?.preventDefault();
@@ -95,6 +96,7 @@ export function EventLink({ href, eventName, className, children, target, metada
       aria-label={ariaLabel}
       data-event-name={eventName}
       data-confirm-message={confirmMessage}
+      prefetch={prefetch}
       onClick={track}
     >
       {children}

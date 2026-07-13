@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/credit-loan",
     "/house-loan",
     "/business-loan",
+    "/loan-comparison",
     "/application-flow",
     "/qa",
     "/consultation",

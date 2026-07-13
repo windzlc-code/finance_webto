@@ -2,6 +2,7 @@ import type { Article, ArticleCategory, ArticleComplianceFlags, FileResource, Le
 
 export const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const allowPublicIndexing = process.env.BANKCLUB_ALLOW_INDEXING === "true";
+export const propertyValuationUrl = process.env.NEXT_PUBLIC_PROPERTY_VALUATION_URL || "/valuation/?from=bank-club";
 
 export const settings: SiteSettings = {
   brandName: "銀行俱樂部",

@@ -951,6 +951,10 @@
         return "<a data-line-cta=\"lead-success\" class=\"btn btn-primary btn-hover-secondary mt-3\" href=\"" + escapeAttr(line.url) + "\"" + target + ">" + escapeHtml(line.label) + "</a>";
     }
 
+    function renderValuationCta() {
+        return "<a data-property-valuation-link data-property-valuation-source=\"tfse\" class=\"tfse-dialog-link\" href=\"/valuation/?from=tfse\">不動產估價工具</a>";
+    }
+
     function bindLeadForm() {
         var form = document.getElementById("contact-form");
         if (!form || form === boundForm) return;
@@ -1125,7 +1129,7 @@
                 showLeadDialog({
                     title: "已提交成功",
                     body: successHtml,
-                    actions: renderLineCta(line).replace("btn btn-primary btn-hover-secondary mt-3", "tfse-dialog-primary")
+                    actions: renderLineCta(line).replace("btn btn-primary btn-hover-secondary mt-3", "tfse-dialog-primary") + renderValuationCta()
                 });
                 startCooldown(form, message, successHtml, "success", now, { silentInline: true });
 
