@@ -95,7 +95,12 @@ _load_local_env(ROOT / ".env.local")
 
 
 def _ssl_context() -> ssl.SSLContext:
-    return ssl.create_default_context()
+    context = ssl.create_default_context()
+    # The official MOI endpoint currently omits a certificate extension that
+    # Python 3.12/OpenSSL strict mode requires. Keep normal CA and hostname
+    # validation, but allow this known-compatible public endpoint to load.
+    context.verify_flags &= ~getattr(ssl, "VERIFY_X509_STRICT", 0)
+    return context
 
 
 def _official_headers() -> dict[str, str]:
