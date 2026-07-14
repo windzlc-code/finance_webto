@@ -534,12 +534,13 @@ class Store:
     def telegram_settings_public(self) -> dict:
         row = self._telegram_row()
         has_token = bool(self._telegram_decrypt(row["bot_token_encrypted"] or ""))
+        has_chat_id = bool(str(row["chat_id"] or "").strip())
         return {
             "enabled": bool(row["enabled"]),
-            "configured": bool(row["enabled"] and has_token and row["chat_id"]),
+            "configured": bool(row["enabled"] and has_token and has_chat_id),
             "token_configured": has_token,
             "token_masked": mask_secret(self._telegram_decrypt(row["bot_token_encrypted"] or "")),
-            "chat_id": row["chat_id"] or "",
+            "chat_id_configured": has_chat_id,
             "chat_id_masked": mask_secret(row["chat_id"] or "", 3, 3),
             "updated_at": row["updated_at"] or "",
             "updated_by_role": row["updated_by_role"] or "",
@@ -551,10 +552,12 @@ class Store:
     def update_telegram_settings(self, payload: dict, actor_role: str) -> dict:
         current = self._telegram_row()
         current_token = self._telegram_decrypt(current["bot_token_encrypted"] or "")
+        current_chat_id = str(current["chat_id"] or "").strip()
         token = str(payload.get("bot_token") or "").strip()
-        chat_id = str(payload.get("chat_id") if "chat_id" in payload else current["chat_id"] or "").strip()
+        requested_chat_id = str(payload.get("chat_id") or "").strip()
         enabled = as_bool(payload.get("enabled"))
         clear_token = as_bool(payload.get("clear_token"))
+        clear_chat_id = as_bool(payload.get("clear_chat_id"))
         if clear_token:
             token = ""
         elif token:
@@ -562,6 +565,14 @@ class Store:
                 raise ValueError("telegram_bot_token_invalid")
         else:
             token = current_token
+        if clear_chat_id:
+            chat_id = ""
+        elif requested_chat_id:
+            chat_id = requested_chat_id
+        else:
+            # A blank input means "keep the stored value". The browser only
+            # receives its masked form and must not need to resend it.
+            chat_id = current_chat_id
         if chat_id and not TELEGRAM_CHAT_ID_RE.fullmatch(chat_id):
             raise ValueError("telegram_chat_id_invalid")
         if enabled and (not token or not chat_id):

@@ -160,8 +160,10 @@ def main() -> int:
                 {"enabled": True, "bot_token": telegram_token, "chat_id": "-1001234567890"},
                 csrf_token=csrf_token,
             ).get("settings") or {}
-            if not telegram_settings.get("configured") or telegram_settings.get("chat_id") != "-1001234567890":
+            if not telegram_settings.get("configured") or telegram_settings.get("chat_id_masked") != "-10…890":
                 raise AssertionError(f"telegram settings were not persisted: {telegram_settings}")
+            if "chat_id" in telegram_settings:
+                raise AssertionError("telegram chat id leaked through the public settings response")
             if telegram_token in json.dumps(telegram_settings, ensure_ascii=False):
                 raise AssertionError("telegram token leaked through the public settings response")
             if telegram_token.encode("utf-8") in db_path.read_bytes():
@@ -175,19 +177,26 @@ def main() -> int:
             # not merely the in-memory HTTP server state.
             from backend.tfse_persistent_api import Store
             reopened_telegram = Store(db_path).telegram_settings_public()
-            if not reopened_telegram.get("configured") or reopened_telegram.get("chat_id") != "-1001234567890":
+            if not reopened_telegram.get("configured") or reopened_telegram.get("chat_id_masked") != "-10…890":
                 raise AssertionError(f"telegram settings did not survive Store reopen: {reopened_telegram}")
 
-            disabled_telegram = request_json(
+            # The admin only receives masked values. Saving an unrelated
+            # setting with an empty Chat ID must retain the stored destination.
+            retained_telegram = request_json(
                 opener,
                 base_url,
                 "POST",
                 "/api/admin/telegram/settings",
-                {"enabled": "false", "bot_token": "", "chat_id": "-1001234567890"},
+                {"enabled": "false", "bot_token": "", "chat_id": ""},
                 csrf_token=csrf_token,
             ).get("settings") or {}
-            if disabled_telegram.get("enabled") is not False or not disabled_telegram.get("token_configured"):
-                raise AssertionError(f"telegram boolean/token retention failed: {disabled_telegram}")
+            if (
+                retained_telegram.get("enabled") is not False
+                or not retained_telegram.get("token_configured")
+                or not retained_telegram.get("chat_id_configured")
+                or retained_telegram.get("chat_id_masked") != "-10…890"
+            ):
+                raise AssertionError(f"telegram masked settings were not retained: {retained_telegram}")
 
             leads = request_json(opener, base_url, "GET", "/api/admin/leads")
             if not any(item.get("id") == "lead_smoke_001" for item in leads.get("items", [])):

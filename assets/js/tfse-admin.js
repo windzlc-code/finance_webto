@@ -316,7 +316,7 @@
     var productSourceMode = "static";
     var articleSourceMode = "static";
     var publicFeedbackItemsCache = [];
-    var telegramIntegration = { mode: "unavailable", settings: {}, items: [], loading: false };
+    var telegramIntegration = { mode: "unavailable", settings: {}, items: [], loading: false, operation: "", message: "", error: "" };
     var editingProductId = "";
     var editingArticleId = "";
     var editingFaqId = "";
@@ -808,27 +808,36 @@
 
     function loadTelegramIntegration() {
         if (!isAuthenticated() || authSource() !== "api" || !window.TFSEApi || !window.TFSEApi.getTelegramSettings) {
-            telegramIntegration = { mode: "unavailable", settings: {}, items: [], loading: false };
+            telegramIntegration = Object.assign({}, telegramIntegration, { mode: "unavailable", settings: {}, items: [], loading: false });
             return Promise.resolve(telegramIntegration);
         }
+        var previous = telegramIntegration || {};
         telegramIntegration.loading = true;
-        return Promise.all([
-            window.TFSEApi.getTelegramSettings(),
-            window.TFSEApi.listTelegramNotifications ? window.TFSEApi.listTelegramNotifications() : Promise.resolve({ items: [] })
-        ]).then(function (results) {
-            telegramIntegration = {
-                mode: results[0].mode || "api",
-                settings: results[0].settings || {},
-                items: results[1].items || [],
-                loading: false
-            };
-            if (visualConsoleState.tab === "settings") renderVisualConsole();
-            return telegramIntegration;
+        return window.TFSEApi.getTelegramSettings().then(function (settingsResult) {
+            telegramIntegration = Object.assign({}, previous, {
+                mode: settingsResult.mode || "api",
+                settings: settingsResult.settings || {},
+                items: previous.items || [],
+                loading: false,
+                error: ""
+            });
+            if (!window.TFSEApi.listTelegramNotifications) return telegramIntegration;
+            return window.TFSEApi.listTelegramNotifications().then(function (notificationResult) {
+                telegramIntegration.items = notificationResult.items || [];
+                return telegramIntegration;
+            }).catch(function (error) {
+                // A history read failure must never erase a successfully read
+                // configuration or leave the controls in a pending state.
+                telegramIntegration.error = error && error.message ? "通知紀錄讀取失敗：" + error.message : "通知紀錄讀取失敗";
+                return telegramIntegration;
+            });
         }).catch(function (error) {
-            telegramIntegration.loading = false;
+            telegramIntegration = Object.assign({}, previous, { loading: false });
             telegramIntegration.error = error && error.message ? error.message : "telegram_settings_load_failed";
-            if (visualConsoleState.tab === "settings") renderVisualConsole();
             return telegramIntegration;
+        }).then(function (result) {
+            if (visualConsoleState.tab === "settings") renderVisualConsole();
+            return result;
         });
     }
 
@@ -9277,7 +9286,7 @@
         var settings = state.settings || {};
         var isSuperAdmin = currentRole() === "super_admin";
         var disabled = isSuperAdmin ? "" : " disabled";
-        var status = state.loading ? "讀取設定中" : (settings.configured ? "已啟用並會自動通知" : (settings.token_configured ? "Token 已保存，尚未啟用" : "尚未設定"));
+        var status = state.operation === "saving" ? "儲存中" : (state.operation === "testing" ? "測試發送中" : (settings.configured ? "已啟用並會自動通知" : (settings.token_configured ? "Token 已保存，尚未啟用" : "尚未設定")));
         var recent = (state.items || []).slice(0, 5);
         var statusLabel = function (value) {
             return { queued: "排隊中", sent: "已送達", failed: "發送失敗" }[value] || value || "未送出";
@@ -9287,11 +9296,14 @@
             "<div class=\"tfse-visual-telegram-head\"><div><span class=\"tfse-visual-eyebrow\">Telegram Bot</span><h4>表單即時通知</h4><p>金融站與 Bank Club 的訪客表單會先入庫，再由伺服器發送到指定 Chat ID。Bot Token 不會顯示或傳到前端。</p></div><span class=\"tfse-visual-telegram-status" + (settings.configured ? " is-ready" : "") + "\">" + escapeHtml(status) + "</span></div>",
             "<form class=\"tfse-visual-telegram-form\" data-visual-telegram-settings>",
             "<label class=\"tfse-visual-telegram-toggle\"><input type=\"checkbox\" name=\"enabled\"" + (settings.enabled ? " checked" : "") + disabled + "><span>啟用新表單 Telegram 通知</span></label>",
-            "<label><span>Bot Token</span><input type=\"password\" name=\"bot_token\" autocomplete=\"new-password\" placeholder=\"" + escapeHtml(settings.token_configured ? "已保存 " + (settings.token_masked || "") + "；留空代表不更換" : "由 BotFather 取得的 Token") + "\"" + disabled + "></label>",
-            "<label><span>接收 Chat ID / 群組 ID</span><input type=\"text\" name=\"chat_id\" value=\"" + escapeHtml(settings.chat_id || "") + "\" placeholder=\"例如 -1001234567890 或 @channelname\"" + disabled + "></label>",
+            "<label><span>Bot Token</span><input type=\"password\" name=\"bot_token\" autocomplete=\"new-password\" placeholder=\"" + escapeHtml(settings.token_configured ? "已儲存：" + (settings.token_masked || "已設定") + "；留空不更換" : "由 BotFather 取得的 Token") + "\"" + disabled + "></label>",
+            "<label><span>接收 Chat ID / 群組 ID</span><input type=\"text\" name=\"chat_id\" autocomplete=\"off\" placeholder=\"" + escapeHtml(settings.chat_id_configured ? "已儲存：" + (settings.chat_id_masked || "已設定") + "；留空不更換" : "例如 -1001234567890 或 @channelname") + "\"" + disabled + "></label>",
             "<label class=\"tfse-visual-telegram-clear\"><input type=\"checkbox\" name=\"clear_token\"" + disabled + "><span>清除目前儲存的 Bot Token</span></label>",
+            "<label class=\"tfse-visual-telegram-clear\"><input type=\"checkbox\" name=\"clear_chat_id\"" + disabled + "><span>清除目前儲存的 Chat ID</span></label>",
+            (settings.token_configured || settings.chat_id_configured) ? "<div class=\"tfse-visual-telegram-saved\"><span>目前保存</span><b>Bot Token：" + escapeHtml(settings.token_configured ? (settings.token_masked || "已設定") : "未設定") + "</b><b>Chat ID：" + escapeHtml(settings.chat_id_configured ? (settings.chat_id_masked || "已設定") : "未設定") + "</b></div>" : "",
             "<div class=\"tfse-visual-telegram-actions\"><button type=\"submit\"" + disabled + ">儲存連線設定</button><button type=\"button\" class=\"is-secondary\" data-visual-telegram-test" + disabled + ">發送測試訊息</button></div>",
             !isSuperAdmin ? "<p class=\"tfse-visual-telegram-note\">僅 Super Admin 能儲存 Token、變更接收 Chat ID 或測試發送。</p>" : "",
+            state.message ? "<p class=\"tfse-visual-telegram-note" + (state.operation === "error" ? " is-error" : " is-success") + "\">" + escapeHtml(state.message) + "</p>" : "",
             state.error ? "<p class=\"tfse-visual-telegram-note is-error\">操作失敗：" + escapeHtml(state.error) + "</p>" : "",
             settings.last_test_at ? "<p class=\"tfse-visual-telegram-note\">最近測試：" + escapeHtml(formatDate(settings.last_test_at)) + " ｜ " + escapeHtml(settings.last_test_status || "") + (settings.last_error ? " ｜ " + escapeHtml(settings.last_error) : "") + "</p>" : "",
             "</form>",
@@ -10434,14 +10446,20 @@
             var telegramTestButton = event.target.closest("[data-visual-telegram-test]");
             if (telegramTestButton) {
                 if (!window.TFSEApi || !window.TFSEApi.sendTelegramTest) return;
-                telegramTestButton.disabled = true;
-                telegramTestButton.textContent = "傳送中…";
-            window.TFSEApi.sendTelegramTest().then(function (result) {
-                telegramIntegration.settings = result.settings || telegramIntegration.settings;
+                telegramIntegration.operation = "testing";
+                telegramIntegration.message = "正在向已保存的 Chat ID 發送測試訊息…";
                 telegramIntegration.error = "";
+                renderVisualConsole();
+                window.TFSEApi.sendTelegramTest().then(function (result) {
+                telegramIntegration.settings = result.settings || telegramIntegration.settings;
+                telegramIntegration.operation = result.status === "sent" ? "success" : "error";
+                telegramIntegration.message = result.status === "sent" ? "測試訊息已送達 Telegram。" : "測試訊息未送達，請查看錯誤狀態。";
+                telegramIntegration.error = result.status === "sent" ? "" : (result.error || "telegram_test_failed");
                 addAudit("telegram_test", result.status || "unknown");
                     return loadTelegramIntegration();
                 }).catch(function (error) {
+                    telegramIntegration.operation = "error";
+                    telegramIntegration.message = "測試發送失敗，設定仍保留在伺服器。";
                     telegramIntegration.error = error && error.message ? error.message : "telegram_test_failed";
                     renderVisualConsole();
                 });
@@ -10511,22 +10529,26 @@
             event.preventDefault();
             if (!window.TFSEApi || !window.TFSEApi.saveTelegramSettings) return;
             var formData = new FormData(telegramForm);
-            var submitButton = telegramForm.querySelector("button[type='submit']");
-            if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.textContent = "儲存中…";
-            }
+            telegramIntegration.operation = "saving";
+            telegramIntegration.message = "正在加密保存 Telegram 連線設定…";
+            telegramIntegration.error = "";
+            renderVisualConsole();
             window.TFSEApi.saveTelegramSettings({
                 enabled: formData.get("enabled") === "on",
                 bot_token: String(formData.get("bot_token") || ""),
                 chat_id: String(formData.get("chat_id") || ""),
-                clear_token: formData.get("clear_token") === "on"
+                clear_token: formData.get("clear_token") === "on",
+                clear_chat_id: formData.get("clear_chat_id") === "on"
             }).then(function (result) {
                 telegramIntegration.settings = result.settings || {};
+                telegramIntegration.operation = "success";
+                telegramIntegration.message = "設定已保存，Token 與 Chat ID 將以掩碼持續顯示。";
                 telegramIntegration.error = "";
                 addAudit("telegram_settings_saved", telegramIntegration.settings.configured ? "configured" : "saved");
                 return loadTelegramIntegration();
             }).catch(function (error) {
+                telegramIntegration.operation = "error";
+                telegramIntegration.message = "設定未保存，請修正後再試。";
                 telegramIntegration.error = error && error.message ? error.message : "telegram_settings_save_failed";
                 renderVisualConsole();
             });

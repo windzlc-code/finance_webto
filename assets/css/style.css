@@ -53921,6 +53921,24 @@ body.tfse-admin-authenticated .tfse-visual-shell {
 .tfse-visual-telegram-note.is-error {
   color: #b33636;
 }
+.tfse-visual-telegram-note.is-success {
+  color: #23713b;
+}
+.tfse-visual-telegram-saved {
+  display: flex;
+  grid-column: span 2;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid #cde3d2;
+  border-radius: 6px;
+  color: #28593b;
+  background: #f2fbf4;
+  font-size: 13px;
+}
+.tfse-visual-telegram-saved span { font-weight: 900; }
+.tfse-visual-telegram-saved b { font-weight: 800; }
 .tfse-visual-telegram-history {
   display: grid;
   gap: 7px;
@@ -53959,6 +53977,7 @@ body.tfse-admin-authenticated .tfse-visual-shell {
   .tfse-visual-telegram-toggle,
   .tfse-visual-telegram-clear,
   .tfse-visual-telegram-actions,
+  .tfse-visual-telegram-saved,
   .tfse-visual-telegram-note { grid-column: auto; }
   .tfse-visual-telegram-head { display: grid; }
   .tfse-visual-telegram-history > div { grid-template-columns: 1fr; gap: 4px; }
