@@ -658,7 +658,13 @@ class LvrDevHandler(BaseHTTPRequestHandler):
             self._send(404, b"Not Found", "text/plain; charset=utf-8")
             return
         data = safe.read_bytes()
-        self._send(200, data, _content_type(safe), cache_control=self._static_cache_control(safe))
+        cache_control = self._static_cache_control(safe)
+        # TFSE preloads this exact landing URL before its valuation buttons are
+        # clicked. A short private cache eliminates the final document round trip
+        # without allowing the operational page to go stale for long.
+        if safe.name == "index.html" and (qs.get("from") or [""])[0] == "tfse":
+            cache_control = "private, max-age=60, must-revalidate"
+        self._send(200, data, _content_type(safe), cache_control=cache_control)
 
 
 def main() -> None:
