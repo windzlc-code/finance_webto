@@ -34,6 +34,19 @@ MIME_TYPES = {
     ".woff2": "font/woff2",
 }
 
+STATIC_CACHE_SUFFIXES = {
+    ".css",
+    ".gif",
+    ".ico",
+    ".jpg",
+    ".jpeg",
+    ".js",
+    ".png",
+    ".svg",
+    ".woff",
+    ".woff2",
+}
+
 
 class BackadminHandler(Handler):
     static_root = APP_ROOT
@@ -73,6 +86,10 @@ class BackadminHandler(Handler):
         self.send_header("Content-Type", MIME_TYPES.get(target.suffix.lower(), "application/octet-stream"))
         if target.name == "site-config.json":
             self.send_header("Cache-Control", "no-store")
+        elif target.suffix.lower() in STATIC_CACHE_SUFFIXES:
+            self.send_header("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400")
+        else:
+            self.send_header("Cache-Control", "no-cache, max-age=0, must-revalidate")
         self.end_headers()
         if include_body:
             with target.open("rb") as handle:
