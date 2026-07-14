@@ -6,12 +6,11 @@
 
     function loadConfig() {
         if (configPromise) return configPromise;
-        configPromise = fetch("site-config.json")
-            .then(function (response) {
-                if (!response.ok) throw new Error("site-config.json " + response.status);
-                return response.json();
-            })
+        configPromise = requestJson("site-config.json", { method: "GET" }, 5000)
             .catch(function () {
+                // Do not keep a permanently pending/failed configuration
+                // promise. A later action can retry when the network returns.
+                configPromise = null;
                 return {};
             });
         return configPromise;
@@ -228,7 +227,6 @@
 
     function requestJson(url, options, ms) {
         var controller = window.AbortController ? new AbortController() : null;
-        var timer = controller ? setTimeout(function () { controller.abort(); }, ms) : null;
         var requestOptions = Object.assign({
             headers: { "Content-Type": "application/json" },
             credentials: "include"
@@ -242,21 +240,35 @@
             }
         }
         if (controller) requestOptions.signal = controller.signal;
-
-        return fetch(url, requestOptions)
-            .then(function (response) {
-                if (timer) clearTimeout(timer);
-                if (!response.ok) {
-                    var error = new Error(url + " " + response.status);
-                    error.status = response.status;
-                    throw error;
-                }
-                return response.json().catch(function () { return {}; });
-            })
-            .catch(function (error) {
-                if (timer) clearTimeout(timer);
-                throw error;
-            });
+        var timeout = Math.max(1000, Number(ms) || 8000);
+        return new Promise(function (resolve, reject) {
+            var settled = false;
+            var timer = setTimeout(function () {
+                if (settled) return;
+                settled = true;
+                if (controller) controller.abort();
+                var error = new Error(url + " request_timeout");
+                error.code = "request_timeout";
+                reject(error);
+            }, timeout);
+            function finish(callback, value) {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                callback(value);
+            }
+            fetch(url, requestOptions)
+                .then(function (response) {
+                    if (!response.ok) {
+                        var error = new Error(url + " " + response.status);
+                        error.status = response.status;
+                        throw error;
+                    }
+                    return response.json().catch(function () { return {}; });
+                })
+                .then(function (data) { finish(resolve, data); })
+                .catch(function (error) { finish(reject, error); });
+        });
     }
 
     function reportApiFallback(action, error) {

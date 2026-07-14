@@ -317,6 +317,8 @@
     var articleSourceMode = "static";
     var publicFeedbackItemsCache = [];
     var telegramIntegration = { mode: "unavailable", settings: {}, items: [], loading: false, operation: "", message: "", error: "" };
+    var telegramOperationTimer = null;
+    var telegramOperationSequence = 0;
     var editingProductId = "";
     var editingArticleId = "";
     var editingFaqId = "";
@@ -839,6 +841,39 @@
             if (visualConsoleState.tab === "settings") renderVisualConsole();
             return result;
         });
+    }
+
+    function telegramErrorMessage(error, fallback) {
+        if (error && error.status === 401) return "登入工作階段已過期，請重新登入後再試。";
+        if (error && error.code === "request_timeout") return "伺服器逾時未回應，請確認網路後再試。";
+        return error && error.message ? error.message : fallback;
+    }
+
+    function startTelegramOperation(operation, message) {
+        var sequence = ++telegramOperationSequence;
+        if (telegramOperationTimer) window.clearTimeout(telegramOperationTimer);
+        telegramIntegration.operation = operation;
+        telegramIntegration.message = message;
+        telegramIntegration.error = "";
+        renderVisualConsole();
+        telegramOperationTimer = window.setTimeout(function () {
+            if (sequence !== telegramOperationSequence) return;
+            telegramIntegration.operation = "error";
+            telegramIntegration.message = "操作逾時，尚未確認是否保存成功。";
+            telegramIntegration.error = "請重新登入後查看目前保存狀態，再決定是否重試。";
+            renderVisualConsole();
+        }, 10500);
+        return sequence;
+    }
+
+    function finishTelegramOperation(sequence, operation, message, error) {
+        if (sequence !== telegramOperationSequence) return;
+        if (telegramOperationTimer) window.clearTimeout(telegramOperationTimer);
+        telegramOperationTimer = null;
+        telegramIntegration.operation = operation;
+        telegramIntegration.message = message;
+        telegramIntegration.error = error || "";
+        renderVisualConsole();
     }
 
     function syncAdminContentFromApi() {
@@ -10446,22 +10481,21 @@
             var telegramTestButton = event.target.closest("[data-visual-telegram-test]");
             if (telegramTestButton) {
                 if (!window.TFSEApi || !window.TFSEApi.sendTelegramTest) return;
-                telegramIntegration.operation = "testing";
-                telegramIntegration.message = "正在向已保存的 Chat ID 發送測試訊息…";
-                telegramIntegration.error = "";
-                renderVisualConsole();
-                window.TFSEApi.sendTelegramTest().then(function (result) {
-                telegramIntegration.settings = result.settings || telegramIntegration.settings;
-                telegramIntegration.operation = result.status === "sent" ? "success" : "error";
-                telegramIntegration.message = result.status === "sent" ? "測試訊息已送達 Telegram。" : "測試訊息未送達，請查看錯誤狀態。";
-                telegramIntegration.error = result.status === "sent" ? "" : (result.error || "telegram_test_failed");
-                addAudit("telegram_test", result.status || "unknown");
+                var testSequence = startTelegramOperation("testing", "正在向已保存的 Chat ID 發送測試訊息…");
+                Promise.resolve().then(function () {
+                    return window.TFSEApi.sendTelegramTest();
+                }).then(function (result) {
+                    telegramIntegration.settings = result.settings || telegramIntegration.settings;
+                    finishTelegramOperation(
+                        testSequence,
+                        result.status === "sent" ? "success" : "error",
+                        result.status === "sent" ? "測試訊息已送達 Telegram。" : "測試訊息未送達，請查看錯誤狀態。",
+                        result.status === "sent" ? "" : (result.error || "telegram_test_failed")
+                    );
+                    addAudit("telegram_test", result.status || "unknown");
                     return loadTelegramIntegration();
                 }).catch(function (error) {
-                    telegramIntegration.operation = "error";
-                    telegramIntegration.message = "測試發送失敗，設定仍保留在伺服器。";
-                    telegramIntegration.error = error && error.message ? error.message : "telegram_test_failed";
-                    renderVisualConsole();
+                    finishTelegramOperation(testSequence, "error", "測試發送失敗，設定仍保留在伺服器。", telegramErrorMessage(error, "telegram_test_failed"));
                 });
                 return;
             }
@@ -10529,28 +10563,23 @@
             event.preventDefault();
             if (!window.TFSEApi || !window.TFSEApi.saveTelegramSettings) return;
             var formData = new FormData(telegramForm);
-            telegramIntegration.operation = "saving";
-            telegramIntegration.message = "正在加密保存 Telegram 連線設定…";
-            telegramIntegration.error = "";
-            renderVisualConsole();
-            window.TFSEApi.saveTelegramSettings({
+            var saveSequence = startTelegramOperation("saving", "正在加密保存 Telegram 連線設定…");
+            var settingsPayload = {
                 enabled: formData.get("enabled") === "on",
                 bot_token: String(formData.get("bot_token") || ""),
                 chat_id: String(formData.get("chat_id") || ""),
                 clear_token: formData.get("clear_token") === "on",
                 clear_chat_id: formData.get("clear_chat_id") === "on"
+            };
+            Promise.resolve().then(function () {
+                return window.TFSEApi.saveTelegramSettings(settingsPayload);
             }).then(function (result) {
                 telegramIntegration.settings = result.settings || {};
-                telegramIntegration.operation = "success";
-                telegramIntegration.message = "設定已保存，Token 與 Chat ID 將以掩碼持續顯示。";
-                telegramIntegration.error = "";
+                finishTelegramOperation(saveSequence, "success", "設定已保存，Token 與 Chat ID 將持續顯示。", "");
                 addAudit("telegram_settings_saved", telegramIntegration.settings.configured ? "configured" : "saved");
                 return loadTelegramIntegration();
             }).catch(function (error) {
-                telegramIntegration.operation = "error";
-                telegramIntegration.message = "設定未保存，請修正後再試。";
-                telegramIntegration.error = error && error.message ? error.message : "telegram_settings_save_failed";
-                renderVisualConsole();
+                finishTelegramOperation(saveSequence, "error", "設定未保存，請修正後再試。", telegramErrorMessage(error, "telegram_settings_save_failed"));
             });
         });
     }
