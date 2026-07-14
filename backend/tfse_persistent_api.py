@@ -541,6 +541,9 @@ class Store:
             "token_configured": has_token,
             "token_masked": mask_secret(self._telegram_decrypt(row["bot_token_encrypted"] or "")),
             "chat_id_configured": has_chat_id,
+            # Chat IDs are operational routing values for the authenticated
+            # administrator, so keep the exact value visible in settings.
+            "chat_id": row["chat_id"] or "",
             "chat_id_masked": mask_secret(row["chat_id"] or "", 3, 3),
             "updated_at": row["updated_at"] or "",
             "updated_by_role": row["updated_by_role"] or "",

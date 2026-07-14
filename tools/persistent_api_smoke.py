@@ -162,8 +162,8 @@ def main() -> int:
             ).get("settings") or {}
             if not telegram_settings.get("configured") or telegram_settings.get("chat_id_masked") != "-10…890":
                 raise AssertionError(f"telegram settings were not persisted: {telegram_settings}")
-            if "chat_id" in telegram_settings:
-                raise AssertionError("telegram chat id leaked through the public settings response")
+            if telegram_settings.get("chat_id") != "-1001234567890":
+                raise AssertionError("telegram chat id was not returned to the authenticated admin")
             if telegram_token in json.dumps(telegram_settings, ensure_ascii=False):
                 raise AssertionError("telegram token leaked through the public settings response")
             if telegram_token.encode("utf-8") in db_path.read_bytes():
