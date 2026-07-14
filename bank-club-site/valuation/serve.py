@@ -238,11 +238,11 @@ class LvrDevHandler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args) -> None:
         print("[%s] %s" % (self.log_date_time_string(), fmt % args))
 
-    def _send(self, status: int, body: bytes, content_type: str) -> None:
+    def _send(self, status: int, body: bytes, content_type: str, *, cache_control: str = "no-store") -> None:
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Cache-Control", cache_control)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header(
             "Access-Control-Allow-Headers",
@@ -255,6 +255,13 @@ class LvrDevHandler(BaseHTTPRequestHandler):
     def _send_json(self, status: int, payload: object) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self._send(status, body, "application/json; charset=utf-8")
+
+    @staticmethod
+    def _static_cache_control(path: Path) -> str:
+        """Keep the app shell current while allowing its immutable assets to warm."""
+        if path.suffix.lower() in {".html", ".json"}:
+            return "no-cache, max-age=0, must-revalidate"
+        return "public, max-age=3600, stale-while-revalidate=86400"
 
     def _read_body(self) -> bytes:
         length = int(self.headers.get("Content-Length", "0") or "0")
@@ -651,7 +658,7 @@ class LvrDevHandler(BaseHTTPRequestHandler):
             self._send(404, b"Not Found", "text/plain; charset=utf-8")
             return
         data = safe.read_bytes()
-        self._send(200, data, _content_type(safe))
+        self._send(200, data, _content_type(safe), cache_control=self._static_cache_control(safe))
 
 
 def main() -> None:

@@ -3,6 +3,7 @@
 
     var DEFAULT_URL = "/valuation/";
     var BUTTON_ID = "tfse-property-valuation-float";
+    var WARMED_KEY = "tfse-property-valuation-warmed";
 
     function configUrl() {
         var script = document.currentScript || document.getElementById("tfse-property-valuation-script");
@@ -66,6 +67,52 @@
             link.href = withSource(url, link.getAttribute("data-property-valuation-source") || "tfse");
             link.setAttribute("aria-label", "開啟" + label);
         });
+        warmValuation(url);
+    }
+
+    function warmValuation(url) {
+        if (!window.sessionStorage || sessionStorage.getItem(WARMED_KEY)) return;
+        sessionStorage.setItem(WARMED_KEY, "1");
+
+        var target;
+        try {
+            target = new URL(url, window.location.origin);
+            if (target.origin !== window.location.origin || target.pathname.indexOf("/valuation/") !== 0) return;
+        } catch (error) {
+            return;
+        }
+
+        var base = target.pathname.replace(/[^/]*$/, "");
+        var warmAssets = [
+            ["fetch", target.pathname],
+            ["style", base + "style.css?v=20260623-loanable-card"],
+            ["script", base + "_lvr_vendor.bundle.js?v=20260328-1"],
+            ["script", base + "lvr-bridge.js?v=20260510-file-fetch"],
+            ["script", base + "_lvr_common.bundle.js"],
+            ["modulepreload", base + "src/app/main.js?v=20260630-common-multi-label"],
+            ["modulepreload", base + "src/support/support-widget.js?v=20260623-loan-capacity-merged"]
+        ];
+
+        var run = function () {
+            warmAssets.forEach(function (asset) {
+                if (asset[0] === "fetch") {
+                    fetch(asset[1], { credentials: "same-origin", cache: "force-cache" }).catch(function () {});
+                    return;
+                }
+                var link = document.createElement("link");
+                link.rel = asset[0] === "style" ? "preload" : asset[0];
+                link.href = asset[1];
+                if (asset[0] === "style") link.as = "style";
+                if (asset[0] === "script") {
+                    link.rel = "preload";
+                    link.as = "script";
+                }
+                document.head.appendChild(link);
+            });
+        };
+
+        if ("requestIdleCallback" in window) window.requestIdleCallback(run, { timeout: 1800 });
+        else window.setTimeout(run, 900);
     }
 
     function loadConfig() {
