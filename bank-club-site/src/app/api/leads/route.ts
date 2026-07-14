@@ -4,7 +4,7 @@ import path from "path";
 import { NextResponse } from "next/server";
 import { sendLeadNotification } from "@/lib/lead-notifications";
 import { detectSensitiveLeadNote } from "@/lib/sensitive-content";
-import { createAudit, mutateDB } from "@/lib/store";
+import { bankClubDataDir, createAudit, mutateDB } from "@/lib/store";
 import type { BusinessLoanApplication, CreditApplication, CreditApplicationFile, Gender, HouseLoanApplication, IdentityType, Lead, LoanType } from "@/lib/types";
 
 const recentSubmits = new Map<string, number[]>();
@@ -12,7 +12,7 @@ const recentAttempts = new Map<string, number[]>();
 const rateLimitWindowMs = 60 * 60 * 1000;
 const rateLimitMax = 3;
 const attemptLimitMax = 20;
-const creditUploadDir = path.join(process.cwd(), ".data", "credit-application-files");
+const creditUploadDir = path.join(bankClubDataDir, "credit-application-files");
 const allowedCreditFileTypes = new Set(["image/jpeg", "image/png", "image/heic", "image/heif"]);
 const maxCreditFileBytes = 8 * 1024 * 1024;
 const idCardMinAspectRatio = 1.35;

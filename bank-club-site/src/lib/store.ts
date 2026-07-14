@@ -7,7 +7,12 @@ import { localDefaultAdminPassword } from "./security-defaults";
 import { defaultAnnualPercentageRateDescription, seededArticleCategories, seededArticles, seededFiles, settings } from "./site-data";
 import type { ArticleComplianceFlags, ArticleRevision, AuditLog, BankClubDB } from "./types";
 
-const dataDir = path.join(process.cwd(), ".data");
+// Keep visitor applications outside the image filesystem so a container rebuild
+// cannot silently discard submitted forms or related application files.
+export const bankClubDataDir = process.env.BANKCLUB_DATA_DIR?.trim()
+  ? path.resolve(process.env.BANKCLUB_DATA_DIR)
+  : path.join(process.cwd(), ".data");
+const dataDir = bankClubDataDir;
 const dbFile = path.join(dataDir, "bank-club-db.json");
 const dbLockFile = path.join(dataDir, "bank-club-db.lock");
 let mutationQueue: Promise<unknown> = Promise.resolve();

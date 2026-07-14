@@ -15,6 +15,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 def request_json(opener, base_url: str, method: str, path: str, payload: dict | None = None, timeout: float = 5.0, csrf_token: str = "") -> dict:
@@ -148,6 +150,44 @@ def main() -> int:
             csrf_token = login.get("csrf_token") or ""
             if not csrf_token:
                 raise AssertionError(f"admin login did not return csrf token: {login}")
+
+            telegram_token = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi"
+            telegram_settings = request_json(
+                opener,
+                base_url,
+                "POST",
+                "/api/admin/telegram/settings",
+                {"enabled": True, "bot_token": telegram_token, "chat_id": "-1001234567890"},
+                csrf_token=csrf_token,
+            ).get("settings") or {}
+            if not telegram_settings.get("configured") or telegram_settings.get("chat_id") != "-1001234567890":
+                raise AssertionError(f"telegram settings were not persisted: {telegram_settings}")
+            if telegram_token in json.dumps(telegram_settings, ensure_ascii=False):
+                raise AssertionError("telegram token leaked through the public settings response")
+            if telegram_token.encode("utf-8") in db_path.read_bytes():
+                raise AssertionError("telegram token was stored as plaintext in SQLite")
+
+            telegram_settings = request_json(opener, base_url, "GET", "/api/admin/telegram/settings").get("settings") or {}
+            if not telegram_settings.get("token_configured") or telegram_settings.get("enabled") is not True:
+                raise AssertionError(f"telegram settings did not survive a fresh API read: {telegram_settings}")
+
+            # Re-open through a fresh Store instance to cover data/key persistence,
+            # not merely the in-memory HTTP server state.
+            from backend.tfse_persistent_api import Store
+            reopened_telegram = Store(db_path).telegram_settings_public()
+            if not reopened_telegram.get("configured") or reopened_telegram.get("chat_id") != "-1001234567890":
+                raise AssertionError(f"telegram settings did not survive Store reopen: {reopened_telegram}")
+
+            disabled_telegram = request_json(
+                opener,
+                base_url,
+                "POST",
+                "/api/admin/telegram/settings",
+                {"enabled": "false", "bot_token": "", "chat_id": "-1001234567890"},
+                csrf_token=csrf_token,
+            ).get("settings") or {}
+            if disabled_telegram.get("enabled") is not False or not disabled_telegram.get("token_configured"):
+                raise AssertionError(f"telegram boolean/token retention failed: {disabled_telegram}")
 
             leads = request_json(opener, base_url, "GET", "/api/admin/leads")
             if not any(item.get("id") == "lead_smoke_001" for item in leads.get("items", [])):
@@ -284,6 +324,7 @@ def main() -> int:
                             "lead_submit",
                             "lead_duplicate_reuse",
                             "admin_login",
+                            "telegram_settings_persistence",
                             "admin_lead_list",
                             "admin_csrf_reject_without_token",
                             "lead_status_patch",

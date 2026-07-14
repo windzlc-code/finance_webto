@@ -83,6 +83,15 @@ def mask_secret(value: str, start: int = 5, end: int = 4) -> str:
     return value[:start] + "…" + value[-end:]
 
 
+def as_bool(value: object) -> bool:
+    """Parse JSON and form-style booleans without treating "false" as true."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def normalize_api_path(path: str) -> str:
     """Accept API requests with or without the deployed /tfse site prefix."""
     if path == "/tfse":
@@ -544,8 +553,8 @@ class Store:
         current_token = self._telegram_decrypt(current["bot_token_encrypted"] or "")
         token = str(payload.get("bot_token") or "").strip()
         chat_id = str(payload.get("chat_id") if "chat_id" in payload else current["chat_id"] or "").strip()
-        enabled = bool(payload.get("enabled"))
-        clear_token = bool(payload.get("clear_token"))
+        enabled = as_bool(payload.get("enabled"))
+        clear_token = as_bool(payload.get("clear_token"))
         if clear_token:
             token = ""
         elif token:

@@ -13,8 +13,11 @@ services:
       dockerfile: docker/bankclub.Dockerfile
     environment:
       BANKCLUB_BASE_PATH: ""
+      BANKCLUB_DATA_DIR: /data
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:8080
       TFSE_SHARED_API_URL: http://backadmin:8788
+    volumes:
+      - bankclub-data:/data
     restart: unless-stopped
 
   backadmin:
@@ -45,3 +48,4 @@ services:
 
 volumes:
   backadmin-data:
+  bankclub-data:

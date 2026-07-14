@@ -385,7 +385,10 @@
     function submitPublicFeedback(payload) {
         return loadConfig().then(function (config) {
             var url = endpoint(config, "/api/public-feedback");
-            if (!url) return localSubmitPublicFeedback(payload);
+            if (!url) {
+                if (requiresApi(config)) throw new Error("api_endpoint_not_configured");
+                return localSubmitPublicFeedback(payload);
+            }
             return requestJson(url, {
                 method: "POST",
                 body: JSON.stringify(payload)
@@ -393,6 +396,7 @@
                 return Object.assign({ mode: "api" }, data);
             }).catch(function (error) {
                 reportApiFallback("POST /api/public-feedback", error);
+                if (requiresApi(config)) throw error;
                 return localSubmitPublicFeedback(payload).then(function (data) {
                     data.mode = "api_fallback_localStorage";
                     data.error = error.message;
