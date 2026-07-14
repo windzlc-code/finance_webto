@@ -17,6 +17,15 @@ type Props = {
   prefetch?: boolean;
 };
 
+function isNativeNavigation(href: string) {
+  return href.startsWith("http")
+    || href.startsWith("tel:")
+    || href.startsWith("mailto:")
+    || href.startsWith("/tfse/")
+    || href.startsWith("/valuation/")
+    || href.startsWith("/admin/");
+}
+
 function currentSourceChannel() {
   const params = new URLSearchParams(window.location.search);
   const utmSource = params.get("utm_source");
@@ -70,7 +79,7 @@ export function EventLink({ href, eventName, className, children, target, metada
     }).catch(() => undefined);
   }
 
-  if (href.startsWith("http") || href.startsWith("tel:") || href.startsWith("mailto:")) {
+  if (isNativeNavigation(href)) {
     return (
       <a
         className={className}

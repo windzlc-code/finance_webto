@@ -662,7 +662,7 @@ class LvrDevHandler(BaseHTTPRequestHandler):
         # TFSE preloads this exact landing URL before its valuation buttons are
         # clicked. A short private cache eliminates the final document round trip
         # without allowing the operational page to go stale for long.
-        if safe.name == "index.html" and (qs.get("from") or [""])[0] == "tfse":
+        if safe.name == "index.html" and (qs.get("from") or [""])[0] in {"tfse", "bank-club"}:
             cache_control = "private, max-age=60, must-revalidate"
         self._send(200, data, _content_type(safe), cache_control=cache_control)
 
