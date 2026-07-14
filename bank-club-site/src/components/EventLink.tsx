@@ -44,6 +44,8 @@ function currentSourceChannel() {
 }
 
 export function EventLink({ href, eventName, className, children, target, metadata, leadId, confirmMessage, ariaLabel, prefetch }: Props) {
+  const nativeNavigation = isNativeNavigation(href);
+
   function track(event?: MouseEvent<HTMLAnchorElement>) {
     if (confirmMessage && !window.confirm(confirmMessage)) {
       event?.preventDefault();
@@ -64,6 +66,10 @@ export function EventLink({ href, eventName, className, children, target, metada
       session_id: sessionId,
       ...eventMetadata,
     });
+    // Do not contend with the destination page for the file-backed event store
+    // during an immediate cross-application navigation. Form and in-app events
+    // continue to be recorded through the API below.
+    if (nativeNavigation) return;
     fetch("/api/events", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -79,7 +85,7 @@ export function EventLink({ href, eventName, className, children, target, metada
     }).catch(() => undefined);
   }
 
-  if (isNativeNavigation(href)) {
+  if (nativeNavigation) {
     return (
       <a
         className={className}
