@@ -316,6 +316,7 @@
     var productSourceMode = "static";
     var articleSourceMode = "static";
     var publicFeedbackItemsCache = [];
+    var telegramIntegration = { mode: "unavailable", settings: {}, items: [], loading: false };
     var editingProductId = "";
     var editingArticleId = "";
     var editingFaqId = "";
@@ -805,6 +806,32 @@
         });
     }
 
+    function loadTelegramIntegration() {
+        if (!isAuthenticated() || authSource() !== "api" || !window.TFSEApi || !window.TFSEApi.getTelegramSettings) {
+            telegramIntegration = { mode: "unavailable", settings: {}, items: [], loading: false };
+            return Promise.resolve(telegramIntegration);
+        }
+        telegramIntegration.loading = true;
+        return Promise.all([
+            window.TFSEApi.getTelegramSettings(),
+            window.TFSEApi.listTelegramNotifications ? window.TFSEApi.listTelegramNotifications() : Promise.resolve({ items: [] })
+        ]).then(function (results) {
+            telegramIntegration = {
+                mode: results[0].mode || "api",
+                settings: results[0].settings || {},
+                items: results[1].items || [],
+                loading: false
+            };
+            if (visualConsoleState.tab === "settings") renderVisualConsole();
+            return telegramIntegration;
+        }).catch(function (error) {
+            telegramIntegration.loading = false;
+            telegramIntegration.error = error && error.message ? error.message : "telegram_settings_load_failed";
+            if (visualConsoleState.tab === "settings") renderVisualConsole();
+            return telegramIntegration;
+        });
+    }
+
     function syncAdminContentFromApi() {
         if (!isAuthenticated()) {
             productSourceMode = "static";
@@ -1186,6 +1213,7 @@
         renderConversionBacklog();
         renderAudit();
         renderVisualConsole();
+        loadTelegramIntegration();
         organizeAdminWorkbench();
     }
 
@@ -9244,6 +9272,37 @@
         ].join("");
     }
 
+    function visualRenderTelegramSettings() {
+        var state = telegramIntegration || {};
+        var settings = state.settings || {};
+        var isSuperAdmin = currentRole() === "super_admin";
+        var disabled = isSuperAdmin ? "" : " disabled";
+        var status = state.loading ? "讀取設定中" : (settings.configured ? "已啟用並會自動通知" : (settings.token_configured ? "Token 已保存，尚未啟用" : "尚未設定"));
+        var recent = (state.items || []).slice(0, 5);
+        var statusLabel = function (value) {
+            return { queued: "排隊中", sent: "已送達", failed: "發送失敗" }[value] || value || "未送出";
+        };
+        return [
+            "<section class=\"tfse-visual-telegram\">",
+            "<div class=\"tfse-visual-telegram-head\"><div><span class=\"tfse-visual-eyebrow\">Telegram Bot</span><h4>表單即時通知</h4><p>金融站與 Bank Club 的訪客表單會先入庫，再由伺服器發送到指定 Chat ID。Bot Token 不會顯示或傳到前端。</p></div><span class=\"tfse-visual-telegram-status" + (settings.configured ? " is-ready" : "") + "\">" + escapeHtml(status) + "</span></div>",
+            "<form class=\"tfse-visual-telegram-form\" data-visual-telegram-settings>",
+            "<label class=\"tfse-visual-telegram-toggle\"><input type=\"checkbox\" name=\"enabled\"" + (settings.enabled ? " checked" : "") + disabled + "><span>啟用新表單 Telegram 通知</span></label>",
+            "<label><span>Bot Token</span><input type=\"password\" name=\"bot_token\" autocomplete=\"new-password\" placeholder=\"" + escapeHtml(settings.token_configured ? "已保存 " + (settings.token_masked || "") + "；留空代表不更換" : "由 BotFather 取得的 Token") + "\"" + disabled + "></label>",
+            "<label><span>接收 Chat ID / 群組 ID</span><input type=\"text\" name=\"chat_id\" value=\"" + escapeHtml(settings.chat_id || "") + "\" placeholder=\"例如 -1001234567890 或 @channelname\"" + disabled + "></label>",
+            "<label class=\"tfse-visual-telegram-clear\"><input type=\"checkbox\" name=\"clear_token\"" + disabled + "><span>清除目前儲存的 Bot Token</span></label>",
+            "<div class=\"tfse-visual-telegram-actions\"><button type=\"submit\"" + disabled + ">儲存連線設定</button><button type=\"button\" class=\"is-secondary\" data-visual-telegram-test" + disabled + ">發送測試訊息</button></div>",
+            !isSuperAdmin ? "<p class=\"tfse-visual-telegram-note\">僅 Super Admin 能儲存 Token、變更接收 Chat ID 或測試發送。</p>" : "",
+            state.error ? "<p class=\"tfse-visual-telegram-note is-error\">操作失敗：" + escapeHtml(state.error) + "</p>" : "",
+            settings.last_test_at ? "<p class=\"tfse-visual-telegram-note\">最近測試：" + escapeHtml(formatDate(settings.last_test_at)) + " ｜ " + escapeHtml(settings.last_test_status || "") + (settings.last_error ? " ｜ " + escapeHtml(settings.last_error) : "") + "</p>" : "",
+            "</form>",
+            "<div class=\"tfse-visual-telegram-history\"><strong>最近傳送紀錄</strong>",
+            recent.length ? recent.map(function (item) {
+                return "<div><span class=\"is-" + escapeHtml(item.status || "queued") + "\">" + escapeHtml(statusLabel(item.status)) + "</span><b>" + escapeHtml(item.message_preview || item.lead_id || "表單通知") + "</b><small>" + escapeHtml(formatDate(item.sent_at || item.created_at)) + (item.error ? " ｜ " + escapeHtml(item.error) : "") + "</small></div>";
+            }).join("") : "<p>尚無通知紀錄。完成設定後，下一筆前台表單會自動出現在這裡。</p>",
+            "</div></section>"
+        ].join("");
+    }
+
     function visualRenderSettingsModule() {
         var backend = (siteConfigData && siteConfigData.backend) || {};
         var apiReady = backend.mode === "api" && !!backend.api_base_url;
@@ -9252,6 +9311,7 @@
             "<div class=\"tfse-visual-module-head\"><div><h3>系統設定</h3><p>這裡直接顯示目前是不是正式 API 模式，避免把本機暫存誤認成後端。</p></div><button type=\"button\" data-visual-trigger=\"[data-admin-config-draft-template]\"><i class=\"fa fa-cog\"></i> 載入配置範本</button></div>",
             "<div class=\"tfse-visual-panel-nav\"><span class=\"is-active\">連線設定</span><span>資料來源</span><span>交接匯出</span></div>",
             "<div class=\"tfse-visual-card-grid is-compact\"><article class=\"tfse-visual-module-card\"><small>後端模式</small><h4>" + escapeHtml(backend.mode || "localStorage") + "</h4><p>" + (apiReady ? "已配置 API：" + escapeHtml(backend.api_base_url) : "尚未在 site-config.json 設定 backend.mode=api 與 api_base_url。") + "</p></article><article class=\"tfse-visual-module-card\"><small>線索來源</small><h4>" + escapeHtml(leadSourceMode) + "</h4><p>前台表單會優先走 API，未配置時才使用瀏覽器 localStorage。</p></article><article class=\"tfse-visual-module-card\"><small>內容來源</small><h4>" + escapeHtml(productSourceMode + " / " + articleSourceMode) + "</h4><p>產品與文章可走 API；未登入或未配置時回退靜態資料。</p></article></div>",
+            visualRenderTelegramSettings(),
             "<div class=\"tfse-visual-action-row\"><button type=\"button\" data-visual-trigger=\"[data-admin-config-readiness-export]\">匯出配置交接包</button><button type=\"button\" data-visual-trigger=\"[data-admin-backend-acceptance-export]\">匯出 API 驗收矩陣</button><button type=\"button\" data-visual-trigger=\"[data-admin-backend-roadmap-export]\">匯出後端路線圖</button></div>",
             "</div>"
         ].join("");
@@ -10371,6 +10431,22 @@
                 renderVisualConsole();
                 return;
             }
+            var telegramTestButton = event.target.closest("[data-visual-telegram-test]");
+            if (telegramTestButton) {
+                if (!window.TFSEApi || !window.TFSEApi.sendTelegramTest) return;
+                telegramTestButton.disabled = true;
+                telegramTestButton.textContent = "傳送中…";
+            window.TFSEApi.sendTelegramTest().then(function (result) {
+                telegramIntegration.settings = result.settings || telegramIntegration.settings;
+                telegramIntegration.error = "";
+                addAudit("telegram_test", result.status || "unknown");
+                    return loadTelegramIntegration();
+                }).catch(function (error) {
+                    telegramIntegration.error = error && error.message ? error.message : "telegram_test_failed";
+                    renderVisualConsole();
+                });
+                return;
+            }
             var unifiedExportButton = event.target.closest("[data-visual-unified-export]");
             if (unifiedExportButton) {
                 exportVisualCombinedLeads();
@@ -10425,9 +10501,35 @@
         });
         visualConsolePanel.addEventListener("submit", function (event) {
             var form = event.target.closest("[data-visual-lead-edit]");
-            if (!form) return;
+            if (form) {
+                event.preventDefault();
+                saveVisualLeadEdit(form);
+                return;
+            }
+            var telegramForm = event.target.closest("[data-visual-telegram-settings]");
+            if (!telegramForm) return;
             event.preventDefault();
-            saveVisualLeadEdit(form);
+            if (!window.TFSEApi || !window.TFSEApi.saveTelegramSettings) return;
+            var formData = new FormData(telegramForm);
+            var submitButton = telegramForm.querySelector("button[type='submit']");
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "儲存中…";
+            }
+            window.TFSEApi.saveTelegramSettings({
+                enabled: formData.get("enabled") === "on",
+                bot_token: String(formData.get("bot_token") || ""),
+                chat_id: String(formData.get("chat_id") || ""),
+                clear_token: formData.get("clear_token") === "on"
+            }).then(function (result) {
+                telegramIntegration.settings = result.settings || {};
+                telegramIntegration.error = "";
+                addAudit("telegram_settings_saved", telegramIntegration.settings.configured ? "configured" : "saved");
+                return loadTelegramIntegration();
+            }).catch(function (error) {
+                telegramIntegration.error = error && error.message ? error.message : "telegram_settings_save_failed";
+                renderVisualConsole();
+            });
         });
     }
     document.addEventListener("tfse:bankclub-leads-updated", function () {

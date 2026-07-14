@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import hmac
 import json
@@ -10,6 +11,7 @@ import re
 import secrets
 import sqlite3
 import sys
+import threading
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from http import cookies
@@ -30,6 +32,8 @@ ARTICLE_DETAIL_RE = re.compile(r"^/api/articles/([^/]+)$")
 ADMIN_PRODUCT_RE = re.compile(r"^/api/admin/products/([^/]+)$")
 ADMIN_ARTICLE_RE = re.compile(r"^/api/admin/articles/([^/]+)$")
 BANK_CLUB_LEAD_STATUS_RE = re.compile(r"^/api/admin/bank-club/leads/([^/]+)/status$")
+TELEGRAM_TOKEN_RE = re.compile(r"^\d{5,15}:[A-Za-z0-9_-]{20,}$")
+TELEGRAM_CHAT_ID_RE = re.compile(r"^(?:-?\d{5,20}|@[A-Za-z0-9_]{5,})$")
 SENSITIVE_PATTERNS = [
     re.compile(r"\b[A-Z][12]\d{8}\b", re.I),
     re.compile(r"\b\d{12,19}\b"),
@@ -68,6 +72,15 @@ def redact_sensitive_text(value: object) -> str:
     for pattern in SENSITIVE_PATTERNS:
         text = pattern.sub("[redacted]", text)
     return text
+
+
+def mask_secret(value: str, start: int = 5, end: int = 4) -> str:
+    value = str(value or "")
+    if not value:
+        return ""
+    if len(value) <= start + end:
+        return "已設定"
+    return value[:start] + "…" + value[-end:]
 
 
 def normalize_api_path(path: str) -> str:
@@ -258,7 +271,70 @@ class Store:
     def __init__(self, db_path: Path):
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._telegram_key = self._load_or_create_telegram_key()
         self.init_db()
+
+    def _load_or_create_telegram_key(self) -> bytes:
+        """Keep the configuration key server-side and outside the SQLite records."""
+        key_path = self.db_path.parent / ".tfse-telegram.key"
+        try:
+            key = key_path.read_bytes()
+            if len(key) >= 32:
+                return key[:32]
+        except OSError:
+            pass
+        key = secrets.token_bytes(32)
+        temp_path = key_path.with_suffix(".tmp")
+        flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+        descriptor = os.open(str(temp_path), flags, 0o600)
+        try:
+            with os.fdopen(descriptor, "wb") as handle:
+                handle.write(key)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temp_path, key_path)
+            os.chmod(key_path, 0o600)
+        finally:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+        return key
+
+    def _telegram_encrypt(self, value: str) -> str:
+        """Authenticated server-side storage; the token is never returned to clients."""
+        nonce = secrets.token_bytes(16)
+        plain = value.encode("utf-8")
+        stream = bytearray()
+        counter = 0
+        while len(stream) < len(plain):
+            stream.extend(hmac.new(self._telegram_key, nonce + counter.to_bytes(4, "big"), hashlib.sha256).digest())
+            counter += 1
+        cipher = bytes(left ^ right for left, right in zip(plain, stream))
+        tag = hmac.new(self._telegram_key, b"tfse-telegram-v1" + nonce + cipher, hashlib.sha256).digest()
+        return "v1." + ".".join(
+            base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+            for value in (nonce, cipher, tag)
+        )
+
+    def _telegram_decrypt(self, stored: str) -> str:
+        try:
+            version, nonce_encoded, cipher_encoded, tag_encoded = str(stored or "").split(".", 3)
+            if version != "v1":
+                return ""
+            decode = lambda value: base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
+            nonce, cipher, tag = decode(nonce_encoded), decode(cipher_encoded), decode(tag_encoded)
+            expected = hmac.new(self._telegram_key, b"tfse-telegram-v1" + nonce + cipher, hashlib.sha256).digest()
+            if not hmac.compare_digest(tag, expected):
+                return ""
+            stream = bytearray()
+            counter = 0
+            while len(stream) < len(cipher):
+                stream.extend(hmac.new(self._telegram_key, nonce + counter.to_bytes(4, "big"), hashlib.sha256).digest())
+                counter += 1
+            return bytes(left ^ right for left, right in zip(cipher, stream)).decode("utf-8")
+        except Exception:
+            return ""
 
     @contextmanager
     def conn(self):
@@ -397,6 +473,31 @@ class Store:
                 );
                 CREATE INDEX IF NOT EXISTS idx_content_records_type_status ON content_records(item_type, status, updated_at DESC);
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_content_records_type_slug ON content_records(item_type, slug);
+                CREATE TABLE IF NOT EXISTS telegram_settings (
+                    id INTEGER PRIMARY KEY CHECK(id = 1),
+                    enabled INTEGER NOT NULL DEFAULT 0,
+                    bot_token_encrypted TEXT NOT NULL DEFAULT '',
+                    chat_id TEXT NOT NULL DEFAULT '',
+                    updated_at TEXT NOT NULL DEFAULT '',
+                    updated_by_role TEXT NOT NULL DEFAULT '',
+                    last_test_status TEXT NOT NULL DEFAULT '',
+                    last_test_at TEXT NOT NULL DEFAULT '',
+                    last_error TEXT NOT NULL DEFAULT ''
+                );
+                INSERT OR IGNORE INTO telegram_settings(id) VALUES (1);
+                CREATE TABLE IF NOT EXISTS telegram_notifications (
+                    id TEXT PRIMARY KEY,
+                    site_key TEXT NOT NULL,
+                    lead_id TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'queued',
+                    message_preview TEXT NOT NULL DEFAULT '',
+                    chat_id_masked TEXT NOT NULL DEFAULT '',
+                    error TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL,
+                    sent_at TEXT NOT NULL DEFAULT ''
+                );
+                CREATE INDEX IF NOT EXISTS idx_telegram_notifications_created ON telegram_notifications(created_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_telegram_notifications_status ON telegram_notifications(status, created_at DESC);
                 """
             )
 
@@ -415,6 +516,193 @@ class Store:
                 (item["id"], item["action"], item["target"], item["detail"], item["actor_role"], item["created_at"]),
             )
         return item
+
+    def _telegram_row(self) -> sqlite3.Row:
+        with self.conn() as conn:
+            row = conn.execute("SELECT * FROM telegram_settings WHERE id = 1").fetchone()
+        return row
+
+    def telegram_settings_public(self) -> dict:
+        row = self._telegram_row()
+        has_token = bool(self._telegram_decrypt(row["bot_token_encrypted"] or ""))
+        return {
+            "enabled": bool(row["enabled"]),
+            "configured": bool(row["enabled"] and has_token and row["chat_id"]),
+            "token_configured": has_token,
+            "token_masked": mask_secret(self._telegram_decrypt(row["bot_token_encrypted"] or "")),
+            "chat_id": row["chat_id"] or "",
+            "chat_id_masked": mask_secret(row["chat_id"] or "", 3, 3),
+            "updated_at": row["updated_at"] or "",
+            "updated_by_role": row["updated_by_role"] or "",
+            "last_test_status": row["last_test_status"] or "",
+            "last_test_at": row["last_test_at"] or "",
+            "last_error": row["last_error"] or "",
+        }
+
+    def update_telegram_settings(self, payload: dict, actor_role: str) -> dict:
+        current = self._telegram_row()
+        current_token = self._telegram_decrypt(current["bot_token_encrypted"] or "")
+        token = str(payload.get("bot_token") or "").strip()
+        chat_id = str(payload.get("chat_id") if "chat_id" in payload else current["chat_id"] or "").strip()
+        enabled = bool(payload.get("enabled"))
+        clear_token = bool(payload.get("clear_token"))
+        if clear_token:
+            token = ""
+        elif token:
+            if not TELEGRAM_TOKEN_RE.fullmatch(token):
+                raise ValueError("telegram_bot_token_invalid")
+        else:
+            token = current_token
+        if chat_id and not TELEGRAM_CHAT_ID_RE.fullmatch(chat_id):
+            raise ValueError("telegram_chat_id_invalid")
+        if enabled and (not token or not chat_id):
+            raise ValueError("telegram_configuration_incomplete")
+        encrypted = self._telegram_encrypt(token) if token else ""
+        updated_at = now_iso()
+        with self.conn() as conn:
+            conn.execute(
+                """
+                UPDATE telegram_settings
+                SET enabled = ?, bot_token_encrypted = ?, chat_id = ?, updated_at = ?,
+                    updated_by_role = ?, last_error = ''
+                WHERE id = 1
+                """,
+                (1 if enabled else 0, encrypted, chat_id, updated_at, actor_role),
+            )
+        self.audit("telegram_settings_updated", "telegram", "enabled=" + str(enabled), actor_role)
+        return self.telegram_settings_public()
+
+    def _telegram_send(self, text: str) -> tuple[bool, str]:
+        row = self._telegram_row()
+        if not row["enabled"]:
+            return False, "telegram_disabled"
+        token = self._telegram_decrypt(row["bot_token_encrypted"] or "")
+        chat_id = str(row["chat_id"] or "").strip()
+        if not token or not chat_id:
+            return False, "telegram_configuration_incomplete"
+        body = json.dumps({
+            "chat_id": chat_id,
+            "text": text[:4096],
+            "disable_web_page_preview": True,
+        }, ensure_ascii=False).encode("utf-8")
+        request = urllib.request.Request(
+            "https://api.telegram.org/bot" + token + "/sendMessage",
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=8) as response:
+                data = json.loads(response.read().decode("utf-8") or "{}")
+            if data.get("ok"):
+                return True, ""
+            description = str(data.get("description") or "telegram_rejected")[:180]
+            return False, description
+        except Exception as exc:
+            # Never return a URL because it contains the bot token.
+            return False, "telegram_request_failed:" + type(exc).__name__
+
+    def _telegram_label(self, key: str) -> str:
+        labels = {
+            "display_name": "姓名", "name": "姓名", "phone": "聯絡電話", "line_id": "LINE ID", "lineId": "LINE ID",
+            "email": "Email", "region": "所在地區", "city": "所在縣市", "needs": "需求類型", "loan_type": "貸款類型",
+            "loanType": "貸款類型", "identity_type": "身分類型", "identityType": "身分類型", "gender": "性別",
+            "birth_date": "出生日期", "occupation_type": "職業", "current_job": "現職工作", "current_job_years": "現職年數",
+            "current_job_months": "現職月數", "income_type": "收入型態", "monthly_income": "現職月收入",
+            "salary_method": "薪轉或領現金", "labor_insurance": "現職公司投勞保", "has_house": "名下有房",
+            "has_car": "名下有汽車", "has_land": "名下有土地", "recent_credit_report": "近一月聯徵",
+            "desired_amount": "需求金額", "desiredAmount": "需求金額", "appointment_time": "預約時段", "appointmentTime": "預約時段",
+            "purpose": "資金用途", "message": "補充說明", "note": "補充說明", "source_page": "來源頁面", "sourcePage": "來源頁面",
+            "source_channel": "來源渠道", "sourceChannel": "來源渠道",
+        }
+        return labels.get(key, key)
+
+    def _telegram_lead_message(self, site_key: str, lead_id: str, payload: dict) -> str:
+        title = "金融站新表單" if site_key == "finance" else "Bank Club 新貸款申請"
+        hidden = {
+            "id", "status", "website", "cf_turnstile_response", "device_id", "tags", "notes", "recommended_categories",
+            "recommended_articles", "consent_version", "submitted_at", "updated_at", "source_url", "utm_source", "utm_medium",
+            "utm_campaign", "utm_content", "utm_term", "ip", "submitted_ip", "user_agent", "session_id", "sessionId",
+        }
+        lines = [title, "案件編號：" + lead_id]
+        emitted = set()
+        preferred = [
+            "display_name", "name", "phone", "line_id", "lineId", "email", "region", "city", "needs", "loan_type", "loanType",
+            "identity_type", "identityType", "gender", "birth_date", "occupation_type", "current_job", "current_job_years",
+            "current_job_months", "income_type", "monthly_income", "salary_method", "labor_insurance", "has_house", "has_car",
+            "has_land", "recent_credit_report", "desired_amount", "desiredAmount", "appointment_time", "appointmentTime", "purpose",
+            "message", "note", "source_page", "sourcePage", "source_channel", "sourceChannel",
+        ]
+        for key in preferred + sorted(payload.keys()):
+            if key in emitted or key in hidden or key not in payload:
+                continue
+            value = payload.get(key)
+            if value in (None, "", [], {}):
+                continue
+            if isinstance(value, (dict, list)):
+                continue
+            emitted.add(key)
+            text = redact_sensitive_text(value).replace("\n", " ").strip()
+            if text:
+                lines.append(self._telegram_label(key) + "：" + text[:220])
+            if len(lines) >= 28:
+                break
+        lines.append("後台：/admin/ 線索與客戶")
+        return "\n".join(lines)[:4096]
+
+    def _telegram_notification_preview(self, site_key: str, payload: dict) -> str:
+        name = str(payload.get("display_name") or payload.get("name") or "未命名")[:40]
+        need = str(payload.get("needs") or payload.get("loan_type") or payload.get("loanType") or "未分類")[:60]
+        return ("金融站" if site_key == "finance" else "Bank Club") + " · " + name + " · " + need
+
+    def queue_telegram_lead_notification(self, site_key: str, lead_id: str, payload: dict) -> dict:
+        settings = self.telegram_settings_public()
+        if not settings["configured"]:
+            return {"status": "not_configured", "notification_id": ""}
+        notification_id = "telegram_" + secrets.token_hex(10)
+        with self.conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO telegram_notifications(id, site_key, lead_id, status, message_preview, chat_id_masked, error, created_at, sent_at)
+                VALUES (?, ?, ?, 'queued', ?, ?, '', ?, '')
+                """,
+                (notification_id, site_key, lead_id, self._telegram_notification_preview(site_key, payload), settings["chat_id_masked"], now_iso()),
+            )
+        thread = threading.Thread(
+            target=self._deliver_telegram_lead_notification,
+            args=(notification_id, site_key, lead_id, dict(payload)),
+            daemon=True,
+        )
+        thread.start()
+        return {"status": "queued", "notification_id": notification_id}
+
+    def _deliver_telegram_lead_notification(self, notification_id: str, site_key: str, lead_id: str, payload: dict) -> None:
+        success, error = self._telegram_send(self._telegram_lead_message(site_key, lead_id, payload))
+        status = "sent" if success else "failed"
+        with self.conn() as conn:
+            conn.execute(
+                "UPDATE telegram_notifications SET status = ?, error = ?, sent_at = ? WHERE id = ?",
+                (status, error[:240], now_iso() if success else "", notification_id),
+            )
+        self.audit("telegram_notification_" + status, lead_id, site_key, "system")
+
+    def send_telegram_test(self, actor_role: str) -> dict:
+        success, error = self._telegram_send("TFSE Telegram 連線測試\n此訊息代表公共後台已成功連上目前設定的 Chat ID。")
+        status = "sent" if success else "failed"
+        with self.conn() as conn:
+            conn.execute(
+                "UPDATE telegram_settings SET last_test_status = ?, last_test_at = ?, last_error = ? WHERE id = 1",
+                (status, now_iso(), error[:240]),
+            )
+        self.audit("telegram_test_" + status, "telegram", error[:240], actor_role)
+        return {"status": status, "error": error, "settings": self.telegram_settings_public()}
+
+    def list_telegram_notifications(self) -> list[dict]:
+        with self.conn() as conn:
+            rows = conn.execute(
+                "SELECT id, site_key, lead_id, status, message_preview, chat_id_masked, error, created_at, sent_at FROM telegram_notifications ORDER BY created_at DESC LIMIT 12"
+            ).fetchall()
+        return [dict(row) for row in rows]
 
     def assert_lead_rate_limit(self, client_ip: str, device_id: str) -> None:
         ip_hash = stable_hash(client_ip, "TFSE_IP_HASH_SALT")
@@ -512,7 +800,14 @@ class Store:
                 ),
             )
         self.audit("lead_submit", lead_id, "persistent api accepted lead")
-        return {"id": lead_id, "status": clean_payload.get("status", "new"), "lead": clean_payload, "line_url": os.getenv("TFSE_LINE_OA_URL", "free-check.html#line-cta")}
+        notification = self.queue_telegram_lead_notification("finance", lead_id, clean_payload)
+        return {
+            "id": lead_id,
+            "status": clean_payload.get("status", "new"),
+            "lead": clean_payload,
+            "telegram_notification": notification,
+            "line_url": os.getenv("TFSE_LINE_OA_URL", "free-check.html#line-cta"),
+        }
 
     def list_leads(self) -> list[dict]:
         with self.conn() as conn:
@@ -600,7 +895,14 @@ class Store:
                 ),
             )
         audit = self.audit("bank_club_lead_submit", lead_id, "persistent api accepted Bank Club lead")
-        return {"id": lead_id, "status": clean_payload.get("status", "new"), "lead": clean_payload, "audit_log": audit}
+        notification = self.queue_telegram_lead_notification("bank_club", lead_id, clean_payload)
+        return {
+            "id": lead_id,
+            "status": clean_payload.get("status", "new"),
+            "lead": clean_payload,
+            "telegram_notification": notification,
+            "audit_log": audit,
+        }
 
     def list_bank_club_leads(self) -> list[dict]:
         with self.conn() as conn:
@@ -921,6 +1223,7 @@ class Store:
                 "content_products": conn.execute("SELECT COUNT(1) FROM content_records WHERE item_type = 'product'").fetchone()[0],
                 "content_articles": conn.execute("SELECT COUNT(1) FROM content_records WHERE item_type = 'article'").fetchone()[0],
                 "bank_club_leads": conn.execute("SELECT COUNT(1) FROM bank_club_leads").fetchone()[0],
+                "telegram_notifications": conn.execute("SELECT COUNT(1) FROM telegram_notifications").fetchone()[0],
             }
         return {"ok": True, "service": "tfse_persistent_api", "db_path": str(self.db_path), "generated_at": now_iso(), **counts}
 
@@ -1095,6 +1398,16 @@ class Handler(BaseHTTPRequestHandler):
             items = self.store.list_bank_club_leads()
             self._write_json({"items": items, "total": len(items)})
             return
+        if path == "/api/admin/telegram/settings":
+            if not self._require_admin():
+                return
+            self._write_json({"settings": self.store.telegram_settings_public()})
+            return
+        if path == "/api/admin/telegram/notifications":
+            if not self._require_admin():
+                return
+            self._write_json({"items": self.store.list_telegram_notifications()})
+            return
         self._write_json({"error": "not_found", "path": path}, status=404)
 
     def do_POST(self) -> None:
@@ -1151,6 +1464,30 @@ class Handler(BaseHTTPRequestHandler):
                 if not self._require_csrf(session):
                     return
                 self._write_json(self.store.create_compliance_review(payload, role))
+                return
+            if path == "/api/admin/telegram/settings":
+                admin = self._require_admin()
+                if not admin:
+                    return
+                role, session = admin
+                if role != "super_admin":
+                    self._write_json({"error": "forbidden"}, status=403)
+                    return
+                if not self._require_csrf(session):
+                    return
+                self._write_json({"settings": self.store.update_telegram_settings(payload, role)})
+                return
+            if path == "/api/admin/telegram/test":
+                admin = self._require_admin()
+                if not admin:
+                    return
+                role, session = admin
+                if role != "super_admin":
+                    self._write_json({"error": "forbidden"}, status=403)
+                    return
+                if not self._require_csrf(session):
+                    return
+                self._write_json(self.store.send_telegram_test(role))
                 return
             if path == "/api/admin/products":
                 admin = self._require_admin()
