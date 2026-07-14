@@ -764,6 +764,49 @@
         });
     }
 
+    function getLineSettings() {
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/line/settings");
+            if (!url || backendMode(config) !== "api") return { mode: "unavailable", settings: {} };
+            return requestJson(url, { method: "GET" }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            });
+        });
+    }
+
+    function saveLineSettings(payload) {
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/line/settings");
+            if (!url || backendMode(config) !== "api") throw new Error("api_endpoint_not_configured");
+            return requestJson(url, {
+                method: "POST",
+                body: JSON.stringify(payload || {})
+            }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            });
+        });
+    }
+
+    function sendLineTest() {
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/line/test");
+            if (!url || backendMode(config) !== "api") throw new Error("api_endpoint_not_configured");
+            return requestJson(url, { method: "POST", body: JSON.stringify({}) }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            });
+        });
+    }
+
+    function listLineNotifications() {
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/line/notifications");
+            if (!url || backendMode(config) !== "api") return { mode: "unavailable", items: [] };
+            return requestJson(url, { method: "GET" }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            });
+        });
+    }
+
     function listProducts(params) {
         params = params || {};
         return loadConfig().then(function (config) {
@@ -909,6 +952,10 @@
         saveTelegramSettings: saveTelegramSettings,
         sendTelegramTest: sendTelegramTest,
         listTelegramNotifications: listTelegramNotifications,
+        getLineSettings: getLineSettings,
+        saveLineSettings: saveLineSettings,
+        sendLineTest: sendLineTest,
+        listLineNotifications: listLineNotifications,
         adminListProducts: adminListProducts,
         saveAdminProduct: saveAdminProduct,
         adminListArticles: adminListArticles,

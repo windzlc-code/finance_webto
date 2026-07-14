@@ -137,6 +137,8 @@ def main() -> int:
             lead = request_json(opener, base_url, "POST", "/api/leads", lead_payload)
             if lead.get("id") != "lead_smoke_001":
                 raise AssertionError(f"lead id mismatch: {lead}")
+            if (lead.get("line_notification") or {}).get("status") != "not_configured":
+                raise AssertionError(f"lead did not report the expected LINE notification state: {lead}")
             duplicate_payload = dict(lead_payload)
             duplicate_payload["id"] = "lead_smoke_duplicate"
             duplicate_payload["device_id"] = "smoke-device-duplicate"
@@ -197,6 +199,63 @@ def main() -> int:
                 or retained_telegram.get("chat_id_masked") != "-10…890"
             ):
                 raise AssertionError(f"telegram masked settings were not retained: {retained_telegram}")
+
+            line_token = "line_smoke_channel_access_token_abcdefghijklmnopqrstuvwxyz"
+            line_recipient = "U" + ("a" * 32)
+            line_settings = request_json(
+                opener,
+                base_url,
+                "POST",
+                "/api/admin/line/settings",
+                {"enabled": False, "channel_access_token": line_token, "recipient_id": line_recipient},
+                csrf_token=csrf_token,
+            ).get("settings") or {}
+            if line_settings.get("enabled") is not False or not line_settings.get("token_configured") or line_settings.get("recipient_id") != line_recipient:
+                raise AssertionError(f"LINE settings were not persisted: {line_settings}")
+            if line_token in json.dumps(line_settings, ensure_ascii=False):
+                raise AssertionError("LINE token leaked through the public settings response")
+            if line_token.encode("utf-8") in db_path.read_bytes():
+                raise AssertionError("LINE token was stored as plaintext in SQLite")
+
+            reopened_line = Store(db_path).line_settings_public()
+            if not reopened_line.get("token_configured") or reopened_line.get("recipient_id") != line_recipient:
+                raise AssertionError(f"LINE settings did not survive Store reopen: {reopened_line}")
+
+            retained_line = request_json(
+                opener,
+                base_url,
+                "POST",
+                "/api/admin/line/settings",
+                {"enabled": "false", "channel_access_token": "", "recipient_id": ""},
+                csrf_token=csrf_token,
+            ).get("settings") or {}
+            if retained_line.get("enabled") is not False or not retained_line.get("token_configured") or retained_line.get("recipient_id") != line_recipient:
+                raise AssertionError(f"LINE masked settings were not retained: {retained_line}")
+
+            line_test = request_json(opener, base_url, "POST", "/api/admin/line/test", {}, csrf_token=csrf_token)
+            if line_test.get("status") != "failed" or line_test.get("error") != "line_disabled":
+                raise AssertionError(f"LINE disabled test did not return a safe status: {line_test}")
+
+            bank_lead = request_json(
+                opener,
+                base_url,
+                "POST",
+                "/api/bank-club/leads",
+                {
+                    "id": "bank_lead_smoke_001",
+                    "display_name": "Bank Club 測試使用者",
+                    "phone": "0912-345-679",
+                    "line_id": "bank-club-smoke",
+                    "loan_type": "房屋貸款",
+                    "message": "希望了解公開貸款資訊。",
+                    "source_page": "/loan-application.html",
+                },
+            )
+            if bank_lead.get("id") != "bank_lead_smoke_001" or (bank_lead.get("line_notification") or {}).get("status") != "not_configured":
+                raise AssertionError(f"Bank Club form did not join the LINE notification workflow: {bank_lead}")
+            bank_leads = request_json(opener, base_url, "GET", "/api/admin/bank-club/leads")
+            if not any(item.get("id") == "bank_lead_smoke_001" for item in bank_leads.get("items", [])):
+                raise AssertionError(f"Bank Club lead not visible in admin list: {bank_leads}")
 
             leads = request_json(opener, base_url, "GET", "/api/admin/leads")
             if not any(item.get("id") == "lead_smoke_001" for item in leads.get("items", [])):
@@ -334,6 +393,9 @@ def main() -> int:
                             "lead_duplicate_reuse",
                             "admin_login",
                             "telegram_settings_persistence",
+                            "line_settings_persistence",
+                            "line_disabled_test_status",
+                            "bank_club_line_notification_workflow",
                             "admin_lead_list",
                             "admin_csrf_reject_without_token",
                             "lead_status_patch",

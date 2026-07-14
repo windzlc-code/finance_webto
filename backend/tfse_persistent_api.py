@@ -12,6 +12,7 @@ import secrets
 import sqlite3
 import sys
 import threading
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from http import cookies
@@ -34,6 +35,7 @@ ADMIN_ARTICLE_RE = re.compile(r"^/api/admin/articles/([^/]+)$")
 BANK_CLUB_LEAD_STATUS_RE = re.compile(r"^/api/admin/bank-club/leads/([^/]+)/status$")
 TELEGRAM_TOKEN_RE = re.compile(r"^\d{5,15}:[A-Za-z0-9_-]{20,}$")
 TELEGRAM_CHAT_ID_RE = re.compile(r"^(?:-?\d{5,20}|@[A-Za-z0-9_]{5,})$")
+LINE_RECIPIENT_ID_RE = re.compile(r"^[UCR][0-9A-Fa-f]{32}$")
 SENSITIVE_PATTERNS = [
     re.compile(r"\b[A-Z][12]\d{8}\b", re.I),
     re.compile(r"\b\d{12,19}\b"),
@@ -507,6 +509,31 @@ class Store:
                 );
                 CREATE INDEX IF NOT EXISTS idx_telegram_notifications_created ON telegram_notifications(created_at DESC);
                 CREATE INDEX IF NOT EXISTS idx_telegram_notifications_status ON telegram_notifications(status, created_at DESC);
+                CREATE TABLE IF NOT EXISTS line_settings (
+                    id INTEGER PRIMARY KEY CHECK(id = 1),
+                    enabled INTEGER NOT NULL DEFAULT 0,
+                    channel_access_token_encrypted TEXT NOT NULL DEFAULT '',
+                    recipient_id TEXT NOT NULL DEFAULT '',
+                    updated_at TEXT NOT NULL DEFAULT '',
+                    updated_by_role TEXT NOT NULL DEFAULT '',
+                    last_test_status TEXT NOT NULL DEFAULT '',
+                    last_test_at TEXT NOT NULL DEFAULT '',
+                    last_error TEXT NOT NULL DEFAULT ''
+                );
+                INSERT OR IGNORE INTO line_settings(id) VALUES (1);
+                CREATE TABLE IF NOT EXISTS line_notifications (
+                    id TEXT PRIMARY KEY,
+                    site_key TEXT NOT NULL,
+                    lead_id TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'queued',
+                    message_preview TEXT NOT NULL DEFAULT '',
+                    recipient_id_masked TEXT NOT NULL DEFAULT '',
+                    error TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL,
+                    sent_at TEXT NOT NULL DEFAULT ''
+                );
+                CREATE INDEX IF NOT EXISTS idx_line_notifications_created ON line_notifications(created_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_line_notifications_status ON line_notifications(status, created_at DESC);
                 """
             )
 
@@ -727,6 +754,116 @@ class Store:
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def _line_row(self) -> sqlite3.Row:
+        with self.conn() as conn:
+            return conn.execute("SELECT * FROM line_settings WHERE id = 1").fetchone()
+
+    def line_settings_public(self) -> dict:
+        row = self._line_row()
+        token = self._telegram_decrypt(row["channel_access_token_encrypted"] or "")
+        recipient_id = str(row["recipient_id"] or "").strip()
+        return {
+            "enabled": bool(row["enabled"]),
+            "configured": bool(row["enabled"] and token and recipient_id),
+            "token_configured": bool(token),
+            "token_masked": mask_secret(token),
+            "recipient_id_configured": bool(recipient_id),
+            "recipient_id": recipient_id,
+            "recipient_id_masked": mask_secret(recipient_id),
+            "updated_at": row["updated_at"] or "",
+            "updated_by_role": row["updated_by_role"] or "",
+            "last_test_status": row["last_test_status"] or "",
+            "last_test_at": row["last_test_at"] or "",
+            "last_error": row["last_error"] or "",
+        }
+
+    def update_line_settings(self, payload: dict, actor_role: str) -> dict:
+        current = self._line_row()
+        current_token = self._telegram_decrypt(current["channel_access_token_encrypted"] or "")
+        current_recipient_id = str(current["recipient_id"] or "").strip()
+        requested_token = str(payload.get("channel_access_token") or "").strip()
+        requested_recipient_id = str(payload.get("recipient_id") or "").strip()
+        clear_token = as_bool(payload.get("clear_token"))
+        clear_recipient_id = as_bool(payload.get("clear_recipient_id"))
+        enabled = as_bool(payload.get("enabled"))
+        token = "" if clear_token else (requested_token or current_token)
+        recipient_id = "" if clear_recipient_id else (requested_recipient_id or current_recipient_id)
+        if recipient_id and not LINE_RECIPIENT_ID_RE.fullmatch(recipient_id):
+            raise ValueError("line_recipient_id_invalid")
+        if enabled and (not token or not recipient_id):
+            raise ValueError("line_configuration_incomplete")
+        with self.conn() as conn:
+            conn.execute(
+                """
+                UPDATE line_settings
+                SET enabled = ?, channel_access_token_encrypted = ?, recipient_id = ?, updated_at = ?,
+                    updated_by_role = ?, last_error = ''
+                WHERE id = 1
+                """,
+                (1 if enabled else 0, self._telegram_encrypt(token) if token else "", recipient_id, now_iso(), actor_role),
+            )
+        self.audit("line_settings_updated", "line", "enabled=" + str(enabled), actor_role)
+        return self.line_settings_public()
+
+    def _line_send(self, text: str) -> tuple[bool, str]:
+        row = self._line_row()
+        if not row["enabled"]:
+            return False, "line_disabled"
+        token = self._telegram_decrypt(row["channel_access_token_encrypted"] or "")
+        recipient_id = str(row["recipient_id"] or "").strip()
+        if not token or not recipient_id:
+            return False, "line_configuration_incomplete"
+        body = json.dumps({"to": recipient_id, "messages": [{"type": "text", "text": text[:5000]}]}, ensure_ascii=False).encode("utf-8")
+        request = urllib.request.Request(
+            "https://api.line.me/v2/bot/message/push",
+            data=body,
+            headers={"Content-Type": "application/json", "Authorization": "Bearer " + token, "X-Line-Retry-Key": str(uuid.uuid4())},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=8) as response:
+                response.read()
+            return True, ""
+        except Exception as exc:
+            # Never retain provider payloads because request diagnostics can contain sensitive data.
+            return False, "line_request_failed:" + type(exc).__name__
+
+    def queue_line_lead_notification(self, site_key: str, lead_id: str, payload: dict) -> dict:
+        settings = self.line_settings_public()
+        if not settings["configured"]:
+            return {"status": "not_configured", "notification_id": ""}
+        notification_id = "line_" + secrets.token_hex(10)
+        with self.conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO line_notifications(id, site_key, lead_id, status, message_preview, recipient_id_masked, error, created_at, sent_at)
+                VALUES (?, ?, ?, 'queued', ?, ?, '', ?, '')
+                """,
+                (notification_id, site_key, lead_id, self._telegram_notification_preview(site_key, payload), settings["recipient_id_masked"], now_iso()),
+            )
+        threading.Thread(target=self._deliver_line_lead_notification, args=(notification_id, site_key, lead_id, dict(payload)), daemon=True).start()
+        return {"status": "queued", "notification_id": notification_id}
+
+    def _deliver_line_lead_notification(self, notification_id: str, site_key: str, lead_id: str, payload: dict) -> None:
+        success, error = self._line_send(self._telegram_lead_message(site_key, lead_id, payload))
+        status = "sent" if success else "failed"
+        with self.conn() as conn:
+            conn.execute("UPDATE line_notifications SET status = ?, error = ?, sent_at = ? WHERE id = ?", (status, error[:240], now_iso() if success else "", notification_id))
+        self.audit("line_notification_" + status, lead_id, site_key, "system")
+
+    def send_line_test(self, actor_role: str) -> dict:
+        success, error = self._line_send("TFSE LINE 連線測試\n此訊息代表公共後台已成功連上目前設定的接收者。")
+        status = "sent" if success else "failed"
+        with self.conn() as conn:
+            conn.execute("UPDATE line_settings SET last_test_status = ?, last_test_at = ?, last_error = ? WHERE id = 1", (status, now_iso(), error[:240]))
+        self.audit("line_test_" + status, "line", error[:240], actor_role)
+        return {"status": status, "error": error, "settings": self.line_settings_public()}
+
+    def list_line_notifications(self) -> list[dict]:
+        with self.conn() as conn:
+            rows = conn.execute("SELECT id, site_key, lead_id, status, message_preview, recipient_id_masked, error, created_at, sent_at FROM line_notifications ORDER BY created_at DESC LIMIT 12").fetchall()
+        return [dict(row) for row in rows]
+
     def assert_lead_rate_limit(self, client_ip: str, device_id: str) -> None:
         ip_hash = stable_hash(client_ip, "TFSE_IP_HASH_SALT")
         device_id = str(device_id or "")[:120]
@@ -824,11 +961,13 @@ class Store:
             )
         self.audit("lead_submit", lead_id, "persistent api accepted lead")
         notification = self.queue_telegram_lead_notification("finance", lead_id, clean_payload)
+        line_notification = self.queue_line_lead_notification("finance", lead_id, clean_payload)
         return {
             "id": lead_id,
             "status": clean_payload.get("status", "new"),
             "lead": clean_payload,
             "telegram_notification": notification,
+            "line_notification": line_notification,
             "line_url": os.getenv("TFSE_LINE_OA_URL", "free-check.html#line-cta"),
         }
 
@@ -919,11 +1058,13 @@ class Store:
             )
         audit = self.audit("bank_club_lead_submit", lead_id, "persistent api accepted Bank Club lead")
         notification = self.queue_telegram_lead_notification("bank_club", lead_id, clean_payload)
+        line_notification = self.queue_line_lead_notification("bank_club", lead_id, clean_payload)
         return {
             "id": lead_id,
             "status": clean_payload.get("status", "new"),
             "lead": clean_payload,
             "telegram_notification": notification,
+            "line_notification": line_notification,
             "audit_log": audit,
         }
 
@@ -1247,6 +1388,7 @@ class Store:
                 "content_articles": conn.execute("SELECT COUNT(1) FROM content_records WHERE item_type = 'article'").fetchone()[0],
                 "bank_club_leads": conn.execute("SELECT COUNT(1) FROM bank_club_leads").fetchone()[0],
                 "telegram_notifications": conn.execute("SELECT COUNT(1) FROM telegram_notifications").fetchone()[0],
+                "line_notifications": conn.execute("SELECT COUNT(1) FROM line_notifications").fetchone()[0],
             }
         return {"ok": True, "service": "tfse_persistent_api", "db_path": str(self.db_path), "generated_at": now_iso(), **counts}
 
@@ -1431,6 +1573,16 @@ class Handler(BaseHTTPRequestHandler):
                 return
             self._write_json({"items": self.store.list_telegram_notifications()})
             return
+        if path == "/api/admin/line/settings":
+            if not self._require_admin():
+                return
+            self._write_json({"settings": self.store.line_settings_public()})
+            return
+        if path == "/api/admin/line/notifications":
+            if not self._require_admin():
+                return
+            self._write_json({"items": self.store.list_line_notifications()})
+            return
         self._write_json({"error": "not_found", "path": path}, status=404)
 
     def do_POST(self) -> None:
@@ -1511,6 +1663,30 @@ class Handler(BaseHTTPRequestHandler):
                 if not self._require_csrf(session):
                     return
                 self._write_json(self.store.send_telegram_test(role))
+                return
+            if path == "/api/admin/line/settings":
+                admin = self._require_admin()
+                if not admin:
+                    return
+                role, session = admin
+                if role != "super_admin":
+                    self._write_json({"error": "forbidden"}, status=403)
+                    return
+                if not self._require_csrf(session):
+                    return
+                self._write_json({"settings": self.store.update_line_settings(payload, role)})
+                return
+            if path == "/api/admin/line/test":
+                admin = self._require_admin()
+                if not admin:
+                    return
+                role, session = admin
+                if role != "super_admin":
+                    self._write_json({"error": "forbidden"}, status=403)
+                    return
+                if not self._require_csrf(session):
+                    return
+                self._write_json(self.store.send_line_test(role))
                 return
             if path == "/api/admin/products":
                 admin = self._require_admin()
