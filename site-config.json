@@ -27,10 +27,6 @@
     "oa_url": "free-check.html#line-cta",
     "label": "Line 官方帳號承接說明"
   },
-  "property_valuation": {
-    "url": "/valuation/",
-    "label": "不動產估價工具"
-  },
   "default_changefreq": "weekly",
   "canonical_pages": [
     "",

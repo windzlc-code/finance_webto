@@ -8,7 +8,6 @@ import { PageViewTracker } from "./PageViewTracker";
 import { PublicNav } from "./PublicNav";
 import { fbHref } from "@/lib/fb-links";
 import { lineHref } from "@/lib/line-links";
-import { propertyValuationUrl } from "@/lib/site-data";
 import { readDB } from "@/lib/store";
 import type { Article, SiteSettings } from "@/lib/types";
 
@@ -142,17 +141,6 @@ export async function PublicShell({
       <Header settings={settings} />
       {children}
       <Footer settings={settings} popularArticles={popularArticles} variant={footerVariant} />
-      <EventLink
-        className="property-valuation-float"
-        href={propertyValuationUrl}
-        eventName="property_valuation_float_click"
-        metadata={{ sourceSection: "global_float" }}
-        ariaLabel="開啟不動產估價工具"
-        prefetch={false}
-      >
-        <Icon name="home" />
-        <span className="sr-only">開啟不動產估價工具</span>
-      </EventLink>
     </>
   );
 }

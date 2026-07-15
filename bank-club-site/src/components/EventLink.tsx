@@ -22,7 +22,6 @@ function isNativeNavigation(href: string) {
     || href.startsWith("tel:")
     || href.startsWith("mailto:")
     || href.startsWith("/tfse/")
-    || href.startsWith("/valuation/")
     || href.startsWith("/admin/");
 }
 

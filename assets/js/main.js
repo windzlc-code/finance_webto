@@ -406,17 +406,4 @@
     -----------------------------------*/
     $window.resize(function () {});
 
-    (function loadPropertyValuationFloat() {
-        if (document.getElementById('tfse-property-valuation-script')) return;
-        var current = document.currentScript;
-        var src = current && current.src
-            ? new URL('tfse-property-valuation.js', current.src).href
-            : 'assets/js/tfse-property-valuation.js';
-        var script = document.createElement('script');
-        script.id = 'tfse-property-valuation-script';
-        script.src = src;
-        script.defer = true;
-        document.head.appendChild(script);
-    }());
-
 })(jQuery);

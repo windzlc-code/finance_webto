@@ -6,30 +6,11 @@ const host = process.env.TFSE_GATEWAY_HOST || "127.0.0.1";
 const port = Number(process.env.TFSE_GATEWAY_PORT || 8080);
 const bankClubPort = Number(process.env.BANKCLUB_PORT || 3000);
 const backadminPort = Number(process.env.BACKADMIN_PORT || 8788);
-const valuationPort = Number(process.env.VALUATION_PORT || 5606);
-
-const valuationApiPrefixes = [
-  "/api/lvr/",
-  "/api/support/",
-  "/api/minimax/",
-  "/api/real-price/",
-  "/api/geocode/",
-  "/api/cathay/",
-  "/api/tgos/",
-];
-
 function routeFor(rawUrl) {
   const parsed = new URL(rawUrl, `http://${host}:${port}`);
   const url = parsed.pathname;
   const pathWithQuery = `${parsed.pathname}${parsed.search}`;
 
-  if (url === "/valuation") return { redirect: `/valuation/${parsed.search}` };
-  if (url.startsWith("/valuation/")) {
-    return { port: valuationPort, path: pathWithQuery.slice("/valuation".length) || "/" };
-  }
-  if (valuationApiPrefixes.some((prefix) => url.startsWith(prefix))) {
-    return { port: valuationPort, path: pathWithQuery };
-  }
   if (url === "/admin" || url === "/admin.html") return { redirect: `/admin/${parsed.search}` };
   if (url.startsWith("/admin/")) {
     return { port: backadminPort, path: pathWithQuery.slice("/admin".length) || "/" };

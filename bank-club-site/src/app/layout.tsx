@@ -45,11 +45,6 @@ export default async function RootLayout({
     <html lang="zh-Hant" className="h-full antialiased">
       <head>
         <link rel="prefetch" href="/tfse/" as="document" />
-        <link rel="prefetch" href="/valuation/?from=bank-club" as="document" />
-        <link rel="prefetch" href="/valuation/_lvr_vendor.bundle.js?v=20260328-1" as="script" />
-        <link rel="prefetch" href="/valuation/lvr-bridge.js?v=20260510-file-fetch" as="script" />
-        <link rel="prefetch" href="/valuation/_lvr_common.bundle.js" as="script" />
-        <link rel="prefetch" href="/valuation/valuation-app.bundle.js?v=20260714-performance-bundle" as="script" />
         {allowPublicIndexing && searchConsoleVerification ? (
           <meta name="google-site-verification" content={searchConsoleVerification} />
         ) : null}
