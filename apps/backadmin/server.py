@@ -74,7 +74,12 @@ class BackadminHandler(Handler):
         self.end_headers()
 
     def _serve_static(self, path: str, include_body: bool) -> None:
-        if path in {"", "/", "/admin", "/admin/"}:
+        # The production gateway strips /admin/ before proxying, while the
+        # standalone preview keeps it. Support both so the same 8080 preview
+        # never falls back to a cached, obsolete runtime asset.
+        if path.startswith("/admin/"):
+            path = "/" + path[len("/admin/"):]
+        if path in {"", "/", "/admin"}:
             path = "/admin.html"
         target = (self.static_root / path.lstrip("/")).resolve()
         if target.is_dir():
