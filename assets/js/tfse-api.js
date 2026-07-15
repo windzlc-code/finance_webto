@@ -807,6 +807,16 @@
         });
     }
 
+    function listLineWebhookEvents() {
+        return loadConfig().then(function (config) {
+            var url = endpoint(config, "/api/admin/line/webhook-events");
+            if (!url || backendMode(config) !== "api") return { mode: "unavailable", items: [] };
+            return requestJson(url, { method: "GET" }, timeoutMs(config)).then(function (data) {
+                return Object.assign({ mode: "api" }, data);
+            });
+        });
+    }
+
     function listProducts(params) {
         params = params || {};
         return loadConfig().then(function (config) {
@@ -956,6 +966,7 @@
         saveLineSettings: saveLineSettings,
         sendLineTest: sendLineTest,
         listLineNotifications: listLineNotifications,
+        listLineWebhookEvents: listLineWebhookEvents,
         adminListProducts: adminListProducts,
         saveAdminProduct: saveAdminProduct,
         adminListArticles: adminListArticles,

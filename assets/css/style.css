@@ -53870,7 +53870,7 @@ body.tfse-admin-authenticated .tfse-visual-shell {
   gap: 10px;
   align-items: end;
 }
-.tfse-visual-telegram-form > label:not(.tfse-visual-telegram-toggle):not(.tfse-visual-telegram-clear) {
+.tfse-visual-telegram-form > label:not(.tfse-visual-telegram-toggle) {
   display: grid;
   gap: 5px;
   color: var(--tfse-navy);
@@ -53888,8 +53888,47 @@ body.tfse-admin-authenticated .tfse-visual-shell {
   background: #fff;
   font-size: 14px;
 }
-.tfse-visual-telegram-toggle,
-.tfse-visual-telegram-clear {
+.tfse-visual-secret-field {
+  position: relative;
+  display: block;
+}
+.tfse-visual-secret-field input[type="password"],
+.tfse-visual-secret-field input[type="text"] {
+  padding-right: 46px;
+}
+.tfse-visual-secret-toggle {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 5px;
+  color: #456078;
+  background: transparent;
+  cursor: pointer;
+}
+.tfse-visual-secret-toggle:hover,
+.tfse-visual-secret-toggle:focus-visible {
+  color: var(--tfse-navy);
+  background: #edf4fa;
+  outline: none;
+}
+.tfse-visual-secret-toggle:disabled { cursor: not-allowed; opacity: .45; }
+.tfse-visual-secret-toggle svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+.tfse-visual-telegram-toggle {
   display: inline-flex;
   grid-column: span 2;
   gap: 8px;
@@ -53898,8 +53937,7 @@ body.tfse-admin-authenticated .tfse-visual-shell {
   font-size: 13px;
   font-weight: 850;
 }
-.tfse-visual-telegram-toggle input,
-.tfse-visual-telegram-clear input {
+.tfse-visual-telegram-toggle input {
   width: 18px;
   height: 18px;
   accent-color: var(--tfse-gold);
@@ -53975,7 +54013,6 @@ body.tfse-admin-authenticated .tfse-visual-shell {
 @media (max-width: 760px) {
   .tfse-visual-telegram-form { grid-template-columns: 1fr; }
   .tfse-visual-telegram-toggle,
-  .tfse-visual-telegram-clear,
   .tfse-visual-telegram-actions,
   .tfse-visual-telegram-saved,
   .tfse-visual-telegram-note { grid-column: auto; }

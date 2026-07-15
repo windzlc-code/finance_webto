@@ -36,6 +36,7 @@ BANK_CLUB_LEAD_STATUS_RE = re.compile(r"^/api/admin/bank-club/leads/([^/]+)/stat
 TELEGRAM_TOKEN_RE = re.compile(r"^\d{5,15}:[A-Za-z0-9_-]{20,}$")
 TELEGRAM_CHAT_ID_RE = re.compile(r"^(?:-?\d{5,20}|@[A-Za-z0-9_]{5,})$")
 LINE_RECIPIENT_ID_RE = re.compile(r"^[UCR][0-9A-Fa-f]{32}$")
+LINE_CHANNEL_SECRET_RE = re.compile(r"^[0-9A-Fa-f]{32}$")
 SENSITIVE_PATTERNS = [
     re.compile(r"\b[A-Z][12]\d{8}\b", re.I),
     re.compile(r"\b\d{12,19}\b"),
@@ -513,6 +514,7 @@ class Store:
                     id INTEGER PRIMARY KEY CHECK(id = 1),
                     enabled INTEGER NOT NULL DEFAULT 0,
                     channel_access_token_encrypted TEXT NOT NULL DEFAULT '',
+                    channel_secret_encrypted TEXT NOT NULL DEFAULT '',
                     recipient_id TEXT NOT NULL DEFAULT '',
                     updated_at TEXT NOT NULL DEFAULT '',
                     updated_by_role TEXT NOT NULL DEFAULT '',
@@ -534,8 +536,24 @@ class Store:
                 );
                 CREATE INDEX IF NOT EXISTS idx_line_notifications_created ON line_notifications(created_at DESC);
                 CREATE INDEX IF NOT EXISTS idx_line_notifications_status ON line_notifications(status, created_at DESC);
+                CREATE TABLE IF NOT EXISTS line_webhook_events (
+                    webhook_event_id TEXT PRIMARY KEY,
+                    event_type TEXT NOT NULL DEFAULT '',
+                    source_type TEXT NOT NULL DEFAULT '',
+                    source_id TEXT NOT NULL DEFAULT '',
+                    user_id TEXT NOT NULL DEFAULT '',
+                    message_type TEXT NOT NULL DEFAULT '',
+                    message_text TEXT NOT NULL DEFAULT '',
+                    received_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_line_webhook_events_received ON line_webhook_events(received_at DESC);
                 """
             )
+            # Existing deployments already have this single-row table. SQLite
+            # cannot add the column through CREATE TABLE IF NOT EXISTS.
+            columns = {row["name"] for row in conn.execute("PRAGMA table_info(line_settings)").fetchall()}
+            if "channel_secret_encrypted" not in columns:
+                conn.execute("ALTER TABLE line_settings ADD COLUMN channel_secret_encrypted TEXT NOT NULL DEFAULT ''")
 
     def audit(self, action: str, target: str, detail: str = "", actor_role: str = "") -> dict:
         item = {
@@ -586,17 +604,17 @@ class Store:
         token = str(payload.get("bot_token") or "").strip()
         requested_chat_id = str(payload.get("chat_id") or "").strip()
         enabled = as_bool(payload.get("enabled"))
-        clear_token = as_bool(payload.get("clear_token"))
-        clear_chat_id = as_bool(payload.get("clear_chat_id"))
-        if clear_token:
-            token = ""
-        elif token:
-            if not TELEGRAM_TOKEN_RE.fullmatch(token):
-                raise ValueError("telegram_bot_token_invalid")
-        else:
+        # The admin UI only sends replace_* after an operator actually edits
+        # a field. This preserves masked credentials on an untouched form,
+        # while letting an intentionally blank field clear the saved value.
+        replace_token = as_bool(payload.get("replace_token")) or as_bool(payload.get("clear_token"))
+        replace_chat_id = as_bool(payload.get("replace_chat_id")) or as_bool(payload.get("clear_chat_id"))
+        if not replace_token and not token:
             token = current_token
-        if clear_chat_id:
-            chat_id = ""
+        elif token and not TELEGRAM_TOKEN_RE.fullmatch(token):
+            raise ValueError("telegram_bot_token_invalid")
+        if replace_chat_id:
+            chat_id = requested_chat_id
         elif requested_chat_id:
             chat_id = requested_chat_id
         else:
@@ -761,12 +779,15 @@ class Store:
     def line_settings_public(self) -> dict:
         row = self._line_row()
         token = self._telegram_decrypt(row["channel_access_token_encrypted"] or "")
+        channel_secret = self._telegram_decrypt(row["channel_secret_encrypted"] or "")
         recipient_id = str(row["recipient_id"] or "").strip()
         return {
             "enabled": bool(row["enabled"]),
             "configured": bool(row["enabled"] and token and recipient_id),
             "token_configured": bool(token),
             "token_masked": mask_secret(token),
+            "channel_secret_configured": bool(channel_secret),
+            "channel_secret_masked": mask_secret(channel_secret),
             "recipient_id_configured": bool(recipient_id),
             "recipient_id": recipient_id,
             "recipient_id_masked": mask_secret(recipient_id),
@@ -780,14 +801,22 @@ class Store:
     def update_line_settings(self, payload: dict, actor_role: str) -> dict:
         current = self._line_row()
         current_token = self._telegram_decrypt(current["channel_access_token_encrypted"] or "")
+        current_channel_secret = self._telegram_decrypt(current["channel_secret_encrypted"] or "")
         current_recipient_id = str(current["recipient_id"] or "").strip()
         requested_token = str(payload.get("channel_access_token") or "").strip()
+        requested_channel_secret = str(payload.get("channel_secret") or "").strip()
         requested_recipient_id = str(payload.get("recipient_id") or "").strip()
-        clear_token = as_bool(payload.get("clear_token"))
-        clear_recipient_id = as_bool(payload.get("clear_recipient_id"))
+        # See update_telegram_settings: empty values only clear a stored
+        # value when the form explicitly marks that field as edited.
+        replace_token = as_bool(payload.get("replace_channel_access_token")) or as_bool(payload.get("clear_token"))
+        replace_channel_secret = as_bool(payload.get("replace_channel_secret")) or as_bool(payload.get("clear_channel_secret"))
+        replace_recipient_id = as_bool(payload.get("replace_recipient_id")) or as_bool(payload.get("clear_recipient_id"))
         enabled = as_bool(payload.get("enabled"))
-        token = "" if clear_token else (requested_token or current_token)
-        recipient_id = "" if clear_recipient_id else (requested_recipient_id or current_recipient_id)
+        token = requested_token if replace_token else (requested_token or current_token)
+        channel_secret = requested_channel_secret if replace_channel_secret else (requested_channel_secret or current_channel_secret)
+        recipient_id = requested_recipient_id if replace_recipient_id else (requested_recipient_id or current_recipient_id)
+        if channel_secret and not LINE_CHANNEL_SECRET_RE.fullmatch(channel_secret):
+            raise ValueError("line_channel_secret_invalid")
         if recipient_id and not LINE_RECIPIENT_ID_RE.fullmatch(recipient_id):
             raise ValueError("line_recipient_id_invalid")
         if enabled and (not token or not recipient_id):
@@ -796,11 +825,18 @@ class Store:
             conn.execute(
                 """
                 UPDATE line_settings
-                SET enabled = ?, channel_access_token_encrypted = ?, recipient_id = ?, updated_at = ?,
+                SET enabled = ?, channel_access_token_encrypted = ?, channel_secret_encrypted = ?, recipient_id = ?, updated_at = ?,
                     updated_by_role = ?, last_error = ''
                 WHERE id = 1
                 """,
-                (1 if enabled else 0, self._telegram_encrypt(token) if token else "", recipient_id, now_iso(), actor_role),
+                (
+                    1 if enabled else 0,
+                    self._telegram_encrypt(token) if token else "",
+                    self._telegram_encrypt(channel_secret) if channel_secret else "",
+                    recipient_id,
+                    now_iso(),
+                    actor_role,
+                ),
             )
         self.audit("line_settings_updated", "line", "enabled=" + str(enabled), actor_role)
         return self.line_settings_public()
@@ -862,6 +898,77 @@ class Store:
     def list_line_notifications(self) -> list[dict]:
         with self.conn() as conn:
             rows = conn.execute("SELECT id, site_key, lead_id, status, message_preview, recipient_id_masked, error, created_at, sent_at FROM line_notifications ORDER BY created_at DESC LIMIT 12").fetchall()
+        return [dict(row) for row in rows]
+
+    def receive_line_webhook(self, raw_body: bytes, signature: str) -> dict:
+        """Verify, de-duplicate, and persist incoming LINE webhook events."""
+        channel_secret = self._telegram_decrypt(self._line_row()["channel_secret_encrypted"] or "")
+        if not channel_secret:
+            raise ValueError("line_webhook_not_configured")
+        expected = base64.b64encode(hmac.new(channel_secret.encode("utf-8"), raw_body, hashlib.sha256).digest()).decode("ascii")
+        if not signature or not hmac.compare_digest(expected, signature):
+            raise ValueError("line_webhook_signature_invalid")
+        try:
+            payload = json.loads(raw_body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("line_webhook_payload_invalid") from exc
+        events = payload.get("events") if isinstance(payload, dict) else []
+        if not isinstance(events, list):
+            raise ValueError("line_webhook_payload_invalid")
+        accepted = 0
+        duplicates = 0
+        with self.conn() as conn:
+            for event in events[:100]:
+                if not isinstance(event, dict):
+                    continue
+                event_id = str(event.get("webhookEventId") or "").strip()
+                if not event_id:
+                    # Every current Messaging API webhook has an ID. Ignore
+                    # malformed records instead of making LINE retry forever.
+                    continue
+                source = event.get("source") if isinstance(event.get("source"), dict) else {}
+                message = event.get("message") if isinstance(event.get("message"), dict) else {}
+                source_type = str(source.get("type") or "")[:32]
+                user_id = str(source.get("userId") or "")[:80]
+                source_id = str(source.get("groupId") or source.get("roomId") or user_id or "")[:80]
+                message_type = str(message.get("type") or "")[:32]
+                message_text = redact_sensitive_text(message.get("text") or "").replace("\n", " ").strip()[:1000]
+                try:
+                    conn.execute(
+                        """
+                        INSERT INTO line_webhook_events(
+                            webhook_event_id, event_type, source_type, source_id, user_id,
+                            message_type, message_text, received_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            event_id,
+                            str(event.get("type") or "unknown")[:48],
+                            source_type,
+                            source_id,
+                            user_id,
+                            message_type,
+                            message_text,
+                            now_iso(),
+                        ),
+                    )
+                    accepted += 1
+                except sqlite3.IntegrityError:
+                    duplicates += 1
+        self.audit("line_webhook_received", "line", "accepted=" + str(accepted) + ";duplicate=" + str(duplicates), "system")
+        return {"ok": True, "accepted": accepted, "duplicates": duplicates}
+
+    def list_line_webhook_events(self) -> list[dict]:
+        with self.conn() as conn:
+            rows = conn.execute(
+                """
+                SELECT webhook_event_id, event_type, source_type, source_id, user_id,
+                       message_type, message_text, received_at
+                FROM line_webhook_events
+                ORDER BY received_at DESC
+                LIMIT 20
+                """
+            ).fetchall()
         return [dict(row) for row in rows]
 
     def assert_lead_rate_limit(self, client_ip: str, device_id: str) -> None:
@@ -1437,11 +1544,16 @@ class Handler(BaseHTTPRequestHandler):
         self._set_headers(status=status)
         self.wfile.write(json_bytes(payload))
 
-    def _read_json(self) -> dict:
+    def _read_raw_body(self, maximum: int = 1_000_000) -> bytes:
         length = int(self.headers.get("Content-Length", "0") or "0")
         if length <= 0:
-            return {}
-        raw = self.rfile.read(length)
+            return b""
+        if length > maximum:
+            raise ValueError("request_body_too_large")
+        return self.rfile.read(length)
+
+    def _read_json(self) -> dict:
+        raw = self._read_raw_body()
         if not raw:
             return {}
         return json.loads(raw.decode("utf-8"))
@@ -1583,11 +1695,26 @@ class Handler(BaseHTTPRequestHandler):
                 return
             self._write_json({"items": self.store.list_line_notifications()})
             return
+        if path == "/api/admin/line/webhook-events":
+            if not self._require_admin():
+                return
+            self._write_json({"items": self.store.list_line_webhook_events()})
+            return
         self._write_json({"error": "not_found", "path": path}, status=404)
 
     def do_POST(self) -> None:
         path = normalize_api_path(urlparse(self.path).path)
         try:
+            if path == "/api/line/webhook":
+                raw_body = self._read_raw_body()
+                try:
+                    result = self.store.receive_line_webhook(raw_body, str(self.headers.get("X-Line-Signature") or ""))
+                except ValueError as exc:
+                    status = 401 if str(exc) == "line_webhook_signature_invalid" else 503 if str(exc) == "line_webhook_not_configured" else 400
+                    self._write_json({"error": str(exc)}, status=status)
+                    return
+                self._write_json(result)
+                return
             payload = self._read_json()
             if path == "/api/leads":
                 self._write_json(self.store.create_lead(payload, self._client_ip()))

@@ -319,7 +319,7 @@
     var telegramIntegration = { mode: "unavailable", settings: {}, items: [], loading: false, operation: "", message: "", error: "" };
     var telegramOperationTimer = null;
     var telegramOperationSequence = 0;
-    var lineIntegration = { mode: "unavailable", settings: {}, items: [], loading: false, operation: "", message: "", error: "" };
+    var lineIntegration = { mode: "unavailable", settings: {}, items: [], webhookEvents: [], loading: false, operation: "", message: "", error: "" };
     var lineOperationTimer = null;
     var lineOperationSequence = 0;
     var editingProductId = "";
@@ -881,7 +881,7 @@
 
     function loadLineIntegration() {
         if (!isAuthenticated() || authSource() !== "api" || !window.TFSEApi || !window.TFSEApi.getLineSettings) {
-            lineIntegration = Object.assign({}, lineIntegration, { mode: "unavailable", settings: {}, items: [], loading: false });
+            lineIntegration = Object.assign({}, lineIntegration, { mode: "unavailable", settings: {}, items: [], webhookEvents: [], loading: false });
             return Promise.resolve(lineIntegration);
         }
         var previous = lineIntegration || {};
@@ -891,15 +891,26 @@
                 mode: settingsResult.mode || "api",
                 settings: settingsResult.settings || {},
                 items: previous.items || [],
+                webhookEvents: previous.webhookEvents || [],
                 loading: false,
                 error: ""
             });
-            if (!window.TFSEApi.listLineNotifications) return lineIntegration;
-            return window.TFSEApi.listLineNotifications().then(function (notificationResult) {
-                lineIntegration.items = notificationResult.items || [];
+            var requests = [];
+            if (window.TFSEApi.listLineNotifications) {
+                requests.push(window.TFSEApi.listLineNotifications().then(function (notificationResult) {
+                    lineIntegration.items = notificationResult.items || [];
+                }));
+            }
+            if (window.TFSEApi.listLineWebhookEvents) {
+                requests.push(window.TFSEApi.listLineWebhookEvents().then(function (eventResult) {
+                    lineIntegration.webhookEvents = eventResult.items || [];
+                }));
+            }
+            if (!requests.length) return lineIntegration;
+            return Promise.all(requests).then(function () {
                 return lineIntegration;
             }).catch(function (error) {
-                lineIntegration.error = error && error.message ? "LINE 通知紀錄讀取失敗：" + error.message : "LINE 通知紀錄讀取失敗";
+                lineIntegration.error = error && error.message ? "LINE 連線紀錄讀取失敗：" + error.message : "LINE 連線紀錄讀取失敗";
                 return lineIntegration;
             });
         }).catch(function (error) {
@@ -9380,6 +9391,14 @@
         ].join("");
     }
 
+    function visualEyeIcon() {
+        return "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z\"></path><circle cx=\"12\" cy=\"12\" r=\"2.6\"></circle></svg>";
+    }
+
+    function visualConfigInput(label, name, value, placeholder, disabled, secret) {
+        return "<label><span>" + escapeHtml(label) + "</span><span class=\"tfse-visual-secret-field\"><input type=\"password\" name=\"" + escapeHtml(name) + "\" autocomplete=\"off\" value=\"" + escapeHtml(value || "") + "\" placeholder=\"" + escapeHtml(placeholder) + "\" data-visual-config-input data-visual-config-secret=\"" + (secret ? "true" : "false") + "\"" + disabled + "><button type=\"button\" class=\"tfse-visual-secret-toggle\" data-visual-secret-toggle=\"" + escapeHtml(name) + "\" aria-label=\"顯示 " + escapeHtml(label) + "\" title=\"顯示或隱藏\"" + disabled + ">" + visualEyeIcon() + "</button></span></label>";
+    }
+
     function visualRenderTelegramSettings() {
         var state = telegramIntegration || {};
         var settings = state.settings || {};
@@ -9395,12 +9414,11 @@
             "<div class=\"tfse-visual-telegram-head\"><div><span class=\"tfse-visual-eyebrow\">Telegram Bot</span><h4>表單即時通知</h4><p>金融站與 Bank Club 的訪客表單會先入庫，再由伺服器發送到指定 Chat ID。Bot Token 不會顯示或傳到前端。</p></div><span class=\"tfse-visual-telegram-status" + (settings.configured ? " is-ready" : "") + "\">" + escapeHtml(status) + "</span></div>",
             "<form class=\"tfse-visual-telegram-form\" data-visual-telegram-settings>",
             "<label class=\"tfse-visual-telegram-toggle\"><input type=\"checkbox\" name=\"enabled\"" + (settings.enabled ? " checked" : "") + disabled + "><span>啟用新表單 Telegram 通知</span></label>",
-            "<label><span>Bot Token</span><input type=\"password\" name=\"bot_token\" autocomplete=\"new-password\" placeholder=\"" + escapeHtml(settings.token_configured ? "已儲存：" + (settings.token_masked || "已設定") + "；留空不更換" : "由 BotFather 取得的 Token") + "\"" + disabled + "></label>",
-            "<label><span>接收 Chat ID / 群組 ID</span><input type=\"text\" name=\"chat_id\" autocomplete=\"off\" value=\"" + escapeHtml(settings.chat_id || "") + "\" placeholder=\"" + escapeHtml(settings.chat_id_configured ? "目前已設定；留空不更換" : "例如 -1001234567890 或 @channelname") + "\"" + disabled + "></label>",
-            "<label class=\"tfse-visual-telegram-clear\"><input type=\"checkbox\" name=\"clear_token\"" + disabled + "><span>清除目前儲存的 Bot Token</span></label>",
-            "<label class=\"tfse-visual-telegram-clear\"><input type=\"checkbox\" name=\"clear_chat_id\"" + disabled + "><span>清除目前儲存的 Chat ID</span></label>",
+            visualConfigInput("Bot Token", "bot_token", "", settings.token_configured ? "已儲存：" + (settings.token_masked || "已設定") + "；留空保留，清空後儲存可刪除" : "由 BotFather 取得的 Token", disabled, true),
+            visualConfigInput("接收 Chat ID / 群組 ID", "chat_id", settings.chat_id || "", settings.chat_id_configured ? "目前已設定；清空後儲存可刪除" : "例如 -1001234567890 或 @channelname", disabled, false),
             (settings.token_configured || settings.chat_id_configured) ? "<div class=\"tfse-visual-telegram-saved\"><span>目前保存</span><b>Bot Token：" + escapeHtml(settings.token_configured ? (settings.token_masked || "已設定") : "未設定") + "</b><b>Chat ID：" + escapeHtml(settings.chat_id_configured ? (settings.chat_id || "已設定") : "未設定") + "</b></div>" : "",
             "<div class=\"tfse-visual-telegram-actions\"><button type=\"submit\"" + disabled + ">儲存連線設定</button><button type=\"button\" class=\"is-secondary\" data-visual-telegram-test" + disabled + ">發送測試訊息</button></div>",
+            "<p class=\"tfse-visual-telegram-note\" data-visual-settings-live>未修改欄位會保留原值；修改後會即時標示，清空欄位再儲存即可移除。</p>",
             !isSuperAdmin ? "<p class=\"tfse-visual-telegram-note\">僅 Super Admin 能儲存 Token、變更接收 Chat ID 或測試發送。</p>" : "",
             state.message ? "<p class=\"tfse-visual-telegram-note" + (state.operation === "error" ? " is-error" : " is-success") + "\">" + escapeHtml(state.message) + "</p>" : "",
             state.error ? "<p class=\"tfse-visual-telegram-note is-error\">操作失敗：" + escapeHtml(state.error) + "</p>" : "",
@@ -9421,6 +9439,8 @@
         var disabled = isSuperAdmin ? "" : " disabled";
         var status = state.operation === "saving" ? "儲存中" : (state.operation === "testing" ? "測試發送中" : (settings.configured ? "已啟用並會自動通知" : (settings.token_configured ? "Token 已保存，尚未啟用" : "尚未設定")));
         var recent = (state.items || []).slice(0, 5);
+        var webhookEvents = (state.webhookEvents || []).slice(0, 5);
+        var webhookUrl = window.location.origin + "/api/line/webhook";
         var statusLabel = function (value) {
             return { queued: "排隊中", sent: "已送達", failed: "發送失敗" }[value] || value || "未送出";
         };
@@ -9429,13 +9449,14 @@
             "<div class=\"tfse-visual-telegram-head\"><div><span class=\"tfse-visual-eyebrow\">LINE Messaging API</span><h4>表單即時通知</h4><p>金融站與 Bank Club 的訪客表單會先入庫，再由伺服器發送至指定 LINE 使用者、群組或聊天室。Channel Access Token 不會顯示或傳到前端。</p></div><span class=\"tfse-visual-telegram-status" + (settings.configured ? " is-ready" : "") + "\">" + escapeHtml(status) + "</span></div>",
             "<form class=\"tfse-visual-telegram-form\" data-visual-line-settings>",
             "<label class=\"tfse-visual-telegram-toggle\"><input type=\"checkbox\" name=\"enabled\"" + (settings.enabled ? " checked" : "") + disabled + "><span>啟用新表單 LINE 通知</span></label>",
-            "<label><span>Channel Access Token</span><input type=\"password\" name=\"channel_access_token\" autocomplete=\"new-password\" placeholder=\"" + escapeHtml(settings.token_configured ? "已儲存：" + (settings.token_masked || "已設定") + "；留空不更換" : "由 LINE Developers 取得的 Channel Access Token") + "\"" + disabled + "></label>",
-            "<label><span>接收者 User ID / 群組 ID / 聊天室 ID</span><input type=\"text\" name=\"recipient_id\" autocomplete=\"off\" value=\"" + escapeHtml(settings.recipient_id || "") + "\" placeholder=\"例如 U 開頭的 33 位 ID\"" + disabled + "></label>",
-            "<label class=\"tfse-visual-telegram-clear\"><input type=\"checkbox\" name=\"clear_token\"" + disabled + "><span>清除目前儲存的 Channel Access Token</span></label>",
-            "<label class=\"tfse-visual-telegram-clear\"><input type=\"checkbox\" name=\"clear_recipient_id\"" + disabled + "><span>清除目前儲存的接收者 ID</span></label>",
-            (settings.token_configured || settings.recipient_id_configured) ? "<div class=\"tfse-visual-telegram-saved\"><span>目前保存</span><b>Token：" + escapeHtml(settings.token_configured ? (settings.token_masked || "已設定") : "未設定") + "</b><b>接收者 ID：" + escapeHtml(settings.recipient_id_configured ? (settings.recipient_id || "已設定") : "未設定") + "</b></div>" : "",
+            visualConfigInput("Channel Access Token", "channel_access_token", "", settings.token_configured ? "已儲存：" + (settings.token_masked || "已設定") + "；留空保留，清空後儲存可刪除" : "由 LINE Developers 取得的 Channel Access Token", disabled, true),
+            visualConfigInput("Channel Secret（Webhook 驗證）", "channel_secret", "", settings.channel_secret_configured ? "已儲存：" + (settings.channel_secret_masked || "已設定") + "；留空保留，清空後儲存可刪除" : "由 LINE Developers 取得的 32 位 Channel Secret", disabled, true),
+            visualConfigInput("接收者 User ID / 群組 ID / 聊天室 ID", "recipient_id", settings.recipient_id || "", settings.recipient_id_configured ? "目前已設定；清空後儲存可刪除" : "例如 U 開頭的 33 位 ID", disabled, false),
+            (settings.token_configured || settings.channel_secret_configured || settings.recipient_id_configured) ? "<div class=\"tfse-visual-telegram-saved\"><span>目前保存</span><b>Token：" + escapeHtml(settings.token_configured ? (settings.token_masked || "已設定") : "未設定") + "</b><b>Webhook Secret：" + escapeHtml(settings.channel_secret_configured ? (settings.channel_secret_masked || "已設定") : "未設定") + "</b><b>接收者 ID：" + escapeHtml(settings.recipient_id_configured ? (settings.recipient_id || "已設定") : "未設定") + "</b></div>" : "",
             "<div class=\"tfse-visual-telegram-actions\"><button type=\"submit\"" + disabled + ">儲存 LINE 連線設定</button><button type=\"button\" class=\"is-secondary\" data-visual-line-test" + disabled + ">發送測試訊息</button></div>",
+            "<p class=\"tfse-visual-telegram-note\" data-visual-settings-live>未修改欄位會保留原值；修改後會即時標示，清空欄位再儲存即可移除。</p>",
             "<p class=\"tfse-visual-telegram-note\">接收者需符合 LINE Messaging API 條件，例如已加入官方帳號好友或所在群組已加入官方帳號。</p>",
+            "<p class=\"tfse-visual-telegram-note\">雙向收訊 Webhook URL：<b>" + escapeHtml(webhookUrl) + "</b>。請在 LINE Developers 的 Messaging API 頁貼上此網址、啟用 Use webhook，再按 Verify。 <button type=\"button\" class=\"is-secondary\" data-visual-line-copy-webhook>複製 Webhook URL</button></p>",
             !isSuperAdmin ? "<p class=\"tfse-visual-telegram-note\">僅 Super Admin 能儲存 Token、變更接收者 ID 或測試發送。</p>" : "",
             state.message ? "<p class=\"tfse-visual-telegram-note" + (state.operation === "error" ? " is-error" : " is-success") + "\">" + escapeHtml(state.message) + "</p>" : "",
             state.error ? "<p class=\"tfse-visual-telegram-note is-error\">操作失敗：" + escapeHtml(state.error) + "</p>" : "",
@@ -9445,6 +9466,13 @@
             recent.length ? recent.map(function (item) {
                 return "<div><span class=\"is-" + escapeHtml(item.status || "queued") + "\">" + escapeHtml(statusLabel(item.status)) + "</span><b>" + escapeHtml(item.message_preview || item.lead_id || "表單通知") + "</b><small>" + escapeHtml(formatDate(item.sent_at || item.created_at)) + (item.error ? " ｜ " + escapeHtml(item.error) : "") + "</small></div>";
             }).join("") : "<p>尚無通知紀錄。完成設定後，下一筆前台表單會自動出現在這裡。</p>",
+            "</div>",
+            "<div class=\"tfse-visual-telegram-history\"><strong>最近收到的 LINE 事件</strong>",
+            webhookEvents.length ? webhookEvents.map(function (item) {
+                var source = item.source_id || item.user_id || "未提供來源 ID";
+                var summary = item.message_text || (item.event_type === "follow" ? "使用者已加入官方帳號" : "收到 " + (item.event_type || "LINE") + " 事件");
+                return "<div><span class=\"is-sent\">" + escapeHtml(item.event_type || "event") + "</span><b>" + escapeHtml(summary) + "</b><small>來源 ID：" + escapeHtml(source) + " ｜ " + escapeHtml(formatDate(item.received_at)) + "</small></div>";
+            }).join("") : "<p>尚無收到事件。完成 Secret 設定並在 LINE Developers 啟用 Webhook 後，使用者加好友或傳訊息會顯示在這裡。</p>",
             "</div></section>"
         ].join("");
     }
@@ -10500,6 +10528,16 @@
     if (sourceFilter) sourceFilter.addEventListener("change", renderList);
     if (visualConsolePanel) {
         visualConsolePanel.addEventListener("click", function (event) {
+            var secretToggle = event.target.closest("[data-visual-secret-toggle]");
+            if (secretToggle) {
+                var secretInput = secretToggle.closest(".tfse-visual-secret-field").querySelector("input[data-visual-config-input]");
+                if (!secretInput) return;
+                var reveal = secretInput.type === "password";
+                secretInput.type = reveal ? "text" : "password";
+                secretToggle.setAttribute("aria-label", (reveal ? "隱藏 " : "顯示 ") + (secretInput.closest("label").querySelector("span").textContent || "欄位"));
+                secretToggle.setAttribute("title", reveal ? "隱藏內容" : "顯示內容");
+                return;
+            }
             var siteButton = event.target.closest("[data-visual-site]");
             if (siteButton) {
                 visualConsoleState.tab = "leads";
@@ -10620,6 +10658,20 @@
                 });
                 return;
             }
+            var lineWebhookCopyButton = event.target.closest("[data-visual-line-copy-webhook]");
+            if (lineWebhookCopyButton) {
+                var webhookUrl = window.location.origin + "/api/line/webhook";
+                var copied = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(webhookUrl) : Promise.reject(new Error("clipboard_unavailable"));
+                Promise.resolve(copied).then(function () {
+                    lineIntegration.message = "Webhook URL 已複製，請貼到 LINE Developers 後啟用並驗證。";
+                    lineIntegration.error = "";
+                    renderVisualConsole();
+                }).catch(function () {
+                    lineIntegration.message = "請手動複製上方 Webhook URL。";
+                    renderVisualConsole();
+                });
+                return;
+            }
             var unifiedExportButton = event.target.closest("[data-visual-unified-export]");
             if (unifiedExportButton) {
                 exportVisualCombinedLeads();
@@ -10646,6 +10698,17 @@
             }
         });
         visualConsolePanel.addEventListener("input", function (event) {
+            var configInput = event.target.closest("[data-visual-config-input]");
+            if (configInput) {
+                configInput.dataset.dirty = "true";
+                var configForm = configInput.closest("form");
+                var liveNote = configForm && configForm.querySelector("[data-visual-settings-live]");
+                if (liveNote) {
+                    liveNote.textContent = configInput.value ? "欄位已修改，儲存後會更新目前設定。" : "欄位已清空，儲存後會移除目前設定；若通知仍啟用，請先關閉通知或補齊必要欄位。";
+                    liveNote.classList.remove("is-error", "is-success");
+                }
+                return;
+            }
             var target = event.target.closest("[data-visual-filter]");
             if (!target) return;
             var filterName = target.getAttribute("data-visual-filter");
@@ -10664,6 +10727,13 @@
             }, 180);
         });
         visualConsolePanel.addEventListener("change", function (event) {
+            var settingsToggle = event.target.closest("[data-visual-telegram-settings] input[name=enabled], [data-visual-line-settings] input[name=enabled]");
+            if (settingsToggle) {
+                var settingsForm = settingsToggle.closest("form");
+                var settingsLiveNote = settingsForm && settingsForm.querySelector("[data-visual-settings-live]");
+                if (settingsLiveNote) settingsLiveNote.textContent = settingsToggle.checked ? "通知已開啟；請確認必要欄位皆已保存。" : "通知已關閉；仍可保存或清空連線資料。";
+                return;
+            }
             var target = event.target.closest("[data-visual-filter]");
             if (!target) return;
             var filterName = target.getAttribute("data-visual-filter");
@@ -10688,9 +10758,11 @@
                 var lineSettingsPayload = {
                     enabled: lineFormData.get("enabled") === "on",
                     channel_access_token: String(lineFormData.get("channel_access_token") || ""),
+                    channel_secret: String(lineFormData.get("channel_secret") || ""),
                     recipient_id: String(lineFormData.get("recipient_id") || ""),
-                    clear_token: lineFormData.get("clear_token") === "on",
-                    clear_recipient_id: lineFormData.get("clear_recipient_id") === "on"
+                    replace_channel_access_token: lineForm.querySelector("[name=channel_access_token]").dataset.dirty === "true",
+                    replace_channel_secret: lineForm.querySelector("[name=channel_secret]").dataset.dirty === "true",
+                    replace_recipient_id: lineForm.querySelector("[name=recipient_id]").dataset.dirty === "true"
                 };
                 Promise.resolve().then(function () {
                     return window.TFSEApi.saveLineSettings(lineSettingsPayload);
@@ -10714,8 +10786,8 @@
                 enabled: formData.get("enabled") === "on",
                 bot_token: String(formData.get("bot_token") || ""),
                 chat_id: String(formData.get("chat_id") || ""),
-                clear_token: formData.get("clear_token") === "on",
-                clear_chat_id: formData.get("clear_chat_id") === "on"
+                replace_token: telegramForm.querySelector("[name=bot_token]").dataset.dirty === "true",
+                replace_chat_id: telegramForm.querySelector("[name=chat_id]").dataset.dirty === "true"
             };
             Promise.resolve().then(function () {
                 return window.TFSEApi.saveTelegramSettings(settingsPayload);
