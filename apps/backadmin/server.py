@@ -84,7 +84,15 @@ class BackadminHandler(Handler):
             return
         self.send_response(200)
         self.send_header("Content-Type", MIME_TYPES.get(target.suffix.lower(), "application/octet-stream"))
-        if target.name == "site-config.json":
+        # The admin UI is a plain static app. Keep its runtime files fresh so a
+        # deployed interaction fix is never hidden behind a browser's stale JS.
+        admin_runtime_files = {
+            "assets/js/tfse-admin.js",
+            "assets/js/tfse-api.js",
+            "assets/css/style.css",
+        }
+        request_path = target.relative_to(self.static_root).as_posix()
+        if target.name == "site-config.json" or request_path in admin_runtime_files:
             self.send_header("Cache-Control", "no-store")
         elif target.suffix.lower() in STATIC_CACHE_SUFFIXES:
             self.send_header("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400")
