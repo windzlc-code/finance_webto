@@ -289,6 +289,15 @@
         "首頁": "首页",
         "關於": "关于",
         "資料庫": "资料库",
+        "合作服務": "合作服务",
+        "日本不動產搜尋網": "日本不动产搜索网",
+        "日本置產一起go官方line": "日本置产一起go官方LINE",
+        "東京營運聯絡": "东京营运联系",
+        "東京本社": "东京总部",
+        "海外營業部 部長": "海外营业部 部长",
+        "公司電話": "公司电话",
+        "行動電話": "行动电话",
+        "電子信箱": "电子邮箱",
         "金融分類": "金融分类",
         "金融知識": "金融知识",
         "免費財務健檢查詢": "免费财务健检查询",
@@ -949,6 +958,89 @@
         recordError("unhandled_rejection", event.reason && (event.reason.message || String(event.reason)), {});
     });
 
+    function addFooterPartnerServices() {
+        var footer = document.querySelector(".footer-section");
+        if (!footer || footer.querySelector(".tfse-footer-partners") || document.body.classList.contains("tfse-admin-standalone")) return;
+
+        var container = footer.querySelector(".container");
+        var footerTopRow = container ? container.querySelector(".row") : null;
+        var partners = document.createElement("div");
+        if (!footerTopRow) return;
+
+        partners.className = "tfse-footer-partners col-xl-2 col-lg-2 col-md-4 col-sm-4 col-6 mb-6";
+        partners.innerHTML = [
+            '<div class="footer-widget">',
+                '<h4 class="footer-widget-title">合作服務</h4>',
+                '<div class="footer-widget-content">',
+                    "<ul>",
+                        '<li><a href="https://www.manuvip.com/" target="_blank" rel="noopener noreferrer">日本不動產搜尋網</a></li>',
+                        '<li><a href="https://page.line.me/002apkmh" target="_blank" rel="noopener noreferrer">日本置產一起go官方line</a></li>',
+                    "</ul>",
+                "</div>",
+            "</div>"
+        ].join("");
+
+        footerTopRow.appendChild(partners);
+    }
+
+    function addCorporateFooterContact() {
+        var footer = document.querySelector(".footer-section");
+        if (!footer || footer.querySelector(".tfse-footer-corporate") || document.body.classList.contains("tfse-admin-standalone")) return;
+
+        var container = footer.querySelector(".container");
+        var footerTopRow = container ? container.querySelector(".row") : null;
+        var copyright = footer.querySelector(".copyright");
+        var copyrightRow = copyright ? copyright.closest(".row") : null;
+        var contact = document.createElement("div");
+        if (!container) return;
+
+        contact.className = "tfse-footer-corporate";
+        contact.setAttribute("aria-label", "沐新株式會社營運聯絡資訊");
+        contact.innerHTML = [
+            '<div class="tfse-footer-corporate-main">',
+                '<div class="tfse-footer-corporate-brand">',
+                    '<a href="https://mokujp.com/" target="_blank" rel="noopener noreferrer">',
+                        '<svg class="tfse-footer-company-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">',
+                            '<path d="M3 21h18M5.5 21V8.2L12 4l6.5 4.2V21M8.5 10.5h1M14.5 10.5h1M8.5 14h1M14.5 14h1M10 21v-3.5h4V21"/>',
+                        "</svg>",
+                        '<strong>沐新株式會社<span>MOKUSHIN</span></strong>',
+                    "</a>",
+                    "<small>海外營業部 部長｜陳柏蒼</small>",
+                "</div>",
+                '<address class="tfse-footer-corporate-details">',
+                    '<span class="tfse-footer-contact-item tfse-footer-contact-item--address">',
+                        '<i class="fas fa-map-marker-alt" aria-hidden="true"></i>',
+                        '<span><b>東京本社</b><small>東京都豐島區北大塚 2-17-4 大塚キャリアビル B1</small></span>',
+                    "</span>",
+                    '<a class="tfse-footer-contact-item tfse-footer-contact-item--phone" href="tel:0366856605">',
+                        '<i class="fas fa-phone-alt" aria-hidden="true"></i>',
+                        '<span><b>公司電話</b><small>03-6685-6605</small></span>',
+                    "</a>",
+                    '<a class="tfse-footer-contact-item tfse-footer-contact-item--mobile" href="tel:0915506888">',
+                        '<i class="fas fa-mobile-alt" aria-hidden="true"></i>',
+                        '<span><b>行動電話</b><small>0915-506-888</small></span>',
+                    "</a>",
+                    '<a class="tfse-footer-contact-item tfse-footer-contact-item--email" href="mailto:mokushin.tokyo@gmail.com">',
+                        '<i class="fas fa-envelope" aria-hidden="true"></i>',
+                        '<span><b>電子信箱</b><small>mokushin.tokyo@gmail.com</small></span>',
+                    "</a>",
+                    '<a class="tfse-footer-contact-item tfse-footer-contact-item--website" href="https://mokujp.com/" target="_blank" rel="noopener noreferrer">',
+                        '<i class="fas fa-external-link-alt" aria-hidden="true"></i>',
+                        '<span><b>官方網站</b><small>mokujp.com</small></span>',
+                    "</a>",
+                "</address>",
+            "</div>"
+        ].join("");
+
+        if (footerTopRow) {
+            footerTopRow.appendChild(contact);
+        } else {
+            container.insertBefore(contact, copyrightRow);
+        }
+    }
+
+    addFooterPartnerServices();
+    addCorporateFooterContact();
     track("page_view", {
         title: document.title,
         utm_source: new URLSearchParams(window.location.search).get("utm_source") || "",
