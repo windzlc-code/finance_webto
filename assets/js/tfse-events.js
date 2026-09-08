@@ -995,7 +995,7 @@
         if (!container) return;
 
         contact.className = "tfse-footer-corporate";
-        contact.setAttribute("aria-label", "沐新株式會社營運聯絡資訊");
+        contact.setAttribute("aria-label", "營運聯絡資訊");
         contact.innerHTML = [
             '<div class="tfse-footer-corporate-main">',
                 '<div class="tfse-footer-corporate-brand">',
@@ -1003,7 +1003,7 @@
                         '<svg class="tfse-footer-company-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">',
                             '<path d="M3 21h18M5.5 21V8.2L12 4l6.5 4.2V21M8.5 10.5h1M14.5 10.5h1M8.5 14h1M14.5 14h1M10 21v-3.5h4V21"/>',
                         "</svg>",
-                        '<strong>沐新株式會社<span>MOKUSHIN</span></strong>',
+                        '<strong>海外營業部</strong>',
                     "</a>",
                     "<small>海外營業部 部長｜陳柏蒼</small>",
                 "</div>",
