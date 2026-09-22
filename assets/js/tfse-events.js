@@ -292,6 +292,7 @@
         "合作服務": "合作服务",
         "日本不動產搜尋網": "日本不动产搜索网",
         "日本置產一起go官方line": "日本置产一起go官方LINE",
+        "官方網站 mokujp.com": "官方网站 mokujp.com",
         "公司電話": "公司电话",
         "行動電話": "行动电话",
         "電子信箱": "电子邮箱",
@@ -972,6 +973,7 @@
                     "<ul>",
                         '<li><a href="https://www.manuvip.com/" target="_blank" rel="noopener noreferrer">日本不動產搜尋網</a></li>',
                         '<li><a href="https://page.line.me/002apkmh" target="_blank" rel="noopener noreferrer">日本置產一起go官方line</a></li>',
+                        '<li><a href="https://mokujp.com/" target="_blank" rel="noopener noreferrer">官方網站 mokujp.com</a></li>',
                     "</ul>",
                 "</div>",
             "</div>"
